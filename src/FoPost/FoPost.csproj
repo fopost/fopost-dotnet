@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Doc comments cover the API surface; the compiler nagging about every
+         member is noise we do not want failing the build. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <RootNamespace>FoPost</RootNamespace>
+    <AssemblyName>FoPost.Sdk</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>FoPost.Sdk</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>FoPost, Porter Bridge, LLC</Authors>
+    <Company>Porter Bridge, LLC</Company>
+    <Product>FoPost</Product>
+    <Description>Official .NET SDK for the FoPost API. Schedule and publish to +30 social platforms from your code.</Description>
+    <PackageTags>fopost;social-media;publishing;scheduling;twitter;linkedin;instagram;api;sdk</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://fopost.com</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/fopost/fopost-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="FoPost.Sdk.Tests" />
+  </ItemGroup>
+
+</Project>
