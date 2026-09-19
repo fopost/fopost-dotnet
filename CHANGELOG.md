@@ -8,6 +8,12 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 
 ### Added
 
+- `client.Blogs` for content that already lives on a connected site: `ListBlogsAsync`,
+  `ListArticlesAsync`, `GetArticleAsync`, `CreateArticleAsync`, `UpdateArticleAsync`,
+  `DeleteArticleAsync`, `ListProductsAsync` and `UpdateProductAsync`, with `RemoteBlog`,
+  `RemoteArticle` and `RemoteProduct`. Reads need the `posts` scope; the writes need
+  `posts` and `publish`. Updating an article changes the live one in place and never
+  creates a duplicate.
 - `client.Accounts.ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync` and
   `UpdateSlackIdentityAsync` (`UpdateSlackIdentityOptions`) for a Slack account. All four need the
   `accounts` scope; a webhook-connected account answers 409 `webhook_connection`.
