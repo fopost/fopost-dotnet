@@ -198,7 +198,7 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | `Ai`         | `CreditsAsync`, `GenerateCaptionAsync`, `RewriteAsync`, `RepurposeUrlAsync`                                                        |
 | `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `EditCommentAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `LikeAsync`, `UnlikeAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`, `DeleteAsync`, `StartConversationAsync`, `SetTypingAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
 | `Validate`   | `PostAsync`, `LengthAsync`, `MediaAsync`                                                                                           |
-| `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `SearchTargetingAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `LeadsAsync` |
+| `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync` |
 | `Media`      | `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                                                              |
 
 `Validate` checks a draft, its length, or a media URL against platform rules without creating
@@ -219,9 +219,12 @@ foreach (var platform in check.Platforms.Where(p => !p.Ready))
 `Inbox` needs an API key with the `inbox` scope; the calls that act on the platform as the account
 (`EditCommentAsync`, `LikeAsync`, `UnlikeAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`,
 `StartConversationAsync`, `SetTypingAsync`, a reply with media or quick replies, and deleting our
-own reply) need `publish` as well. `Ads` needs the `ads` scope, and the four calls
-that spend money (`BoostAsync`, `CreateAsync`, `SetStatusAsync`, `DeleteAsync`) need `publish` as
-well. A boost or ad starts paused unless `Paused = false`, so nothing spends until it is resumed.
+own reply) need `publish` as well. `Ads` needs the `ads` scope, and the calls
+that spend money (`BoostAsync`, `CreateAsync`, `SetStatusAsync`, `DeleteAsync`, `BulkSetStatusAsync`,
+and every create, update, delete and duplicate on campaigns, ad sets and network ads) need `publish`
+as well. Anything created starts paused unless `Paused = false`, so nothing spends until it is
+resumed. Campaigns, ad sets, network ads, creatives and audiences take the ad platform's own ids plus
+a `connectionId`, and are read live rather than stored.
 
 `Media` uploads a file straight to storage with the `posts` scope: `UploadDirectAsync` presigns,
 PUTs the bytes, and completes in one call, or drive the three steps yourself.

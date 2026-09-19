@@ -10,6 +10,17 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 
 ### Added
 
+- `client.Ads`: the campaign tree (`AccountTreeAsync`; get, create, update, delete and duplicate for
+  campaigns, ad sets and network ads; `BulkSetStatusAsync`), creatives (`CreativesAsync`,
+  `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`), audience management
+  (`GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`),
+  `EstimateReachAsync`, date-range insights (`InsightsAsync`, `AdInsightsAsync`), and lead forms and
+  the stored leads feed (`GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsFeedAsync`,
+  `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync`). Campaign, ad set and
+  network ad writes and bulk status need the `publish` scope on top of `ads`.
+- `CreateAdOptions.UrlTags` and `AdCreative.UrlTags` carry the query string appended to every link
+  in an ad.
+
 - `client.Inbox`: `LikeAsync`, `UnlikeAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`,
   `EditCommentAsync`, `StartConversationAsync` and `SetTypingAsync`, plus a `ReplyAsync` overload
   taking `ReplyInboxItemOptions` for media and quick replies. These need the `publish` scope on
