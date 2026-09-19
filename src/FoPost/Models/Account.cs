@@ -22,8 +22,13 @@ public sealed class SocialAccount : FoPostModel
     [JsonPropertyName("username")]
     public string? Username { get; set; }
 
+    /// <summary>The display name when one is set, else the platform name.</summary>
     [JsonPropertyName("name")]
     public string? Name { get; set; }
+
+    /// <summary>The name from the platform, whatever the display name.</summary>
+    [JsonPropertyName("platform_name")]
+    public string? PlatformName { get; set; }
 
     [JsonPropertyName("avatar")]
     public string? Avatar { get; set; }
