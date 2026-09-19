@@ -154,3 +154,61 @@ public sealed class AccountGroup : FoPostModel
     [JsonPropertyName("updated_at")]
     public DateTimeOffset? UpdatedAt { get; set; }
 }
+
+/// <summary>
+/// A one-time code, valid for 15 minutes. Sending <see cref="Command"/> to the bot in a Telegram
+/// chat connects that chat.
+/// </summary>
+public sealed class TelegramConnectCode : FoPostModel
+{
+    [JsonPropertyName("code")]
+    public string Code { get; set; } = string.Empty;
+
+    [JsonPropertyName("command")]
+    public string Command { get; set; } = string.Empty;
+
+    [JsonPropertyName("bot_username")]
+    public string? BotUsername { get; set; }
+
+    [JsonPropertyName("deep_link")]
+    public string? DeepLink { get; set; }
+
+    [JsonPropertyName("group_link")]
+    public string? GroupLink { get; set; }
+
+    [JsonPropertyName("expires_at")]
+    public DateTimeOffset? ExpiresAt { get; set; }
+}
+
+/// <summary>
+/// Where a connect code stands: <c>pending</c>, <c>connected</c> (with <see cref="AccountId"/>),
+/// <c>failed</c> (with <see cref="Reason"/>) or <c>expired</c>.
+/// </summary>
+public sealed class TelegramConnectStatus : FoPostModel
+{
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = string.Empty;
+
+    [JsonPropertyName("account_id")]
+    public string? AccountId { get; set; }
+
+    [JsonPropertyName("reason")]
+    public string? Reason { get; set; }
+}
+
+/// <summary>One entry in a Telegram bot's command menu.</summary>
+public sealed class TelegramBotCommand : FoPostModel
+{
+    [JsonPropertyName("command")]
+    public string Command { get; set; } = string.Empty;
+
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = string.Empty;
+}
+
+/// <summary>The command menu the bot shows in a connected Telegram chat.</summary>
+public sealed class TelegramBotCommands : FoPostModel
+{
+    [JsonPropertyName("commands")]
+    public IList<TelegramBotCommand> Commands { get; set; } = new List<TelegramBotCommand>();
+}

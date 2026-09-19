@@ -6,6 +6,14 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `client.Accounts.CreateTelegramConnectCodeAsync` mints a one-time code that connects a Telegram
+  chat when sent to the bot, and `GetTelegramConnectStatusAsync` polls its outcome.
+- `client.Accounts.GetTelegramBotCommandsAsync`, `SetTelegramBotCommandsAsync` and
+  `DeleteTelegramBotCommandsAsync` manage the bot's command menu in a connected chat. All five
+  need the `accounts` scope.
+
 ## [0.3.0] - 2026-09-19
 
 ### Added
