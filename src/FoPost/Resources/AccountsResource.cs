@@ -158,5 +158,70 @@ public sealed class AccountsResource
         return Require<TelegramBotCommands>(FoPostHttpClient.Unwrap(response));
     }
 
+    /// <summary>
+    /// Channels the Slack app can post to: every public channel, and private ones it was invited to.
+    /// A 409 <c>webhook_connection</c> means the account posts through a webhook; reconnect it with
+    /// the Slack app. The same applies to the other Slack calls.
+    /// </summary>
+    public async Task<IReadOnlyList<SlackChannel>> ListSlackChannelsAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/slack/channels", null, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<SlackChannel>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>People in the connected Slack workspace, for addressing a DM.</summary>
+    public async Task<IReadOnlyList<SlackMember>> ListSlackMembersAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/slack/members", null, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<SlackMember>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>The name and icon this Slack account posts under.</summary>
+    public async Task<SlackIdentity> GetSlackIdentityAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/slack/identity", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<SlackIdentity>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Change the name or icon this Slack account posts under. Only the fields you set are sent.</summary>
+    public async Task<SlackIdentity> UpdateSlackIdentityAsync(
+        string accountId,
+        UpdateSlackIdentityOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var body = new Dictionary<string, object?>();
+        if (options.Username.IsSet)
+        {
+            body["username"] = options.Username.Value;
+        }
+        if (options.IconUrl.IsSet)
+        {
+            body["icon_url"] = options.IconUrl.Value;
+        }
+        if (options.IconEmoji.IsSet)
+        {
+            body["icon_emoji"] = options.IconEmoji.Value;
+        }
+
+        var response = await _http
+            .RequestAsync(HttpMethod.Patch, $"{AccountPath(accountId)}/slack/identity", body, null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<SlackIdentity>(FoPostHttpClient.Unwrap(response));
+    }
+
     private static string AccountPath(string accountId) => $"/v1/accounts/{Uri.EscapeDataString(accountId)}";
 }

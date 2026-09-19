@@ -212,3 +212,58 @@ public sealed class TelegramBotCommands : FoPostModel
     [JsonPropertyName("commands")]
     public IList<TelegramBotCommand> Commands { get; set; } = new List<TelegramBotCommand>();
 }
+
+/// <summary>A channel the Slack app can post to; <see cref="IsCurrent"/> marks the one this account posts to.</summary>
+public sealed class SlackChannel : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("is_private")]
+    public bool IsPrivate { get; set; }
+
+    /// <summary>Whether the bot is in the channel.</summary>
+    [JsonPropertyName("is_member")]
+    public bool IsMember { get; set; }
+
+    [JsonPropertyName("is_current")]
+    public bool IsCurrent { get; set; }
+}
+
+/// <summary>A person in the connected Slack workspace; pass <see cref="Id"/> as the handle to start a DM.</summary>
+public sealed class SlackMember : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("real_name")]
+    public string? RealName { get; set; }
+
+    [JsonPropertyName("display_name")]
+    public string? DisplayName { get; set; }
+
+    [JsonPropertyName("avatar")]
+    public string? Avatar { get; set; }
+
+    [JsonPropertyName("is_bot")]
+    public bool IsBot { get; set; }
+}
+
+/// <summary>The name and icon a Slack account posts under; each is null when unset.</summary>
+public sealed class SlackIdentity : FoPostModel
+{
+    [JsonPropertyName("username")]
+    public string? Username { get; set; }
+
+    [JsonPropertyName("icon_url")]
+    public string? IconUrl { get; set; }
+
+    [JsonPropertyName("icon_emoji")]
+    public string? IconEmoji { get; set; }
+}
