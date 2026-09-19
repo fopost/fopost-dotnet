@@ -85,6 +85,10 @@ public sealed class CreateAdOptions : AdRequestOptions
     /// <summary>A media library asset url.</summary>
     [JsonPropertyName("mediaUrl")]
     public string? MediaUrl { get; set; }
+
+    /// <summary>Query string appended to every link in the ad, e.g. <c>utm_source=meta&amp;utm_medium=paid</c>.</summary>
+    [JsonPropertyName("urlTags")]
+    public string? UrlTags { get; set; }
 }
 
 /// <summary>
@@ -194,4 +198,249 @@ public sealed class CreateLeadFormOptions
 
     [JsonPropertyName("followUpUrl")]
     public string? FollowUpUrl { get; set; }
+}
+
+/// <summary>The workspace and ads connection every campaign-tree write names.</summary>
+public abstract class AdConnectionRequestOptions
+{
+    [JsonPropertyName("workspaceId")]
+    public string WorkspaceId { get; set; } = string.Empty;
+
+    /// <summary>An ads connection in the workspace.</summary>
+    [JsonPropertyName("connectionId")]
+    public string ConnectionId { get; set; } = string.Empty;
+}
+
+/// <summary>The body of <see cref="Resources.AdsResource.CreateCampaignAsync"/>.</summary>
+public sealed class CreateAdCampaignOptions : AdConnectionRequestOptions
+{
+    /// <summary>Ad account id, <c>act_…</c>.</summary>
+    [JsonPropertyName("adAccountId")]
+    public string AdAccountId { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>One of <see cref="AdGoals"/>.</summary>
+    [JsonPropertyName("goal")]
+    public string Goal { get; set; } = AdGoals.Engagement;
+
+    /// <summary>Left unset, the campaign is created paused. Set to <c>false</c> to go live at once.</summary>
+    [JsonPropertyName("paused")]
+    public bool? Paused { get; set; }
+}
+
+/// <summary>The body of <see cref="Resources.AdsResource.UpdateCampaignAsync"/>; unset fields are left alone.</summary>
+public sealed class UpdateAdCampaignOptions
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    /// <summary>One of <see cref="AdStatuses"/>.</summary>
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
+}
+
+/// <summary>The body of <see cref="Resources.AdsResource.CreateAdSetAsync"/>.</summary>
+public sealed class CreateAdSetOptions : AdConnectionRequestOptions
+{
+    [JsonPropertyName("campaignId")]
+    public string CampaignId { get; set; } = string.Empty;
+
+    /// <summary>The Page the ads in this set run as.</summary>
+    [JsonPropertyName("pageId")]
+    public string PageId { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>One of <see cref="AdGoals"/>.</summary>
+    [JsonPropertyName("goal")]
+    public string Goal { get; set; } = AdGoals.Engagement;
+
+    [JsonPropertyName("budget")]
+    public AdBudget Budget { get; set; } = new();
+
+    [JsonPropertyName("targeting")]
+    public AdTargeting Targeting { get; set; } = new();
+
+    /// <summary>Left unset, the ad set is created paused. Set to <c>false</c> to go live at once.</summary>
+    [JsonPropertyName("paused")]
+    public bool? Paused { get; set; }
+}
+
+/// <summary>The body of <see cref="Resources.AdsResource.UpdateAdSetAsync"/>; unset fields are left alone.</summary>
+public sealed class UpdateAdSetOptions
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    /// <summary>One of <see cref="AdStatuses"/>.</summary>
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
+
+    /// <summary>New budget in minor units; the budget type set at creation stays.</summary>
+    [JsonPropertyName("budgetMinor")]
+    public long? BudgetMinor { get; set; }
+
+    [JsonPropertyName("endAt")]
+    public DateTimeOffset? EndAt { get; set; }
+
+    [JsonPropertyName("targeting")]
+    public AdTargeting? Targeting { get; set; }
+}
+
+/// <summary>The body of <see cref="Resources.AdsResource.CreateNetworkAdAsync"/>.</summary>
+public sealed class CreateNetworkAdOptions : AdConnectionRequestOptions
+{
+    [JsonPropertyName("adSetId")]
+    public string AdSetId { get; set; } = string.Empty;
+
+    /// <summary>From <see cref="Resources.AdsResource.CreateCreativeAsync"/> or the creative library.</summary>
+    [JsonPropertyName("creativeId")]
+    public string CreativeId { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Left unset, the ad is created paused. Set to <c>false</c> to go live at once.</summary>
+    [JsonPropertyName("paused")]
+    public bool? Paused { get; set; }
+}
+
+/// <summary>The body of <see cref="Resources.AdsResource.UpdateNetworkAdAsync"/>; unset fields are left alone.</summary>
+public sealed class UpdateNetworkAdOptions
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    /// <summary>One of <see cref="AdStatuses"/>.</summary>
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
+
+    [JsonPropertyName("creativeId")]
+    public string? CreativeId { get; set; }
+}
+
+/// <summary>A campaign, ad set, or ad named in <see cref="BulkAdStatusOptions"/>.</summary>
+public sealed class AdObjectRef
+{
+    public AdObjectRef()
+    {
+    }
+
+    public AdObjectRef(string id, string level)
+    {
+        Id = id;
+        Level = level;
+    }
+
+    /// <summary>The ad platform's id.</summary>
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>One of <see cref="AdObjectLevels"/>.</summary>
+    [JsonPropertyName("level")]
+    public string Level { get; set; } = AdObjectLevels.Campaign;
+}
+
+/// <summary>The body of <see cref="Resources.AdsResource.BulkSetStatusAsync"/>.</summary>
+public sealed class BulkAdStatusOptions : AdConnectionRequestOptions
+{
+    /// <summary>One of <see cref="AdStatuses"/>.</summary>
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = AdStatuses.Paused;
+
+    /// <summary>One to 50 objects.</summary>
+    [JsonPropertyName("objects")]
+    public IList<AdObjectRef> Objects { get; set; } = new List<AdObjectRef>();
+}
+
+/// <summary>One card of a carousel creative.</summary>
+public sealed class AdCreativeCard
+{
+    /// <summary>A media library image.</summary>
+    [JsonPropertyName("mediaUrl")]
+    public string MediaUrl { get; set; } = string.Empty;
+
+    [JsonPropertyName("destinationUrl")]
+    public string? DestinationUrl { get; set; }
+
+    [JsonPropertyName("headline")]
+    public string? Headline { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+}
+
+/// <summary>The body of <see cref="Resources.AdsResource.CreateCreativeAsync"/>.</summary>
+public sealed class CreateAdCreativeOptions : AdConnectionRequestOptions
+{
+    /// <summary>Ad account id, <c>act_…</c>.</summary>
+    [JsonPropertyName("adAccountId")]
+    public string AdAccountId { get; set; } = string.Empty;
+
+    [JsonPropertyName("pageId")]
+    public string PageId { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>One of <see cref="AdCreativeFormats"/>.</summary>
+    [JsonPropertyName("format")]
+    public string Format { get; set; } = AdCreativeFormats.Image;
+
+    /// <summary>Primary text, up to 2000 characters.</summary>
+    [JsonPropertyName("text")]
+    public string Text { get; set; } = string.Empty;
+
+    [JsonPropertyName("headline")]
+    public string? Headline { get; set; }
+
+    [JsonPropertyName("destinationUrl")]
+    public string? DestinationUrl { get; set; }
+
+    /// <summary>For example <c>LEARN_MORE</c> (the default), <c>SHOP_NOW</c>, or <c>SIGN_UP</c>.</summary>
+    [JsonPropertyName("callToAction")]
+    public string? CallToAction { get; set; }
+
+    /// <summary>Query string appended to every link in the ad, e.g. <c>utm_source=meta&amp;utm_medium=paid</c>.</summary>
+    [JsonPropertyName("urlTags")]
+    public string? UrlTags { get; set; }
+
+    /// <summary>A media library asset url: the image, or the video. Required for a video.</summary>
+    [JsonPropertyName("mediaUrl")]
+    public string? MediaUrl { get; set; }
+
+    /// <summary>A video's poster frame, as a library image.</summary>
+    [JsonPropertyName("thumbnailMediaUrl")]
+    public string? ThumbnailMediaUrl { get; set; }
+
+    /// <summary>Two to ten cards; required for a carousel.</summary>
+    [JsonPropertyName("cards")]
+    public IList<AdCreativeCard>? Cards { get; set; }
+}
+
+/// <summary>The body of <see cref="Resources.AdsResource.UpdateAudienceAsync"/>; unset fields are left alone.</summary>
+public sealed class UpdateAudienceOptions
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+}
+
+/// <summary>The body of <see cref="Resources.AdsResource.EstimateReachAsync"/>.</summary>
+public sealed class EstimateReachOptions : AdConnectionRequestOptions
+{
+    /// <summary>Ad account id, <c>act_…</c>.</summary>
+    [JsonPropertyName("adAccountId")]
+    public string AdAccountId { get; set; } = string.Empty;
+
+    [JsonPropertyName("pageId")]
+    public string PageId { get; set; } = string.Empty;
+
+    [JsonPropertyName("targeting")]
+    public AdTargeting Targeting { get; set; } = new();
 }

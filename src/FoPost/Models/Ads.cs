@@ -54,6 +54,31 @@ public static class LeadFormQuestions
     public const string Phone = "PHONE";
 }
 
+/// <summary>The levels <see cref="Resources.AdsResource.BulkSetStatusAsync"/> can act on.</summary>
+public static class AdObjectLevels
+{
+    public const string Campaign = "campaign";
+    public const string AdSet = "ad_set";
+    public const string Ad = "ad";
+}
+
+/// <summary>How an insights report can be split.</summary>
+public static class AdInsightsBreakdowns
+{
+    public const string Age = "age";
+    public const string Gender = "gender";
+    public const string Placement = "placement";
+    public const string Country = "country";
+}
+
+/// <summary>The creative formats <see cref="Resources.AdsResource.CreateCreativeAsync"/> builds.</summary>
+public static class AdCreativeFormats
+{
+    public const string Image = "image";
+    public const string Video = "video";
+    public const string Carousel = "carousel";
+}
+
 /// <summary>An interest, behaviour, or income bracket, as the ad platform names it.</summary>
 public sealed class AdTargetingItem : FoPostModel
 {
@@ -189,6 +214,9 @@ public sealed class AdCreative : FoPostModel
 
     [JsonPropertyName("mediaUrl")]
     public string? MediaUrl { get; set; }
+
+    [JsonPropertyName("urlTags")]
+    public string? UrlTags { get; set; }
 }
 
 /// <summary>A boost or ad created through FoPost.</summary>
@@ -600,4 +628,391 @@ public sealed class LeadsPage : FoPostModel
 
     [JsonPropertyName("nextCursor")]
     public string? NextCursor { get; set; }
+}
+
+/// <summary>A campaign on the ad platform. Read live, never stored.</summary>
+public sealed class AdCampaign : FoPostModel
+{
+    /// <summary>The ad platform's campaign id.</summary>
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary><c>ACTIVE</c>, <c>PAUSED</c>, <c>DELETED</c>, or <c>ARCHIVED</c>.</summary>
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = string.Empty;
+
+    [JsonPropertyName("effectiveStatus")]
+    public string? EffectiveStatus { get; set; }
+
+    [JsonPropertyName("objective")]
+    public string? Objective { get; set; }
+
+    /// <summary>Null when the budget lives on the ad sets.</summary>
+    [JsonPropertyName("budgetMinor")]
+    public long? BudgetMinor { get; set; }
+
+    /// <summary>One of <see cref="AdBudgetTypes"/>.</summary>
+    [JsonPropertyName("budgetType")]
+    public string? BudgetType { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    public string? CreatedAt { get; set; }
+
+    /// <summary>Filled only in <see cref="Resources.AdsResource.AccountTreeAsync"/>.</summary>
+    [JsonPropertyName("adSets")]
+    public IList<AdSet>? AdSets { get; set; }
+}
+
+/// <summary>An ad set on the ad platform. Read live, never stored.</summary>
+public sealed class AdSet : FoPostModel
+{
+    /// <summary>The ad platform's ad set id.</summary>
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("campaignId")]
+    public string? CampaignId { get; set; }
+
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = string.Empty;
+
+    [JsonPropertyName("effectiveStatus")]
+    public string? EffectiveStatus { get; set; }
+
+    [JsonPropertyName("budgetMinor")]
+    public long? BudgetMinor { get; set; }
+
+    /// <summary>One of <see cref="AdBudgetTypes"/>.</summary>
+    [JsonPropertyName("budgetType")]
+    public string? BudgetType { get; set; }
+
+    [JsonPropertyName("endAt")]
+    public string? EndAt { get; set; }
+
+    [JsonPropertyName("optimizationGoal")]
+    public string? OptimizationGoal { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    public string? CreatedAt { get; set; }
+
+    /// <summary>Filled only in <see cref="Resources.AdsResource.AccountTreeAsync"/>.</summary>
+    [JsonPropertyName("ads")]
+    public IList<NetworkAd>? Ads { get; set; }
+}
+
+/// <summary>An ad inside an ad set on the ad platform. Read live, never stored.</summary>
+public sealed class NetworkAd : FoPostModel
+{
+    /// <summary>The ad platform's ad id.</summary>
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("campaignId")]
+    public string? CampaignId { get; set; }
+
+    [JsonPropertyName("adSetId")]
+    public string? AdSetId { get; set; }
+
+    [JsonPropertyName("creativeId")]
+    public string? CreativeId { get; set; }
+
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = string.Empty;
+
+    [JsonPropertyName("effectiveStatus")]
+    public string? EffectiveStatus { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    public string? CreatedAt { get; set; }
+}
+
+/// <summary>An ad account's campaigns, each with its ad sets and their ads.</summary>
+public sealed class AdAccountTree : FoPostModel
+{
+    [JsonPropertyName("adAccountId")]
+    public string AdAccountId { get; set; } = string.Empty;
+
+    [JsonPropertyName("currency")]
+    public string? Currency { get; set; }
+
+    [JsonPropertyName("workspaceId")]
+    public string? WorkspaceId { get; set; }
+
+    [JsonPropertyName("campaigns")]
+    public IList<AdCampaign> Campaigns { get; set; } = new List<AdCampaign>();
+}
+
+/// <summary>What happened to one object in a bulk status change.</summary>
+public sealed class BulkAdStatusResult : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>One of <see cref="AdObjectLevels"/>.</summary>
+    [JsonPropertyName("level")]
+    public string Level { get; set; } = string.Empty;
+
+    [JsonPropertyName("ok")]
+    public bool Ok { get; set; }
+
+    [JsonPropertyName("error")]
+    public string? Error { get; set; }
+}
+
+/// <summary>A creative on an ad account, usable in any number of ads.</summary>
+public sealed class NetworkCreative : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary><c>image</c>, <c>video</c>, <c>carousel</c>, <c>post</c>, or <c>other</c>.</summary>
+    [JsonPropertyName("format")]
+    public string Format { get; set; } = string.Empty;
+
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
+
+    [JsonPropertyName("title")]
+    public string? Title { get; set; }
+
+    [JsonPropertyName("body")]
+    public string? Body { get; set; }
+
+    [JsonPropertyName("link")]
+    public string? Link { get; set; }
+
+    [JsonPropertyName("thumbnailUrl")]
+    public string? ThumbnailUrl { get; set; }
+
+    [JsonPropertyName("callToAction")]
+    public string? CallToAction { get; set; }
+
+    [JsonPropertyName("urlTags")]
+    public string? UrlTags { get; set; }
+}
+
+/// <summary>The creatives on one ad account.</summary>
+public sealed class CreativesResult : FoPostModel
+{
+    [JsonPropertyName("creatives")]
+    public IList<NetworkCreative> Creatives { get; set; } = new List<NetworkCreative>();
+
+    [JsonPropertyName("workspaceId")]
+    public string? WorkspaceId { get; set; }
+}
+
+/// <summary>How many people a targeting spec could reach.</summary>
+public sealed class ReachEstimate : FoPostModel
+{
+    [JsonPropertyName("lower")]
+    public long? Lower { get; set; }
+
+    [JsonPropertyName("upper")]
+    public long? Upper { get; set; }
+
+    /// <summary>False while the ad platform is still estimating.</summary>
+    [JsonPropertyName("ready")]
+    public bool Ready { get; set; }
+}
+
+/// <summary>Delivery figures over a date range.</summary>
+public sealed class InsightsMetrics : FoPostModel
+{
+    [JsonPropertyName("impressions")]
+    public long Impressions { get; set; }
+
+    [JsonPropertyName("reach")]
+    public long Reach { get; set; }
+
+    [JsonPropertyName("clicks")]
+    public long Clicks { get; set; }
+
+    /// <summary>Account currency, minor units.</summary>
+    [JsonPropertyName("spendMinor")]
+    public long SpendMinor { get; set; }
+
+    /// <summary>Clicks per impression, as a percentage.</summary>
+    [JsonPropertyName("ctr")]
+    public double Ctr { get; set; }
+
+    [JsonPropertyName("leads")]
+    public long Leads { get; set; }
+}
+
+/// <summary>One slice of a broken-down insights report.</summary>
+public sealed class InsightsBreakdownRow : FoPostModel
+{
+    [JsonPropertyName("key")]
+    public string Key { get; set; } = string.Empty;
+
+    [JsonPropertyName("metrics")]
+    public InsightsMetrics Metrics { get; set; } = new();
+}
+
+/// <summary>One day of a daily insights report.</summary>
+public sealed class InsightsTimelineRow : FoPostModel
+{
+    [JsonPropertyName("date")]
+    public string Date { get; set; } = string.Empty;
+
+    [JsonPropertyName("metrics")]
+    public InsightsMetrics Metrics { get; set; } = new();
+}
+
+/// <summary>Insights for one campaign, ad set, or ad over a date range.</summary>
+public sealed class AdInsightsReport : FoPostModel
+{
+    [JsonPropertyName("objectId")]
+    public string ObjectId { get; set; } = string.Empty;
+
+    [JsonPropertyName("currency")]
+    public string? Currency { get; set; }
+
+    [JsonPropertyName("since")]
+    public string Since { get; set; } = string.Empty;
+
+    [JsonPropertyName("until")]
+    public string Until { get; set; } = string.Empty;
+
+    /// <summary>One of <see cref="AdInsightsBreakdowns"/>, or null.</summary>
+    [JsonPropertyName("breakdownBy")]
+    public string? BreakdownBy { get; set; }
+
+    /// <summary>Null when nothing was delivered in the range.</summary>
+    [JsonPropertyName("totals")]
+    public InsightsMetrics? Totals { get; set; }
+
+    [JsonPropertyName("breakdown")]
+    public IList<InsightsBreakdownRow> Breakdown { get; set; } = new List<InsightsBreakdownRow>();
+
+    [JsonPropertyName("timeline")]
+    public IList<InsightsTimelineRow> Timeline { get; set; } = new List<InsightsTimelineRow>();
+}
+
+/// <summary>A lead form with its settings.</summary>
+public sealed class LeadFormDetail : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
+
+    [JsonPropertyName("leadsCount")]
+    public int LeadsCount { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    public string? CreatedAt { get; set; }
+
+    [JsonPropertyName("questions")]
+    public IList<string> Questions { get; set; } = new List<string>();
+
+    [JsonPropertyName("pageId")]
+    public string? PageId { get; set; }
+
+    [JsonPropertyName("privacyPolicyUrl")]
+    public string? PrivacyPolicyUrl { get; set; }
+
+    [JsonPropertyName("locale")]
+    public string? Locale { get; set; }
+}
+
+/// <summary>A lead stored from a subscribed Page.</summary>
+public sealed class FeedLead : FoPostModel
+{
+    /// <summary>FoPost's id for the stored lead.</summary>
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>The ad platform's lead id.</summary>
+    [JsonPropertyName("leadId")]
+    public string LeadId { get; set; } = string.Empty;
+
+    [JsonPropertyName("connectionId")]
+    public string? ConnectionId { get; set; }
+
+    [JsonPropertyName("pageId")]
+    public string? PageId { get; set; }
+
+    [JsonPropertyName("formId")]
+    public string? FormId { get; set; }
+
+    [JsonPropertyName("adId")]
+    public string? AdId { get; set; }
+
+    [JsonPropertyName("adName")]
+    public string? AdName { get; set; }
+
+    [JsonPropertyName("campaignName")]
+    public string? CampaignName { get; set; }
+
+    [JsonPropertyName("platform")]
+    public string? Platform { get; set; }
+
+    [JsonPropertyName("isOrganic")]
+    public bool IsOrganic { get; set; }
+
+    [JsonPropertyName("fields")]
+    public IList<LeadField> Fields { get; set; } = new List<LeadField>();
+
+    [JsonPropertyName("submittedAt")]
+    public DateTimeOffset? SubmittedAt { get; set; }
+
+    [JsonPropertyName("workspaceId")]
+    public string? WorkspaceId { get; set; }
+}
+
+/// <summary>One page of the leads feed; pass <see cref="NextCursor"/> back as <c>cursor</c> for the next.</summary>
+public sealed class LeadsFeedPage : FoPostModel
+{
+    [JsonPropertyName("leads")]
+    public IList<FeedLead> Leads { get; set; } = new List<FeedLead>();
+
+    [JsonPropertyName("nextCursor")]
+    public string? NextCursor { get; set; }
+}
+
+/// <summary>A Page whose leads are collected into the leads feed.</summary>
+public sealed class LeadPage : FoPostModel
+{
+    [JsonPropertyName("connectionId")]
+    public string ConnectionId { get; set; } = string.Empty;
+
+    [JsonPropertyName("pageId")]
+    public string PageId { get; set; } = string.Empty;
+
+    [JsonPropertyName("pageName")]
+    public string? PageName { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    public DateTimeOffset? CreatedAt { get; set; }
+
+    [JsonPropertyName("workspaceId")]
+    public string? WorkspaceId { get; set; }
+}
+
+/// <summary>A newly subscribed Page.</summary>
+public sealed class SubscribedLeadPage : FoPostModel
+{
+    [JsonPropertyName("pageId")]
+    public string PageId { get; set; } = string.Empty;
+
+    /// <summary>Recent leads pulled in at subscription.</summary>
+    [JsonPropertyName("backfilled")]
+    public int Backfilled { get; set; }
 }

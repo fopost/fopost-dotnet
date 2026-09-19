@@ -89,8 +89,8 @@ returns it → the resource calls `FoPostHttpClient.Unwrap(...)` and `ResourceHe
 `Media`, `Validate` (scope `posts`, wraps the three stateless `/v1/validate/*` checks).
 `Inbox` (scope `inbox`) skips `/v1/inbox/chat/*` (browser-encrypted X Chat) and the binary
 `/v1/inbox/{id}/attachments/{index}` stream. `Ads` (scope `ads`) wraps every `/v1/ads` route;
-boost, create, set status and delete also need `publish`, and a boost or ad starts paused
-unless `Paused = false`. Inbox lists carry `{ page, perPage, total }` meta, read into
+boost, create, set status, delete, bulk status and the campaign/ad set/network ad writes also need
+`publish`, and anything created starts paused unless `Paused = false`. Inbox lists carry `{ page, perPage, total }` meta, read into
 `InboxPage<T>`/`InboxPageMeta` rather than `Page<T>`. Ads request bodies are camelCase and are
 serialised straight from their options objects; the inbox `read`/`refresh` bodies are
 snake_case and `PATCH /v1/inbox/{id}` is camelCase, so those are built by hand. `Media` (scope

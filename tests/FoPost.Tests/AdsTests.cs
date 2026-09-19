@@ -242,4 +242,165 @@ public class AdsTests
         Assert.Equal("c2", leads.NextCursor);
         Assert.Equal("full_name", Assert.Single(Assert.Single(leads.Leads).Fields).Name);
     }
+
+    [Fact]
+    public async Task Account_tree_nests_ad_sets_and_ads_under_campaigns()
+    {
+        var handler = new StubHandler().Json("""{"data":{"adAccountId":"act_123","currency":"USD","workspaceId":"ws_1","campaigns":[{"id":"c_1","name":"Launch","status":"ACTIVE","effectiveStatus":"ACTIVE","objective":"OUTCOME_TRAFFIC","budgetMinor":null,"budgetType":null,"createdAt":null,"adSets":[{"id":"s_1","name":"US","campaignId":"c_1","status":"PAUSED","budgetMinor":2000,"budgetType":"daily","ads":[{"id":"a_1","name":"Morning","adSetId":"s_1","creativeId":"cr_1","status":"PAUSED"}]}]}]}}""");
+        using var test = new TestClient(handler);
+
+        var tree = await test.Client.Ads.AccountTreeAsync("act_123", "conn_1", "ws_1");
+
+        Assert.Equal(
+            $"{TestClient.BaseUrl}/v1/ads/accounts/act_123/tree?workspace_id=ws_1&connection_id=conn_1",
+            handler.LastRequest.RequestUri!.ToString());
+        var campaign = Assert.Single(tree.Campaigns);
+        Assert.Null(campaign.BudgetMinor);
+        var adSet = Assert.Single(campaign.AdSets!);
+        Assert.Equal(2000, adSet.BudgetMinor);
+        Assert.Equal("cr_1", Assert.Single(adSet.Ads!).CreativeId);
+    }
+
+    [Fact]
+    public async Task Campaign_writes_carry_workspace_and_connection_in_the_query()
+    {
+        var campaign = """{"id":"c_1","name":"Launch","status":"PAUSED","effectiveStatus":"PAUSED","objective":"OUTCOME_TRAFFIC","budgetMinor":null,"budgetType":null,"createdAt":null}""";
+        var handler = new StubHandler()
+            .Json($$"""{"data":{{campaign}}}""", System.Net.HttpStatusCode.Created)
+            .Json($$"""{"data":{{campaign}}}""")
+            .Json("""{"data":{"id":"c_2"}}""", System.Net.HttpStatusCode.Created)
+            .Json("""{"message":"Campaign deleted"}""");
+        using var test = new TestClient(handler);
+
+        await test.Client.Ads.CreateCampaignAsync(new CreateAdCampaignOptions
+        {
+            WorkspaceId = "ws_1",
+            ConnectionId = "conn_1",
+            AdAccountId = "act_123",
+            Name = "Launch",
+            Goal = AdGoals.Traffic,
+        });
+        Assert.Equal("/v1/ads/campaigns", handler.LastRequest.RequestUri!.AbsolutePath);
+        var created = JsonDocument.Parse(handler.LastBody!).RootElement;
+        Assert.Equal("conn_1", created.GetProperty("connectionId").GetString());
+        Assert.Equal("traffic", created.GetProperty("goal").GetString());
+        Assert.False(created.TryGetProperty("paused", out _));
+
+        await test.Client.Ads.UpdateCampaignAsync("c_1", "ws_1", "conn_1", new UpdateAdCampaignOptions { Status = AdStatuses.Active });
+        Assert.Equal(HttpMethod.Patch, handler.LastRequest.Method);
+        Assert.Equal($"{TestClient.BaseUrl}/v1/ads/campaigns/c_1?workspace_id=ws_1&connection_id=conn_1", handler.LastRequest.RequestUri!.ToString());
+        Assert.Equal("""{"status":"active"}""", handler.LastBody);
+
+        var copy = await test.Client.Ads.DuplicateCampaignAsync("c_1", "ws_1", "conn_1", paused: false);
+        Assert.Equal("/v1/ads/campaigns/c_1/duplicate", handler.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Equal("""{"paused":false}""", handler.LastBody);
+        Assert.Equal("c_2", copy);
+
+        await test.Client.Ads.DeleteCampaignAsync("c_1", "ws_1", "conn_1");
+        Assert.Equal(HttpMethod.Delete, handler.LastRequest.Method);
+        Assert.Equal($"{TestClient.BaseUrl}/v1/ads/campaigns/c_1?workspace_id=ws_1&connection_id=conn_1", handler.LastRequest.RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task Bulk_status_sends_each_object_with_its_level()
+    {
+        var handler = new StubHandler().Json("""{"data":[{"id":"c_1","level":"campaign","ok":true,"error":null},{"id":"a_1","level":"ad","ok":false,"error":"Not found"}]}""");
+        using var test = new TestClient(handler);
+
+        var results = await test.Client.Ads.BulkSetStatusAsync(new BulkAdStatusOptions
+        {
+            WorkspaceId = "ws_1",
+            ConnectionId = "conn_1",
+            Status = AdStatuses.Paused,
+            Objects = new List<AdObjectRef> { new("c_1", AdObjectLevels.Campaign), new("a_1", AdObjectLevels.Ad) },
+        });
+
+        Assert.Equal("/v1/ads/status", handler.LastRequest.RequestUri!.AbsolutePath);
+        var body = JsonDocument.Parse(handler.LastBody!).RootElement;
+        Assert.Equal("ad", body.GetProperty("objects")[1].GetProperty("level").GetString());
+        Assert.False(results[1].Ok);
+        Assert.Equal("Not found", results[1].Error);
+    }
+
+    [Fact]
+    public async Task Insights_send_the_range_breakdown_and_daily_flag()
+    {
+        var report = """{"data":{"objectId":"c_1","currency":"USD","since":"2026-09-01","until":"2026-09-07","breakdownBy":"age","totals":{"impressions":1000,"reach":800,"clicks":25,"spendMinor":1200,"ctr":2.5,"leads":3},"breakdown":[{"key":"25-34","metrics":{"impressions":600,"reach":500,"clicks":15,"spendMinor":700,"ctr":2.5,"leads":2}}],"timeline":[{"date":"2026-09-01","metrics":{"impressions":100,"reach":90,"clicks":2,"spendMinor":150,"ctr":2,"leads":0}}]}}""";
+        var handler = new StubHandler().Json(report).Json(report);
+        using var test = new TestClient(handler);
+
+        var insights = await test.Client.Ads.InsightsAsync(
+            "conn_1", "c_1", "2026-09-01", "2026-09-07", AdInsightsBreakdowns.Age, daily: true, workspaceId: "ws_1");
+        Assert.Equal(
+            $"{TestClient.BaseUrl}/v1/ads/insights?workspace_id=ws_1&connection_id=conn_1&object_id=c_1&since=2026-09-01&until=2026-09-07&breakdown=age&daily=true",
+            handler.LastRequest.RequestUri!.ToString());
+        Assert.Equal(2.5, insights.Totals!.Ctr);
+        Assert.Equal("25-34", Assert.Single(insights.Breakdown).Key);
+        Assert.Equal(150, Assert.Single(insights.Timeline).Metrics.SpendMinor);
+
+        await test.Client.Ads.AdInsightsAsync("ad_1", "ws_1", "2026-09-01", "2026-09-07");
+        Assert.Equal(
+            $"{TestClient.BaseUrl}/v1/ads/ad_1/insights?workspace_id=ws_1&since=2026-09-01&until=2026-09-07",
+            handler.LastRequest.RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task Leads_feed_passes_the_cursor_back()
+    {
+        var handler = new StubHandler()
+            .Json("""{"data":{"leads":[{"id":"l_1","leadId":"m_1","connectionId":"conn_1","pageId":"1234","formId":"form_1","adId":null,"adName":null,"campaignName":null,"platform":"fb","isOrganic":false,"fields":[{"name":"email","values":["sam@yourbrand.com"]}],"submittedAt":"2026-09-10T12:00:00.000Z","workspaceId":"ws_1"}],"nextCursor":"cur_2"}}""")
+            .Json("""{"data":{"leads":[],"nextCursor":null}}""");
+        using var test = new TestClient(handler);
+
+        var first = await test.Client.Ads.LeadsFeedAsync("ws_1", formId: "form_1", limit: 50);
+        Assert.Equal(
+            $"{TestClient.BaseUrl}/v1/ads/leads?workspace_id=ws_1&form_id=form_1&limit=50",
+            handler.LastRequest.RequestUri!.ToString());
+        Assert.Equal("m_1", Assert.Single(first.Leads).LeadId);
+        Assert.Equal("cur_2", first.NextCursor);
+
+        var second = await test.Client.Ads.LeadsFeedAsync("ws_1", formId: "form_1", cursor: first.NextCursor, limit: 50);
+        Assert.Contains("cursor=cur_2", handler.LastRequest.RequestUri!.Query, StringComparison.Ordinal);
+        Assert.Empty(second.Leads);
+        Assert.Null(second.NextCursor);
+    }
+
+    [Fact]
+    public async Task Lead_pages_audience_users_and_creatives()
+    {
+        var handler = new StubHandler()
+            .Json("""{"data":{"pageId":"1234","backfilled":7}}""", System.Net.HttpStatusCode.Created)
+            .Json("""{"message":"Unsubscribed"}""")
+            .Json("""{"data":{"added":2}}""")
+            .Json("""{"data":{"id":"cr_1","name":"Carousel","format":"carousel","status":"ACTIVE","title":null,"body":"Hi","link":null,"thumbnailUrl":null,"callToAction":"SHOP_NOW","urlTags":"utm_source=meta"}}""", System.Net.HttpStatusCode.Created);
+        using var test = new TestClient(handler);
+
+        var page = await test.Client.Ads.SubscribeLeadPageAsync("ws_1", "conn_1", "1234");
+        Assert.Equal("""{"workspaceId":"ws_1","connectionId":"conn_1","pageId":"1234"}""", handler.LastBody);
+        Assert.Equal(7, page.Backfilled);
+
+        await test.Client.Ads.UnsubscribeLeadPageAsync("1234", "ws_1", "conn_1");
+        Assert.Equal($"{TestClient.BaseUrl}/v1/ads/lead-pages/1234?workspace_id=ws_1&connection_id=conn_1", handler.LastRequest.RequestUri!.ToString());
+
+        var added = await test.Client.Ads.AddAudienceUsersAsync("aud_1", "ws_1", "conn_1", new[] { "a@yourbrand.com", "b@yourbrand.com" });
+        Assert.Equal("/v1/ads/audiences/aud_1/users", handler.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Equal(2, added);
+
+        var creative = await test.Client.Ads.CreateCreativeAsync(new CreateAdCreativeOptions
+        {
+            WorkspaceId = "ws_1",
+            ConnectionId = "conn_1",
+            AdAccountId = "act_123",
+            PageId = "1234",
+            Name = "Carousel",
+            Format = AdCreativeFormats.Carousel,
+            Text = "Hi",
+            UrlTags = "utm_source=meta",
+            Cards = new List<AdCreativeCard> { new() { MediaUrl = "https://cdn.yourbrand.com/1.png" }, new() { MediaUrl = "https://cdn.yourbrand.com/2.png" } },
+        });
+        var body = JsonDocument.Parse(handler.LastBody!).RootElement;
+        Assert.Equal("utm_source=meta", body.GetProperty("urlTags").GetString());
+        Assert.Equal(2, body.GetProperty("cards").GetArrayLength());
+        Assert.Equal("SHOP_NOW", creative.CallToAction);
+    }
 }
