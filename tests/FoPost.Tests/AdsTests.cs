@@ -206,7 +206,7 @@ public class AdsTests
             .Json("""{"data":[{"id":"6003","name":"Coffee","detail":"Interest"}]}""")
             .Json("""{"data":[{"connectionId":"conn_1","connectionName":"Your Brand","pageId":"1234","pageName":"Your Brand","forms":[{"id":"form_1","name":"Newsletter","status":"ACTIVE","leadsCount":12,"createdAt":null,"questions":["EMAIL"]}],"error":null,"workspaceId":"ws_1"}]}""")
             .Json("""{"data":{"id":"form_2"}}""")
-            .Json("""{"data":{"leads":[{"id":"lead_1","createdAt":null,"fields":[{"name":"email","values":["sam@yourbrand.com"]}],"adName":null,"campaignName":null,"platform":"fb","isOrganic":true}],"nextCursor":"c2"}}""");
+            .Json("""{"data":{"leads":[{"id":"lead_1","createdAt":null,"fields":[{"name":"full_name","values":["Sam Lee"]}],"adName":null,"campaignName":null,"platform":"fb","isOrganic":true}],"nextCursor":"c2"}}""");
         using var test = new TestClient(handler);
 
         var options = await test.Client.Ads.SearchTargetingAsync("conn_1", TargetingSearchTypes.Interest, "coffee");
@@ -240,6 +240,6 @@ public class AdsTests
         Assert.Contains("page_id=1234", handler.LastRequest.RequestUri!.Query, StringComparison.Ordinal);
         Assert.Contains("after=c1", handler.LastRequest.RequestUri!.Query, StringComparison.Ordinal);
         Assert.Equal("c2", leads.NextCursor);
-        Assert.Equal("email", Assert.Single(Assert.Single(leads.Leads).Fields).Name);
+        Assert.Equal("full_name", Assert.Single(Assert.Single(leads.Leads).Fields).Name);
     }
 }
