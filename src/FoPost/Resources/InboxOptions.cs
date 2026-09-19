@@ -122,3 +122,37 @@ public sealed class UpdateInboxItemOptions
     /// <summary>Required when <see cref="State"/> is <c>snoozed</c>; must be in the future.</summary>
     public DateTimeOffset? SnoozedUntil { get; set; }
 }
+
+/// <summary>The body of the <see cref="Resources.InboxResource.ReplyAsync(string, ReplyInboxItemOptions, System.Threading.CancellationToken)"/> overload.</summary>
+public sealed class ReplyInboxItemOptions
+{
+    /// <summary>Required unless <see cref="MediaIds"/> is given.</summary>
+    public string? Text { get; set; }
+
+    /// <summary>Media library ids to attach to a DM, at most 10. Only where <c>CanSendMedia</c> is true.</summary>
+    public IList<string>? MediaIds { get; set; }
+
+    /// <summary>Answer buttons under a DM, at most 13 of up to 20 characters. Only where <c>CanQuickReply</c> is true.</summary>
+    public IList<string>? QuickReplies { get; set; }
+}
+
+/// <summary>
+/// The body of <see cref="Resources.InboxResource.StartConversationAsync"/>. Name either
+/// <see cref="AccountId"/> and <see cref="Handle"/>, or <see cref="CommentId"/>.
+/// </summary>
+public sealed class StartInboxConversationOptions
+{
+    /// <summary>The account to send from, with <see cref="Handle"/>.</summary>
+    public string? AccountId { get; set; }
+
+    /// <summary>Who to message.</summary>
+    public string? Handle { get; set; }
+
+    /// <summary>An inbox comment to answer privately instead. Only where <c>CanPrivateReply</c> is true.</summary>
+    public string? CommentId { get; set; }
+
+    public string Text { get; set; } = string.Empty;
+
+    /// <summary>Media library ids to attach, at most 10.</summary>
+    public IList<string>? MediaIds { get; set; }
+}
