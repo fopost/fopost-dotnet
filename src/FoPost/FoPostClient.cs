@@ -32,6 +32,7 @@ public sealed class FoPostClient : IDisposable
 
         Posts = new PostsResource(_http);
         Accounts = new AccountsResource(_http);
+        AccountGroups = new AccountGroupsResource(_http);
         Workspaces = new WorkspacesResource(_http);
         Labels = new LabelsResource(_http);
         Ai = new AiResource(_http);
@@ -48,6 +49,8 @@ public sealed class FoPostClient : IDisposable
     public PostsResource Posts { get; }
 
     public AccountsResource Accounts { get; }
+
+    public AccountGroupsResource AccountGroups { get; }
 
     public WorkspacesResource Workspaces { get; }
 

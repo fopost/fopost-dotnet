@@ -130,3 +130,22 @@ public sealed class Label : FoPostModel
     [JsonPropertyName("updated_at")]
     public DateTimeOffset? UpdatedAt { get; set; }
 }
+
+/// <summary>A named set of accounts in one workspace, for posting to all of them at once.</summary>
+public sealed class AccountGroup : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("account_ids")]
+    public IList<string> AccountIds { get; set; } = new List<string>();
+
+    [JsonPropertyName("created_at")]
+    public DateTimeOffset? CreatedAt { get; set; }
+
+    [JsonPropertyName("updated_at")]
+    public DateTimeOffset? UpdatedAt { get; set; }
+}
