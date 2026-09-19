@@ -117,8 +117,16 @@ public sealed class PostsResource
             ["workspace_id"] = options.WorkspaceId,
             ["status"] = options.Status,
             ["content"] = options.Content,
-            ["accounts"] = options.Accounts,
         };
+
+        if (options.Accounts.Count > 0 || options.AccountGroupId is null)
+        {
+            body["accounts"] = options.Accounts;
+        }
+        if (options.AccountGroupId is not null)
+        {
+            body["account_group_id"] = options.AccountGroupId;
+        }
 
         if (options.ScheduleAt is { } scheduleAt)
         {
