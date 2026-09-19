@@ -123,6 +123,33 @@ Console.WriteLine($"{balance.CreditsRemaining} of {balance.CreditsTotal} credits
 `RewriteAsync` and `RepurposeUrlAsync` are dashboard-session endpoints: they need a
 `BearerToken` rather than an API key, and answer `401` to a key.
 
+## Inbox and ads
+
+```csharp
+// Unread comments and mentions, then answer one
+var unread = await client.Inbox.ListAsync(new ListInboxOptions
+{
+    WorkspaceId = "9b2f6c1e-…",
+    State = InboxItemStates.Unread,
+});
+await client.Inbox.ReplyAsync(unread[0].Id, "Thanks for reaching out!");
+
+// Boost a published post; it starts paused until you resume it
+var ad = await client.Ads.BoostAsync(new BoostPostOptions
+{
+    WorkspaceId = "9b2f6c1e-…",
+    ConnectionId = "c1d2e3f4-…",
+    AdAccountId = "act_123",
+    PostId = post.Id,
+    AccountId = post.Accounts[0].Id,
+    Name = "Launch boost",
+    Goal = AdGoals.Engagement,
+    Budget = new AdBudget(2000, AdBudgetTypes.Daily),
+    Targeting = new AdTargeting { Countries = new List<string> { "US" } },
+});
+await client.Ads.SetStatusAsync(ad.Id, ad.WorkspaceId!, AdStatuses.Active);
+```
+
 ## Error handling
 
 Every non-2xx response raises a `FoPostException` carrying the API's status, error code, and body.
@@ -168,6 +195,12 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | `Workspaces` | `ListAsync`, `GetAsync`                                                                                                            |
 | `Labels`     | `ListAsync`                                                                                                                        |
 | `Ai`         | `CreditsAsync`, `GenerateCaptionAsync`, `RewriteAsync`, `RepurposeUrlAsync`                                                        |
+| `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `DeleteAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
+| `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `SearchTargetingAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `LeadsAsync` |
+
+`Inbox` needs an API key with the `inbox` scope. `Ads` needs the `ads` scope, and the four calls
+that spend money (`BoostAsync`, `CreateAsync`, `SetStatusAsync`, `DeleteAsync`) need `publish` as
+well. A boost or ad starts paused unless `Paused = false`, so nothing spends until it is resumed.
 
 The API has more endpoints than the SDK wraps — analytics, webhooks, automations, media, and
 communities among them. `RequestAsync` reaches any of them with the same auth, retries, and error
