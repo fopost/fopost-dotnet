@@ -181,11 +181,49 @@ public sealed class InboxItem : FoPostModel
     [JsonPropertyName("hidden")]
     public bool Hidden { get; set; }
 
+    [JsonPropertyName("liked")]
+    public bool Liked { get; set; }
+
+    [JsonPropertyName("pinned")]
+    public bool Pinned { get; set; }
+
+    /// <summary>Our reaction on a DM.</summary>
+    [JsonPropertyName("reaction")]
+    public string? Reaction { get; set; }
+
+    [JsonPropertyName("editedAt")]
+    public DateTimeOffset? EditedAt { get; set; }
+
     [JsonPropertyName("canHide")]
     public bool CanHide { get; set; }
 
+    /// <summary>A comment someone left, or our own reply.</summary>
     [JsonPropertyName("canDelete")]
     public bool CanDelete { get; set; }
+
+    [JsonPropertyName("canLike")]
+    public bool CanLike { get; set; }
+
+    /// <summary>Our own comment only.</summary>
+    [JsonPropertyName("canPin")]
+    public bool CanPin { get; set; }
+
+    /// <summary>Our own comment only.</summary>
+    [JsonPropertyName("canEdit")]
+    public bool CanEdit { get; set; }
+
+    [JsonPropertyName("canReact")]
+    public bool CanReact { get; set; }
+
+    [JsonPropertyName("canSendMedia")]
+    public bool CanSendMedia { get; set; }
+
+    [JsonPropertyName("canQuickReply")]
+    public bool CanQuickReply { get; set; }
+
+    /// <summary>A DM can be opened from this comment with <c>StartConversationAsync</c>.</summary>
+    [JsonPropertyName("canPrivateReply")]
+    public bool CanPrivateReply { get; set; }
 
     /// <summary>The FoPost post this item was left under, when we published it.</summary>
     [JsonPropertyName("post")]
@@ -312,6 +350,10 @@ public sealed class InboxAccount : FoPostModel
 
     [JsonPropertyName("dmPendingReason")]
     public string? DmPendingReason { get; set; }
+
+    /// <summary>A new DM can be opened from this account by handle.</summary>
+    [JsonPropertyName("canStartConversation")]
+    public bool CanStartConversation { get; set; }
 }
 
 /// <summary>What the inbox can read on one platform: <c>live</c>, <c>soon</c>, or <c>none</c>.</summary>
@@ -414,6 +456,16 @@ public sealed class InboxReplyResult : FoPostModel
 
     [JsonPropertyName("reply")]
     public InboxReplyRef? Reply { get; set; }
+}
+
+/// <summary>The DM a new conversation opened, and the message sent into it.</summary>
+public sealed class InboxConversationStart : FoPostModel
+{
+    [JsonPropertyName("conversationId")]
+    public string? ConversationId { get; set; }
+
+    [JsonPropertyName("item")]
+    public InboxItem? Item { get; set; }
 }
 
 /// <summary>An account whose DM grant has to be renewed before its DMs can be read again.</summary>

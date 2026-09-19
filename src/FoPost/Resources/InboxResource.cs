@@ -194,13 +194,51 @@ public sealed class InboxResource
         return Require<InboxItem>(FoPostHttpClient.Unwrap(response));
     }
 
-    /// <summary>Send a reply on the platform as the connected account.</summary>
-    public async Task<InboxReplyResult> ReplyAsync(
+    /// <summary>Edit our own comment on the platform. Needs the <c>publish</c> scope.</summary>
+    public async Task<InboxItem> EditCommentAsync(
         string itemId,
         string text,
         CancellationToken cancellationToken = default)
     {
         var body = new Dictionary<string, object?> { ["text"] = text };
+        var response = await _http
+            .RequestAsync(HttpMethod.Patch, ItemPath(itemId), body, null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<InboxItem>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Send a reply on the platform as the connected account.</summary>
+    public Task<InboxReplyResult> ReplyAsync(
+        string itemId,
+        string text,
+        CancellationToken cancellationToken = default) =>
+        ReplyAsync(itemId, new ReplyInboxItemOptions { Text = text }, cancellationToken);
+
+    /// <summary>
+    /// Send a reply that may carry media and quick replies on a DM. Either of those needs the
+    /// <c>publish</c> scope.
+    /// </summary>
+    public async Task<InboxReplyResult> ReplyAsync(
+        string itemId,
+        ReplyInboxItemOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var body = new Dictionary<string, object?>();
+        if (options.Text is not null)
+        {
+            body["text"] = options.Text;
+        }
+        if (options.MediaIds is not null)
+        {
+            body["media_ids"] = options.MediaIds;
+        }
+        if (options.QuickReplies is not null)
+        {
+            body["quick_replies"] = options.QuickReplies;
+        }
+
         var response = await _http.PostAsync($"{ItemPath(itemId)}/reply", body, cancellationToken)
             .ConfigureAwait(false);
         return Require<InboxReplyResult>(FoPostHttpClient.Unwrap(response));
@@ -213,7 +251,92 @@ public sealed class InboxResource
     public Task<InboxItem> UnhideAsync(string itemId, CancellationToken cancellationToken = default) =>
         Act(itemId, "unhide", cancellationToken);
 
-    /// <summary>Delete the comment on the platform.</summary>
+    /// <summary>Like the item on the platform. Needs the <c>publish</c> scope.</summary>
+    public Task<InboxItem> LikeAsync(string itemId, CancellationToken cancellationToken = default) =>
+        Act(itemId, "like", cancellationToken);
+
+    /// <summary>Remove our like. Needs the <c>publish</c> scope.</summary>
+    public Task<InboxItem> UnlikeAsync(string itemId, CancellationToken cancellationToken = default) =>
+        Act(itemId, "unlike", cancellationToken);
+
+    /// <summary>Pin our own comment. Needs the <c>publish</c> scope.</summary>
+    public Task<InboxItem> PinAsync(string itemId, CancellationToken cancellationToken = default) =>
+        Act(itemId, "pin", cancellationToken);
+
+    /// <summary>Unpin our own comment. Needs the <c>publish</c> scope.</summary>
+    public Task<InboxItem> UnpinAsync(string itemId, CancellationToken cancellationToken = default) =>
+        Act(itemId, "unpin", cancellationToken);
+
+    /// <summary>
+    /// React to a DM with an emoji, or pass <c>null</c> to remove ours. Needs the <c>publish</c> scope.
+    /// </summary>
+    public async Task<InboxItem> ReactAsync(
+        string itemId,
+        string? reaction,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["reaction"] = reaction };
+        var response = await _http.PostAsync($"{ItemPath(itemId)}/react", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<InboxItem>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
+    /// Open a DM, by handle from an account or as a private reply to a comment. Needs the
+    /// <c>publish</c> scope.
+    /// </summary>
+    public async Task<InboxConversationStart> StartConversationAsync(
+        StartInboxConversationOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var body = new Dictionary<string, object?> { ["text"] = options.Text };
+        if (options.AccountId is not null)
+        {
+            body["account_id"] = options.AccountId;
+        }
+        if (options.Handle is not null)
+        {
+            body["handle"] = options.Handle;
+        }
+        if (options.CommentId is not null)
+        {
+            body["comment_id"] = options.CommentId;
+        }
+        if (options.MediaIds is not null)
+        {
+            body["media_ids"] = options.MediaIds;
+        }
+
+        var response = await _http.PostAsync("/v1/inbox/conversations", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<InboxConversationStart>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
+    /// Show or clear the typing indicator in a DM thread. Needs the <c>publish</c> scope.
+    /// </summary>
+    public async Task<bool> SetTypingAsync(
+        string conversationId,
+        string accountId,
+        bool on = true,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["account_id"] = accountId, ["on"] = on };
+        var response = await _http
+            .PostAsync(
+                $"/v1/inbox/conversations/{Uri.EscapeDataString(conversationId)}/typing",
+                body,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return FoPostHttpClient.Unwrap(response)?["typing"]?.GetValue<bool>() ?? false;
+    }
+
+    /// <summary>
+    /// Delete the comment on the platform, or our own reply. Deleting our own reply needs the
+    /// <c>publish</c> scope.
+    /// </summary>
     public async Task<bool> DeleteAsync(string itemId, CancellationToken cancellationToken = default)
     {
         var response = await _http.DeleteAsync(ItemPath(itemId), null, cancellationToken).ConfigureAwait(false);

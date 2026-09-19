@@ -11,7 +11,7 @@ exception per error status.
 - **.NET 8** (`net8.0`), **C# 12**, nullable reference types enabled, `TreatWarningsAsErrors`.
 - **No runtime package dependencies** — `System.Net.Http.HttpClient` and `System.Text.Json` from
   the BCL. Do not add one.
-- Assembly and package id `FoPost.Sdk`; root namespace `FoPost`. Version `0.2.0` in
+- Assembly and package id `FoPost.Sdk`; root namespace `FoPost`. Version `0.3.0` in
   `src/FoPost/FoPost.csproj` (the release workflow enforces the tag match).
 
 ## Downstream Packages
