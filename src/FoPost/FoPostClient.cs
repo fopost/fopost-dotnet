@@ -39,6 +39,7 @@ public sealed class FoPostClient : IDisposable
         Inbox = new InboxResource(_http);
         Ads = new AdsResource(_http);
         Validate = new ValidateResource(_http);
+        Media = new MediaResource(_http);
     }
 
     public FoPostClient(string apiKey)
@@ -63,6 +64,8 @@ public sealed class FoPostClient : IDisposable
     public AdsResource Ads { get; }
 
     public ValidateResource Validate { get; }
+
+    public MediaResource Media { get; }
 
     public string BaseUrl => _http.BaseUrl;
 

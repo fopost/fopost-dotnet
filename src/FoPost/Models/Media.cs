@@ -44,3 +44,46 @@ public sealed class ContentBlock : FoPostModel
     [JsonPropertyName("position")]
     public int? Position { get; set; }
 }
+
+/// <summary>A one-time upload slot: PUT the bytes to <see cref="UploadUrl"/> before <see cref="ExpiresAt"/>.</summary>
+public sealed class PresignedUpload : FoPostModel
+{
+    [JsonPropertyName("uploadId")]
+    public string UploadId { get; set; } = string.Empty;
+
+    [JsonPropertyName("uploadUrl")]
+    public string UploadUrl { get; set; } = string.Empty;
+
+    [JsonPropertyName("method")]
+    public string Method { get; set; } = "PUT";
+
+    /// <summary>Headers the PUT must carry, exactly as returned.</summary>
+    [JsonPropertyName("headers")]
+    public IDictionary<string, string> Headers { get; set; } = new Dictionary<string, string>();
+
+    [JsonPropertyName("expiresAt")]
+    public DateTimeOffset? ExpiresAt { get; set; }
+}
+
+/// <summary>A file in the workspace media library.</summary>
+public sealed class MediaLibraryItem : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>One of <c>image</c>, <c>video</c>, <c>gif</c>, or <c>document</c>.</summary>
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = "image";
+
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("url")]
+    public string Url { get; set; } = string.Empty;
+
+    [JsonPropertyName("previewUrl")]
+    public string? PreviewUrl { get; set; }
+
+    [JsonPropertyName("size")]
+    public long? Size { get; set; }
+}

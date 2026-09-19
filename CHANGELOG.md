@@ -8,6 +8,8 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 
 ### Added
 
+- `client.Media`: direct uploads through a presigned URL (`PresignAsync`, `CompleteAsync`, and
+  `UploadDirectAsync`, which runs all three steps). Needs the `posts` scope.
 - `client.Validate`: `PostAsync`, `LengthAsync` and `MediaAsync` wrap `/v1/validate/*` to check
   a draft, its length, or a media URL against platform rules without creating anything. Needs
   the `posts` scope.
