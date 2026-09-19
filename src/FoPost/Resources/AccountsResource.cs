@@ -85,5 +85,78 @@ public sealed class AccountsResource
         return Require<AccountHealth>(FoPostHttpClient.Unwrap(body));
     }
 
+    /// <summary>
+    /// Mint a one-time code, valid for 15 minutes. Sending <c>/connect &lt;code&gt;</c> to the bot in
+    /// a Telegram chat connects that chat. <paramref name="workspaceId"/> may be omitted for a key
+    /// bound to one workspace.
+    /// </summary>
+    public async Task<TelegramConnectCode> CreateTelegramConnectCodeAsync(
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?>();
+        if (workspaceId is not null)
+        {
+            body["workspaceId"] = workspaceId;
+        }
+
+        var response = await _http
+            .PostAsync("/v1/accounts/telegram/connect-code", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<TelegramConnectCode>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Whether a connect code has been used yet, and the account it connected.</summary>
+    public async Task<TelegramConnectStatus> GetTelegramConnectStatusAsync(
+        string code,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new Dictionary<string, object?> { ["code"] = code };
+        var response = await _http
+            .GetAsync("/v1/accounts/telegram/connect-code/status", query, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<TelegramConnectStatus>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>The command menu the bot shows in this Telegram chat.</summary>
+    public async Task<TelegramBotCommands> GetTelegramBotCommandsAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/telegram/commands", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<TelegramBotCommands>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Replace the command menu for this Telegram chat, 1-100 commands.</summary>
+    public async Task<TelegramBotCommands> SetTelegramBotCommandsAsync(
+        string accountId,
+        IEnumerable<TelegramBotCommand> commands,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?>
+        {
+            ["commands"] = commands
+                .Select(c => new Dictionary<string, object?> { ["command"] = c.Command, ["description"] = c.Description })
+                .ToList(),
+        };
+        var response = await _http
+            .PutAsync($"{AccountPath(accountId)}/telegram/commands", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<TelegramBotCommands>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Clear the command menu for this Telegram chat.</summary>
+    public async Task<TelegramBotCommands> DeleteTelegramBotCommandsAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .DeleteAsync($"{AccountPath(accountId)}/telegram/commands", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<TelegramBotCommands>(FoPostHttpClient.Unwrap(response));
+    }
+
     private static string AccountPath(string accountId) => $"/v1/accounts/{Uri.EscapeDataString(accountId)}";
 }
