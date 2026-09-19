@@ -150,6 +150,48 @@ var ad = await client.Ads.BoostAsync(new BoostPostOptions
 await client.Ads.SetStatusAsync(ad.Id, ad.WorkspaceId!, AdStatuses.Active);
 ```
 
+## Analytics
+
+```csharp
+// How long a post keeps earning, from the repeated readings of each post
+var decay = await client.Analytics.DecayAsync(new AnalyticsScopeOptions { Days = 30 });
+Console.WriteLine(decay.HalfLifeBucket); // e.g. "1h_3h"
+
+// Whether posting more earned more
+var cadence = await client.Analytics.FrequencyAsync(new AnalyticsScopeOptions { Days = 90 });
+Console.WriteLine(cadence.Best?.Label); // e.g. "3-5 a week"
+
+// Every reading held for one post, with what moved between them
+var timeline = await client.Analytics.TimelineAsync(post.Id);
+
+// Mirror the metrics into your own store, without refetching everything
+DateTimeOffset? cursor = null;
+while (true)
+{
+    var page = await client.Analytics.ChangesAsync(new MetricChangesOptions { Since = cursor });
+    Save(page.Changes);
+    if (!page.HasMore || page.Cursor is null)
+    {
+        break;
+    }
+
+    cursor = page.Cursor;
+}
+
+// Refresh one post now instead of waiting for the next collection run
+await client.Analytics.CollectPostAsync(post.Id);
+
+// Posts on the account that never went out through FoPost
+var native = await client.Analytics.NativePostsAsync(accounts[0].Id);
+```
+
+A post is addressed by its FoPost id or by its permalink, so a post made by
+hand on the network works the same way:
+
+```csharp
+await client.Analytics.TimelineAsync("https://x.com/acme/status/1");
+```
+
 ## Error handling
 
 Every non-2xx response raises a `FoPostException` carrying the API's status, error code, and body.
@@ -198,6 +240,7 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | `Ai`         | `CreditsAsync`, `GenerateCaptionAsync`, `RewriteAsync`, `RepurposeUrlAsync`                                                        |
 | `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `EditCommentAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `LikeAsync`, `UnlikeAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`, `DeleteAsync`, `StartConversationAsync`, `SetTypingAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
 | `Validate`   | `PostAsync`, `LengthAsync`, `MediaAsync`                                                                                           |
+| `Analytics`  | `DecayAsync`, `FrequencyAsync`, `TimelineAsync`, `ChangesAsync`, `CollectPostAsync`, `NativePostsAsync`                             |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync` |
 | `Media`      | `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                                                              |
 

@@ -40,6 +40,7 @@ public sealed class FoPostClient : IDisposable
         Ads = new AdsResource(_http);
         Validate = new ValidateResource(_http);
         Media = new MediaResource(_http);
+        Analytics = new AnalyticsResource(_http);
     }
 
     public FoPostClient(string apiKey)
@@ -66,6 +67,9 @@ public sealed class FoPostClient : IDisposable
     public ValidateResource Validate { get; }
 
     public MediaResource Media { get; }
+
+    /// <summary>Deeper posting analytics: decay, cadence, per-post timelines and the changes feed.</summary>
+    public AnalyticsResource Analytics { get; }
 
     public string BaseUrl => _http.BaseUrl;
 
