@@ -6,8 +6,17 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-19
+
 ### Added
 
+- `client.Inbox`: `LikeAsync`, `UnlikeAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`,
+  `EditCommentAsync`, `StartConversationAsync` and `SetTypingAsync`, plus a `ReplyAsync` overload
+  taking `ReplyInboxItemOptions` for media and quick replies. These need the `publish` scope on
+  top of `inbox`.
+- `InboxItem` gains `Liked`, `Pinned`, `Reaction`, `EditedAt` and the `CanLike`, `CanPin`,
+  `CanEdit`, `CanReact`, `CanSendMedia`, `CanQuickReply` and `CanPrivateReply` flags;
+  `InboxAccount` gains `CanStartConversation`.
 - `client.Media`: direct uploads through a presigned URL (`PresignAsync`, `CompleteAsync`, and
   `UploadDirectAsync`, which runs all three steps). Needs the `posts` scope.
 - `client.Validate`: `PostAsync`, `LengthAsync` and `MediaAsync` wrap `/v1/validate/*` to check

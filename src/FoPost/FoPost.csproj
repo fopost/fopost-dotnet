@@ -16,7 +16,7 @@
 
   <PropertyGroup>
     <PackageId>FoPost.Sdk</PackageId>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Authors>FoPost, Porter Bridge, LLC</Authors>
     <Company>Porter Bridge, LLC</Company>
     <Product>FoPost</Product>
