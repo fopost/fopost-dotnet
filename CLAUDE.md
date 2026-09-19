@@ -53,7 +53,7 @@ src/FoPost/
   Models/
     FoPostModel.cs         base; unknown keys land in AdditionalData
     Optional.cs            struct sentinel for partial updates
-    Post.cs Account.cs Page.cs Media.cs Ai.cs Platforms.cs Inbox.cs Ads.cs
+    Post.cs Account.cs Page.cs Media.cs Ai.cs Platforms.cs
   Resources/
     PostsResource.cs AccountsResource.cs WorkspacesResource.cs LabelsResource.cs AiResource.cs
     InboxResource.cs AdsResource.cs
@@ -85,15 +85,18 @@ returns it → the resource calls `FoPostHttpClient.Unwrap(...)` and `ResourceHe
   sends only the named fields. `Optional<T>.Of(null)` explicitly clears; `Optional<T>.Unset` omits.
 - Every resource method is async and takes a trailing `CancellationToken`.
 
-**Resources wired today:** `Posts`, `Accounts`, `Workspaces`, `Labels`, `Ai`, `Inbox`, `Ads`.
+**Resources wired today:** `Posts`, `Accounts`, `Workspaces`, `Labels`, `Ai`, `Inbox`, `Ads`, `Media`.
 `Inbox` (scope `inbox`) skips `/v1/inbox/chat/*` (browser-encrypted X Chat) and the binary
 `/v1/inbox/{id}/attachments/{index}` stream. `Ads` (scope `ads`) wraps every `/v1/ads` route;
 boost, create, set status and delete also need `publish`, and a boost or ad starts paused
 unless `Paused = false`. Inbox lists carry `{ page, perPage, total }` meta, read into
 `InboxPage<T>`/`InboxPageMeta` rather than `Page<T>`. Ads request bodies are camelCase and are
 serialised straight from their options objects; the inbox `read`/`refresh` bodies are
-snake_case and `PATCH /v1/inbox/{id}` is camelCase, so those are built by hand. There is no
-`Communities`, `Webhooks`, `Analytics`, `Automations`, or `Media` resource here — reach those
+snake_case and `PATCH /v1/inbox/{id}` is camelCase, so those are built by hand. `Media` (scope
+`posts`) is only the direct-upload flow: `PresignAsync` → `FoPostHttpClient.PutBytesAsync` (raw
+bytes to the presigned URL, no credential header, only the headers the API returned) →
+`CompleteAsync`, bundled as `UploadDirectAsync`. There is no `Communities`, `Webhooks`,
+`Analytics`, or `Automations` resource here — reach those
 through the escape hatch `FoPostClient.RequestAsync(...)`, which returns the raw `JsonNode?`
 envelope and all.
 

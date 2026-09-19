@@ -4,6 +4,13 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `client.Media`: direct uploads through a presigned URL (`PresignAsync`, `CompleteAsync`, and
+  `UploadDirectAsync`, which runs all three steps). Needs the `posts` scope.
+
 ## [0.2.0] - 2026-09-19
 
 ### Added

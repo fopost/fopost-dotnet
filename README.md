@@ -197,12 +197,21 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | `Ai`         | `CreditsAsync`, `GenerateCaptionAsync`, `RewriteAsync`, `RepurposeUrlAsync`                                                        |
 | `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `DeleteAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `SearchTargetingAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `LeadsAsync` |
+| `Media`      | `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                                                              |
 
 `Inbox` needs an API key with the `inbox` scope. `Ads` needs the `ads` scope, and the four calls
 that spend money (`BoostAsync`, `CreateAsync`, `SetStatusAsync`, `DeleteAsync`) need `publish` as
 well. A boost or ad starts paused unless `Paused = false`, so nothing spends until it is resumed.
 
-The API has more endpoints than the SDK wraps — analytics, webhooks, automations, media, and
+`Media` uploads a file straight to storage with the `posts` scope: `UploadDirectAsync` presigns,
+PUTs the bytes, and completes in one call, or drive the three steps yourself.
+
+```csharp
+var bytes = await File.ReadAllBytesAsync("launch.png");
+var media = await client.Media.UploadDirectAsync("9b2f6c1e-…", "launch.png", "image/png", bytes);
+```
+
+The API has more endpoints than the SDK wraps — analytics, webhooks, automations, and
 communities among them. `RequestAsync` reaches any of them with the same auth, retries, and error
 handling:
 
