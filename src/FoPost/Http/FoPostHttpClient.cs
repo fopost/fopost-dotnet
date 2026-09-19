@@ -172,6 +172,36 @@ internal sealed class FoPostHttpClient : IDisposable
         }
     }
 
+    /// <summary>PUT raw bytes to a presigned URL: no credential, only the headers the API returned.</summary>
+    public async Task PutBytesAsync(
+        string url,
+        IEnumerable<KeyValuePair<string, string>> headers,
+        byte[] data,
+        CancellationToken cancellationToken = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Put, new Uri(url))
+        {
+            Content = new ByteArrayContent(data),
+        };
+        foreach (var (name, value) in headers)
+        {
+            if (!request.Content.Headers.TryAddWithoutValidation(name, value))
+            {
+                request.Headers.TryAddWithoutValidation(name, value);
+            }
+        }
+
+        using var response = await _http
+            .SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var raw = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            throw ErrorFor(response, raw);
+        }
+    }
+
     private static async Task<JsonNode?> DecodeAsync(
         HttpResponseMessage response,
         CancellationToken cancellationToken)
@@ -206,12 +236,26 @@ internal sealed class FoPostHttpClient : IDisposable
             return body;
         }
 
-        if (!isJson)
+        throw ErrorFor(response, raw);
+    }
+
+    private static FoPostException ErrorFor(HttpResponseMessage response, string raw)
+    {
+        var status = (int)response.StatusCode;
+        JsonNode? body = null;
+        if (!string.IsNullOrWhiteSpace(raw))
         {
-            throw new FoPostException(raw.Trim(), status);
+            try
+            {
+                body = JsonNode.Parse(raw);
+            }
+            catch (JsonException)
+            {
+                return new FoPostException(raw.Trim(), status);
+            }
         }
 
-        throw ErrorFactory.FromResponse(status, body, RetryAfter(response));
+        return ErrorFactory.FromResponse(status, body, RetryAfter(response));
     }
 
     private static TimeSpan? RetryAfter(HttpResponseMessage response)
