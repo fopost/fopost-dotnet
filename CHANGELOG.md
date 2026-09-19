@@ -4,6 +4,14 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `client.Validate`: `PostAsync`, `LengthAsync` and `MediaAsync` wrap `/v1/validate/*` to check
+  a draft, its length, or a media URL against platform rules without creating anything. Needs
+  the `posts` scope.
+
 ## [0.2.0] - 2026-09-19
 
 ### Added

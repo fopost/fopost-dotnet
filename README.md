@@ -196,7 +196,23 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | `Labels`     | `ListAsync`                                                                                                                        |
 | `Ai`         | `CreditsAsync`, `GenerateCaptionAsync`, `RewriteAsync`, `RepurposeUrlAsync`                                                        |
 | `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `DeleteAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
+| `Validate`   | `PostAsync`, `LengthAsync`, `MediaAsync`                                                                                           |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `SearchTargetingAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `LeadsAsync` |
+
+`Validate` checks a draft, its length, or a media URL against platform rules without creating
+anything; it needs the `posts` scope.
+
+```csharp
+var check = await client.Validate.PostAsync(new ValidatePostOptions
+{
+    Content = "Hello from the SDK",
+    Platforms = new List<string> { Platforms.Twitter, Platforms.LinkedIn },
+});
+foreach (var platform in check.Platforms.Where(p => !p.Ready))
+{
+    Console.WriteLine($"{platform.Platform}: {string.Join(", ", platform.Issues)}");
+}
+```
 
 `Inbox` needs an API key with the `inbox` scope. `Ads` needs the `ads` scope, and the four calls
 that spend money (`BoostAsync`, `CreateAsync`, `SetStatusAsync`, `DeleteAsync`) need `publish` as

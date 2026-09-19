@@ -53,11 +53,11 @@ src/FoPost/
   Models/
     FoPostModel.cs         base; unknown keys land in AdditionalData
     Optional.cs            struct sentinel for partial updates
-    Post.cs Account.cs Page.cs Media.cs Ai.cs Platforms.cs Inbox.cs Ads.cs
+    Post.cs Account.cs Page.cs Media.cs Ai.cs Platforms.cs Inbox.cs Ads.cs Validate.cs
   Resources/
     PostsResource.cs AccountsResource.cs WorkspacesResource.cs LabelsResource.cs AiResource.cs
-    InboxResource.cs AdsResource.cs
-    PostOptions.cs AiOptions.cs InboxOptions.cs AdsOptions.cs ResourceHelpers.cs
+    InboxResource.cs AdsResource.cs ValidateResource.cs
+    PostOptions.cs AiOptions.cs InboxOptions.cs AdsOptions.cs ValidateOptions.cs ResourceHelpers.cs
 tests/FoPost.Tests/        xunit; TestServer.cs holds the stub handler and fixtures
 examples/CreatePost/       runnable create-and-publish sample, part of the solution
 ```
@@ -85,7 +85,8 @@ returns it → the resource calls `FoPostHttpClient.Unwrap(...)` and `ResourceHe
   sends only the named fields. `Optional<T>.Of(null)` explicitly clears; `Optional<T>.Unset` omits.
 - Every resource method is async and takes a trailing `CancellationToken`.
 
-**Resources wired today:** `Posts`, `Accounts`, `Workspaces`, `Labels`, `Ai`, `Inbox`, `Ads`.
+**Resources wired today:** `Posts`, `Accounts`, `Workspaces`, `Labels`, `Ai`, `Inbox`, `Ads`,
+`Validate` (scope `posts`, wraps the three stateless `/v1/validate/*` checks).
 `Inbox` (scope `inbox`) skips `/v1/inbox/chat/*` (browser-encrypted X Chat) and the binary
 `/v1/inbox/{id}/attachments/{index}` stream. `Ads` (scope `ads`) wraps every `/v1/ads` route;
 boost, create, set status and delete also need `publish`, and a boost or ad starts paused
