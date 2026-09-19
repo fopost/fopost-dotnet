@@ -22,8 +22,13 @@ public sealed class SocialAccount : FoPostModel
     [JsonPropertyName("username")]
     public string? Username { get; set; }
 
+    /// <summary>The display name when one is set, else the platform name.</summary>
     [JsonPropertyName("name")]
     public string? Name { get; set; }
+
+    /// <summary>The name from the platform, whatever the display name.</summary>
+    [JsonPropertyName("platform_name")]
+    public string? PlatformName { get; set; }
 
     [JsonPropertyName("avatar")]
     public string? Avatar { get; set; }
@@ -123,6 +128,25 @@ public sealed class Label : FoPostModel
 
     [JsonPropertyName("workspace")]
     public JsonElement? Workspace { get; set; }
+
+    [JsonPropertyName("created_at")]
+    public DateTimeOffset? CreatedAt { get; set; }
+
+    [JsonPropertyName("updated_at")]
+    public DateTimeOffset? UpdatedAt { get; set; }
+}
+
+/// <summary>A named set of accounts in one workspace, for posting to all of them at once.</summary>
+public sealed class AccountGroup : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("account_ids")]
+    public IList<string> AccountIds { get; set; } = new List<string>();
 
     [JsonPropertyName("created_at")]
     public DateTimeOffset? CreatedAt { get; set; }

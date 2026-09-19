@@ -60,6 +60,9 @@ public sealed class CreatePostOptions
     /// <summary>Ids of the connected accounts to publish to.</summary>
     public IList<string> Accounts { get; set; } = new List<string>();
 
+    /// <summary>Also target every account in this group; merged with <see cref="Accounts"/>.</summary>
+    public string? AccountGroupId { get; set; }
+
     /// <summary><c>draft</c> or <c>scheduled</c>; a scheduled post needs <see cref="ScheduleAt"/>.</summary>
     public string Status { get; set; } = PostStatuses.Draft;
 

@@ -32,11 +32,13 @@ public sealed class FoPostClient : IDisposable
 
         Posts = new PostsResource(_http);
         Accounts = new AccountsResource(_http);
+        AccountGroups = new AccountGroupsResource(_http);
         Workspaces = new WorkspacesResource(_http);
         Labels = new LabelsResource(_http);
         Ai = new AiResource(_http);
         Inbox = new InboxResource(_http);
         Ads = new AdsResource(_http);
+        Validate = new ValidateResource(_http);
         Media = new MediaResource(_http);
     }
 
@@ -49,6 +51,8 @@ public sealed class FoPostClient : IDisposable
 
     public AccountsResource Accounts { get; }
 
+    public AccountGroupsResource AccountGroups { get; }
+
     public WorkspacesResource Workspaces { get; }
 
     public LabelsResource Labels { get; }
@@ -58,6 +62,8 @@ public sealed class FoPostClient : IDisposable
     public InboxResource Inbox { get; }
 
     public AdsResource Ads { get; }
+
+    public ValidateResource Validate { get; }
 
     public MediaResource Media { get; }
 
