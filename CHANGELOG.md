@@ -11,6 +11,13 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 - `client.Validate`: `PostAsync`, `LengthAsync` and `MediaAsync` wrap `/v1/validate/*` to check
   a draft, its length, or a media URL against platform rules without creating anything. Needs
   the `posts` scope.
+- `client.AccountGroups`: `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync` and
+  `SetMembersAsync` wrap `/v1/account-groups`. Needs the `accounts` scope.
+- `client.Accounts.RenameAsync` sets or clears an account's display name, and `MoveAsync` moves an
+  account to another workspace you own. `ListAsync(workspaceId, groupId)` filters by account group,
+  and `SocialAccount.PlatformName` carries the name from the platform.
+- `CreatePostOptions.AccountGroupId` targets every account in a group; `Accounts` may then be left
+  empty.
 
 ## [0.2.0] - 2026-09-19
 

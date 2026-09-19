@@ -191,7 +191,8 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | Namespace    | Methods                                                                                                                            |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `Posts`      | `ListAsync`, `ListAllAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `PublishAsync`, `CancelAsync`, `RetryAsync`, `PreflightAsync`, `DuplicateAsync`, `DeliveriesAsync` |
-| `Accounts`   | `ListAsync`, `GetAsync`, `HealthAsync`                                                                                             |
+| `Accounts`   | `ListAsync`, `GetAsync`, `RenameAsync`, `MoveAsync`, `HealthAsync`                                                                 |
+| `AccountGroups` | `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `SetMembersAsync`                                         |
 | `Workspaces` | `ListAsync`, `GetAsync`                                                                                                            |
 | `Labels`     | `ListAsync`                                                                                                                        |
 | `Ai`         | `CreditsAsync`, `GenerateCaptionAsync`, `RewriteAsync`, `RepurposeUrlAsync`                                                        |
