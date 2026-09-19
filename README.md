@@ -196,7 +196,7 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | `Workspaces` | `ListAsync`, `GetAsync`                                                                                                            |
 | `Labels`     | `ListAsync`                                                                                                                        |
 | `Ai`         | `CreditsAsync`, `GenerateCaptionAsync`, `RewriteAsync`, `RepurposeUrlAsync`                                                        |
-| `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `DeleteAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
+| `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `EditCommentAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `LikeAsync`, `UnlikeAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`, `DeleteAsync`, `StartConversationAsync`, `SetTypingAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
 | `Validate`   | `PostAsync`, `LengthAsync`, `MediaAsync`                                                                                           |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `SearchTargetingAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `LeadsAsync` |
 | `Media`      | `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                                                              |
@@ -216,7 +216,10 @@ foreach (var platform in check.Platforms.Where(p => !p.Ready))
 }
 ```
 
-`Inbox` needs an API key with the `inbox` scope. `Ads` needs the `ads` scope, and the four calls
+`Inbox` needs an API key with the `inbox` scope; the calls that act on the platform as the account
+(`EditCommentAsync`, `LikeAsync`, `UnlikeAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`,
+`StartConversationAsync`, `SetTypingAsync`, a reply with media or quick replies, and deleting our
+own reply) need `publish` as well. `Ads` needs the `ads` scope, and the four calls
 that spend money (`BoostAsync`, `CreateAsync`, `SetStatusAsync`, `DeleteAsync`) need `publish` as
 well. A boost or ad starts paused unless `Paused = false`, so nothing spends until it is resumed.
 
