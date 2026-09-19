@@ -187,22 +187,19 @@ on every push rather than at tag time.
 
 ## Releasing
 
-**`FoPost.Sdk` is NOT yet on nuget.org.** `.github/workflows/release.yml` exists and is ready:
-it triggers on a `v*` tag (or manual dispatch), runs in the `nuget` GitHub environment, verifies
-the tag matches `<Version>` in `src/FoPost/FoPost.csproj`, builds, tests, packs, then runs
+**`FoPost.Sdk` is on nuget.org** (0.2.0 at the time of writing). `.github/workflows/release.yml`
+triggers on a `v*` tag (or manual dispatch), runs in the `nuget` GitHub environment, verifies
+the tag matches `<Version>` in `src/FoPost/FoPost.csproj`, builds, tests, packs, exchanges its OIDC token for a
+short-lived key through `NuGet/login`, then runs
 `dotnet nuget push "artifacts/*.nupkg" --source https://api.nuget.org/v3/index.json --skip-duplicate`.
 
-**Repo secret referenced by `release.yml`** (on the `nuget` environment):
+**No repo secret is referenced.** Publishing uses nuget.org trusted publishing
+(`permissions: id-token: write`), and depends on:
 
-- `NUGET_API_KEY`
-
-First publish also requires, outside GitHub:
-
-1. A nuget.org account, and the `FoPost.Sdk` package id available or already reserved (an ID
-   prefix reservation for `FoPost.*` is worth doing before the first push).
-2. An **API key** created on nuget.org scoped to *Push* for that id, stored as `NUGET_API_KEY`.
-   Keys expire — a failed release with a 403 is usually an expired key, not a bad package.
-3. The `nuget` environment created in GitHub repo settings (it gates who can trigger a release).
+1. A **trusted publishing policy** owned by the nuget.org user `fopost` (the `user` passed to
+   `NuGet/login`), for repository `fopost/fopost-dotnet` and workflow `release.yml`. The key it issues is valid for one hour, so the workflow
+   requests it right before the push.
+2. The `nuget` environment created in GitHub repo settings (it gates who can trigger a release).
 
 The package publishes symbols too (`IncludeSymbols` + `snupkg`), so the `.snupkg` beside the
 `.nupkg` is expected in `artifacts/` and is pushed by the same glob.
