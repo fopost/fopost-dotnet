@@ -240,4 +240,148 @@ public class InboxTests
         Assert.Equal("/v1/inbox/platforms", handler.LastRequest.RequestUri!.AbsolutePath);
         Assert.Equal("soon", Assert.Single(platforms).Dms);
     }
+    [Fact]
+    public async Task Item_reads_the_action_flags()
+    {
+        var handler = new StubHandler().Json("""
+        {"data":{"id":"inb_2","platform":"instagram","type":"dm","state":"read","liked":true,"pinned":false,"reaction":"❤️","editedAt":"2026-09-02T08:00:00.000Z","canLike":true,"canPin":false,"canEdit":true,"canReact":true,"canSendMedia":true,"canQuickReply":true,"canPrivateReply":false,"canDelete":true}}
+        """);
+        using var test = new TestClient(handler);
+
+        var item = await test.Client.Inbox.LikeAsync("inb_2");
+
+        Assert.True(item.Liked);
+        Assert.False(item.Pinned);
+        Assert.Equal("❤️", item.Reaction);
+        Assert.Equal(new DateTimeOffset(2026, 9, 2, 8, 0, 0, TimeSpan.Zero), item.EditedAt);
+        Assert.True(item.CanLike);
+        Assert.False(item.CanPin);
+        Assert.True(item.CanEdit);
+        Assert.True(item.CanReact);
+        Assert.True(item.CanSendMedia);
+        Assert.True(item.CanQuickReply);
+        Assert.False(item.CanPrivateReply);
+    }
+
+    [Fact]
+    public async Task Like_unlike_pin_and_unpin_post_to_their_actions()
+    {
+        var handler = new StubHandler()
+            .Json($$"""{"data":{{Item}}}""")
+            .Json($$"""{"data":{{Item}}}""")
+            .Json($$"""{"data":{{Item}}}""")
+            .Json($$"""{"data":{{Item}}}""");
+        using var test = new TestClient(handler);
+
+        await test.Client.Inbox.LikeAsync("inb_1");
+        Assert.Equal(HttpMethod.Post, handler.LastRequest.Method);
+        Assert.Equal("/v1/inbox/inb_1/like", handler.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Null(handler.LastBody);
+
+        await test.Client.Inbox.UnlikeAsync("inb_1");
+        Assert.Equal("/v1/inbox/inb_1/unlike", handler.LastRequest.RequestUri!.AbsolutePath);
+
+        await test.Client.Inbox.PinAsync("inb_1");
+        Assert.Equal("/v1/inbox/inb_1/pin", handler.LastRequest.RequestUri!.AbsolutePath);
+
+        var item = await test.Client.Inbox.UnpinAsync("inb_1");
+        Assert.Equal("/v1/inbox/inb_1/unpin", handler.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Equal("inb_1", item.Id);
+    }
+
+    [Fact]
+    public async Task React_sends_the_emoji_or_an_explicit_null()
+    {
+        var handler = new StubHandler()
+            .Json($$"""{"data":{{Item}}}""")
+            .Json($$"""{"data":{{Item}}}""");
+        using var test = new TestClient(handler);
+
+        await test.Client.Inbox.ReactAsync("inb_1", "❤️");
+        Assert.Equal("/v1/inbox/inb_1/react", handler.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Equal("""{"reaction":"❤️"}""", handler.LastBody);
+
+        await test.Client.Inbox.ReactAsync("inb_1", null);
+        Assert.Equal("""{"reaction":null}""", handler.LastBody);
+    }
+
+    [Fact]
+    public async Task Edit_comment_patches_the_text()
+    {
+        var handler = new StubHandler().Json($$"""{"data":{{Item}}}""");
+        using var test = new TestClient(handler);
+
+        var item = await test.Client.Inbox.EditCommentAsync("inb_1", "Fixed the typo");
+
+        Assert.Equal(HttpMethod.Patch, handler.LastRequest.Method);
+        Assert.Equal("/v1/inbox/inb_1", handler.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Equal("""{"text":"Fixed the typo"}""", handler.LastBody);
+        Assert.Equal("inb_1", item.Id);
+    }
+
+    [Fact]
+    public async Task Reply_with_options_sends_media_and_quick_replies()
+    {
+        var handler = new StubHandler()
+            .Json($$$$"""{"data":{"item":{{{{Item}}}},"reply":{"externalId":"r_2","externalUrl":null}}}""");
+        using var test = new TestClient(handler);
+
+        var reply = await test.Client.Inbox.ReplyAsync("inb_1", new ReplyInboxItemOptions
+        {
+            MediaIds = new List<string> { "med_1" },
+            QuickReplies = new List<string> { "Yes", "No" },
+        });
+
+        Assert.Equal("/v1/inbox/inb_1/reply", handler.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Equal("""{"media_ids":["med_1"],"quick_replies":["Yes","No"]}""", handler.LastBody);
+        Assert.Equal("r_2", reply.Reply!.ExternalId);
+    }
+
+    [Fact]
+    public async Task Start_conversation_and_typing_hit_the_conversation_routes()
+    {
+        var handler = new StubHandler()
+            .Json($$$"""{"data":{"conversationId":"conv_9","item":{{{Item}}}}}""")
+            .Json("""{"data":{"conversationId":null,"item":null}}""")
+            .Json("""{"data":{"typing":false}}""");
+        using var test = new TestClient(handler);
+
+        var started = await test.Client.Inbox.StartConversationAsync(new StartInboxConversationOptions
+        {
+            AccountId = "acc_1",
+            Handle = "samlee",
+            Text = "Hi Sam",
+            MediaIds = new List<string> { "med_1" },
+        });
+        Assert.Equal(HttpMethod.Post, handler.LastRequest.Method);
+        Assert.Equal("/v1/inbox/conversations", handler.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Equal("""{"text":"Hi Sam","account_id":"acc_1","handle":"samlee","media_ids":["med_1"]}""", handler.LastBody);
+        Assert.Equal("conv_9", started.ConversationId);
+        Assert.Equal("inb_1", started.Item!.Id);
+
+        var privateReply = await test.Client.Inbox.StartConversationAsync(new StartInboxConversationOptions
+        {
+            CommentId = "inb_1",
+            Text = "Sent you the details",
+        });
+        Assert.Equal("""{"text":"Sent you the details","comment_id":"inb_1"}""", handler.LastBody);
+        Assert.Null(privateReply.ConversationId);
+        Assert.Null(privateReply.Item);
+
+        var typing = await test.Client.Inbox.SetTypingAsync("conv_9", "acc_1", on: false);
+        Assert.Equal("/v1/inbox/conversations/conv_9/typing", handler.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Equal("""{"account_id":"acc_1","on":false}""", handler.LastBody);
+        Assert.False(typing);
+    }
+
+    [Fact]
+    public async Task Accounts_read_whether_a_conversation_can_start()
+    {
+        var handler = new StubHandler()
+            .Json("""{"data":[{"id":"acc_1","platform":"x","username":"yourbrand","name":"Your Brand","inboxSupported":true,"dmSupported":true,"canStartConversation":true}]}""");
+        using var test = new TestClient(handler);
+
+        var account = Assert.Single(await test.Client.Inbox.AccountsAsync("ws_1"));
+        Assert.True(account.CanStartConversation);
+    }
 }
