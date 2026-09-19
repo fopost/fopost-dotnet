@@ -26,13 +26,20 @@ public sealed class ListProductsOptions
     public string? Q { get; set; }
 }
 
-/// <summary>The body of <c>CreateArticleAsync</c>. Title and Body are required.</summary>
-public sealed class CreateArticleOptions
+/// <summary>
+/// The body of <c>CreateArticleAsync</c> and <c>UpdateArticleAsync</c>.
+/// </summary>
+/// <remarks>
+/// Only the fields that are set travel. On a create, set at least <c>Title</c> and
+/// <c>Body</c>; on an update, set at least one, and whatever is left null keeps
+/// whatever the site already had.
+/// </remarks>
+public sealed class ArticleOptions
 {
-    public string Title { get; set; } = string.Empty;
+    public string? Title { get; set; }
 
     /// <summary>FoPost body markup; the site's own format is rendered from it.</summary>
-    public string Body { get; set; } = string.Empty;
+    public string? Body { get; set; }
 
     public string? Excerpt { get; set; }
 
@@ -48,41 +55,22 @@ public sealed class CreateArticleOptions
 }
 
 /// <summary>
-/// The body of <c>UpdateArticleAsync</c>. Only the fields that were set travel, so an omitted
-/// one keeps whatever the site already had. Set at least one.
+/// The body of <c>UpdateProductAsync</c>. Only the fields that are set travel, so an
+/// omitted one keeps whatever the store already had. Set at least one.
 /// </summary>
-public sealed class UpdateArticleOptions
+public sealed class ProductOptions
 {
-    public Optional<string> Title { get; set; }
+    public string? Title { get; set; }
 
-    public Optional<string> Body { get; set; }
-
-    public Optional<string> Excerpt { get; set; }
-
-    public Optional<string> Status { get; set; }
-
-    public Optional<IList<string>> Tags { get; set; }
-
-    public Optional<string> AuthorName { get; set; }
-
-    public Optional<string> ImageUrl { get; set; }
-}
-
-/// <summary>
-/// The body of <c>UpdateProductAsync</c>. Only the fields that were set travel. Set at least one.
-/// </summary>
-public sealed class UpdateProductOptions
-{
-    public Optional<string> Title { get; set; }
-
-    public Optional<string> Description { get; set; }
+    /// <summary>Body markup, rendered to HTML on the store.</summary>
+    public string? Description { get; set; }
 
     /// <summary><c>active</c>, <c>draft</c> or <c>archived</c>.</summary>
-    public Optional<string> Status { get; set; }
+    public string? Status { get; set; }
 
-    public Optional<IList<string>> Tags { get; set; }
+    public IList<string>? Tags { get; set; }
 
-    public Optional<string> ProductType { get; set; }
+    public string? ProductType { get; set; }
 
-    public Optional<string> Vendor { get; set; }
+    public string? Vendor { get; set; }
 }
