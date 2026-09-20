@@ -37,6 +37,7 @@ public sealed class FoPostClient : IDisposable
         Labels = new LabelsResource(_http);
         Ai = new AiResource(_http);
         Inbox = new InboxResource(_http);
+        Contacts = new ContactsResource(_http);
         Ads = new AdsResource(_http);
         Validate = new ValidateResource(_http);
         Media = new MediaResource(_http);
@@ -60,6 +61,9 @@ public sealed class FoPostClient : IDisposable
     public AiResource Ai { get; }
 
     public InboxResource Inbox { get; }
+
+    /// <summary>The people behind the inbox, and the fields kept about them.</summary>
+    public ContactsResource Contacts { get; }
 
     public AdsResource Ads { get; }
 

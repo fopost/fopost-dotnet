@@ -53,11 +53,11 @@ src/FoPost/
   Models/
     FoPostModel.cs         base; unknown keys land in AdditionalData
     Optional.cs            struct sentinel for partial updates
-    Post.cs Account.cs Page.cs Media.cs Ai.cs Platforms.cs Inbox.cs Ads.cs Validate.cs
+    Post.cs Account.cs Page.cs Media.cs Ai.cs Platforms.cs Inbox.cs Contacts.cs Ads.cs Validate.cs
   Resources/
     PostsResource.cs AccountsResource.cs WorkspacesResource.cs LabelsResource.cs AiResource.cs
-    InboxResource.cs AdsResource.cs ValidateResource.cs
-    PostOptions.cs AiOptions.cs InboxOptions.cs AdsOptions.cs ValidateOptions.cs ResourceHelpers.cs
+    InboxResource.cs ContactsResource.cs AdsResource.cs ValidateResource.cs
+    PostOptions.cs AiOptions.cs InboxOptions.cs ContactOptions.cs AdsOptions.cs ValidateOptions.cs ResourceHelpers.cs
 tests/FoPost.Tests/        xunit; TestServer.cs holds the stub handler and fixtures
 examples/CreatePost/       runnable create-and-publish sample, part of the solution
 ```
@@ -85,8 +85,14 @@ returns it → the resource calls `FoPostHttpClient.Unwrap(...)` and `ResourceHe
   sends only the named fields. `Optional<T>.Of(null)` explicitly clears; `Optional<T>.Unset` omits.
 - Every resource method is async and takes a trailing `CancellationToken`.
 
-**Resources wired today:** `Posts`, `Accounts`, `Workspaces`, `Labels`, `Ai`, `Inbox`, `Ads`,
+**Resources wired today:** `Posts`, `Accounts`, `Workspaces`, `Labels`, `Ai`, `Inbox`, `Contacts`, `Ads`,
 `Media`, `Validate` (scope `posts`, wraps the three stateless `/v1/validate/*` checks).
+`Contacts` (scope `inbox`) covers `/v1/contacts/*` plus the `/v1/contacts/fields` family.
+Its list envelope is `{data, pagination}` with snake_case keys, so it builds a `ContactPage`
+rather than reusing `Page<T>` or `ReadMeta`. `CreateFieldAsync` puts the workspace on the
+query string because the handler reads it there, and `ConversationAnalyticsAsync` reaches
+`/v1/analytics/inbox/conversations` and needs the `analytics` scope instead.
+
 `Inbox` (scope `inbox`) skips `/v1/inbox/chat/*` (browser-encrypted X Chat) and the binary
 `/v1/inbox/{id}/attachments/{index}` stream. `Ads` (scope `ads`) wraps every `/v1/ads` route;
 boost, create, set status, delete, bulk status and the campaign/ad set/network ad writes also need

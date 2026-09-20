@@ -150,6 +150,65 @@ var ad = await client.Ads.BoostAsync(new BoostPostOptions
 await client.Ads.SetStatusAsync(ad.Id, ad.WorkspaceId!, AdStatuses.Active);
 ```
 
+## Contacts
+
+The people behind the inbox: one person however many handles they write from. An inbound item files its author, a reply files whoever you answered, and both fold into whatever is already on file.
+
+```csharp
+var page = await client.Contacts.ListAsync(new ListContactsOptions
+{
+    WorkspaceId = workspaceId,
+    Search = "ada",
+});
+foreach (var contact in page)
+{
+    Console.WriteLine($"{contact.DisplayName} — {contact.Channels.Count} handles");
+}
+
+// Folds into whoever already holds the first channel, so this cannot duplicate someone.
+var contact = await client.Contacts.CreateAsync(new CreateContactOptions
+{
+    WorkspaceId = workspaceId,
+    Channels = new[] { ContactChannel.Of("x", "ada_writes") },
+    DisplayName = "Ada Okafor",
+    Fields = new Dictionary<string, string> { ["plan_tier"] = "Pro" },
+});
+
+// A field set to null is cleared; everything unset is left alone.
+await client.Contacts.UpdateAsync(contact.Id, new UpdateContactOptions
+{
+    Fields = new Dictionary<string, string?> { ["region"] = null },
+});
+await client.Contacts.DeleteAsync(contact.Id);   // the messages stay in the inbox
+
+// The threads this person appears in, newest first.
+foreach (var thread in await client.Contacts.ConversationsAsync(contact.Id))
+{
+    Console.WriteLine($"{thread.Platform} {thread.Messages} messages");
+}
+
+// platform and handle are required columns; any other column is a custom field key.
+var result = await client.Contacts.ImportAsync(workspaceId, "platform,handle\nx,ada_writes");
+Console.WriteLine($"{result.Created} created, {result.Merged} merged");
+
+// The columns your workspace keeps.
+var field = await client.Contacts.CreateFieldAsync(workspaceId, new CreateContactFieldOptions
+{
+    Key = "plan_tier",
+    Name = "Plan Tier",
+    Type = ContactFieldTypes.Select,
+    Options = new[] { "Free", "Pro" },
+});
+await client.Contacts.DeleteFieldAsync(field.Id);   // removes every answer to it
+
+// Volume and median reply time per thread. Needs the `analytics` scope.
+var report = await client.Contacts.ConversationAnalyticsAsync(new ConversationAnalyticsOptions
+{
+    Days = 30,
+    Sort = ConversationSorts.Slowest,
+});
+```
+
 ## Error handling
 
 Every non-2xx response raises a `FoPostException` carrying the API's status, error code, and body.
@@ -197,6 +256,7 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | `Labels`     | `ListAsync`                                                                                                                        |
 | `Ai`         | `CreditsAsync`, `GenerateCaptionAsync`, `RewriteAsync`, `RepurposeUrlAsync`                                                        |
 | `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `EditCommentAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `LikeAsync`, `UnlikeAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`, `DeleteAsync`, `StartConversationAsync`, `SetTypingAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
+| `Contacts`   | `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `ConversationsAsync`, `ImportAsync`, `ListFieldsAsync`, `CreateFieldAsync`, `UpdateFieldAsync`, `DeleteFieldAsync`, `ConversationAnalyticsAsync` |
 | `Validate`   | `PostAsync`, `LengthAsync`, `MediaAsync`                                                                                           |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync` |
 | `Media`      | `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                                                              |
@@ -216,7 +276,7 @@ foreach (var platform in check.Platforms.Where(p => !p.Ready))
 }
 ```
 
-`Inbox` needs an API key with the `inbox` scope; the calls that act on the platform as the account
+`Contacts` needs the `inbox` scope too, except `ConversationAnalyticsAsync`, which needs `analytics`. `Inbox` needs an API key with the `inbox` scope; the calls that act on the platform as the account
 (`EditCommentAsync`, `LikeAsync`, `UnlikeAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`,
 `StartConversationAsync`, `SetTypingAsync`, a reply with media or quick replies, and deleting our
 own reply) need `publish` as well. `Ads` needs the `ads` scope, and the calls

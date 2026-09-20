@@ -8,6 +8,13 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 
 ### Added
 
+- `client.Contacts`: the people behind the inbox. `ListAsync`, `GetAsync`, `CreateAsync`,
+  `UpdateAsync`, `DeleteAsync`, `ConversationsAsync` (the threads one person appears in),
+  `ImportAsync` (CSV), and `ListFieldsAsync`/`CreateFieldAsync`/`UpdateFieldAsync`/
+  `DeleteFieldAsync` for the custom columns a workspace keeps. All need the `inbox` scope.
+- `client.Contacts.ConversationAnalyticsAsync` reads `/v1/analytics/inbox/conversations`:
+  volume and median reply time per thread. Needs the `analytics` scope.
+
 - `client.Accounts.ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync` and
   `UpdateSlackIdentityAsync` (`UpdateSlackIdentityOptions`) for a Slack account. All four need the
   `accounts` scope; a webhook-connected account answers 409 `webhook_connection`.
