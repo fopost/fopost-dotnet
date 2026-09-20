@@ -529,3 +529,17 @@ public sealed class InboxPage<T> : IReadOnlyList<T>
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
+
+/// <summary>
+/// The outcome of a Messenger thread hand-over. <see cref="AppId"/> is null when control
+/// was taken back.
+/// </summary>
+public sealed class InboxHandover : FoPostModel
+{
+    [JsonPropertyName("app_id")]
+    public string? AppId { get; set; }
+
+    /// <summary><c>passed</c> or <c>taken</c>.</summary>
+    [JsonPropertyName("control")]
+    public string Control { get; set; } = string.Empty;
+}

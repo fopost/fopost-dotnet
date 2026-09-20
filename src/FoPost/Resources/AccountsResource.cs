@@ -223,6 +223,134 @@ public sealed class AccountsResource
         return Require<SlackIdentity>(FoPostHttpClient.Unwrap(response));
     }
 
+    // ─── Meta messaging settings (Facebook Pages, Instagram) ─────────
+
+    /// <summary>The prompts shown before the first message. A network without them answers 400.</summary>
+    public async Task<MetaIceBreakers> GetIceBreakersAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/messaging/ice-breakers", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<MetaIceBreakers>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Replace the ice breakers, up to four.</summary>
+    public async Task<MetaIceBreakers> SetIceBreakersAsync(
+        string accountId,
+        IEnumerable<MetaIceBreaker> iceBreakers,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["ice_breakers"] = iceBreakers.ToList() };
+        var response = await _http
+            .PutAsync($"{AccountPath(accountId)}/messaging/ice-breakers", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<MetaIceBreakers>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Clear the ice breakers.</summary>
+    public async Task<MetaIceBreakers> DeleteIceBreakersAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .DeleteAsync($"{AccountPath(accountId)}/messaging/ice-breakers", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<MetaIceBreakers>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>The always-visible Messenger menu. Facebook Pages only; other networks answer 400.</summary>
+    public async Task<MetaPersistentMenu> GetPersistentMenuAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/messaging/persistent-menu", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<MetaPersistentMenu>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Replace the menu, one entry per locale, up to three items each.</summary>
+    public async Task<MetaPersistentMenu> SetPersistentMenuAsync(
+        string accountId,
+        IEnumerable<MetaPersistentMenuEntry> menu,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["persistent_menu"] = menu.ToList() };
+        var response = await _http
+            .PutAsync($"{AccountPath(accountId)}/messaging/persistent-menu", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<MetaPersistentMenu>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Clear the menu.</summary>
+    public async Task<MetaPersistentMenu> DeletePersistentMenuAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .DeleteAsync($"{AccountPath(accountId)}/messaging/persistent-menu", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<MetaPersistentMenu>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>The text shown before a Messenger conversation starts. Facebook Pages only.</summary>
+    public async Task<MetaGreeting> GetGreetingAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/messaging/greeting", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<MetaGreeting>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Replace the greeting, one entry per locale, each up to 160 characters.</summary>
+    public async Task<MetaGreeting> SetGreetingAsync(
+        string accountId,
+        IEnumerable<MetaGreetingText> greeting,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["greeting"] = greeting.ToList() };
+        var response = await _http
+            .PutAsync($"{AccountPath(accountId)}/messaging/greeting", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<MetaGreeting>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Clear the greeting.</summary>
+    public async Task<MetaGreeting> DeleteGreetingAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .DeleteAsync($"{AccountPath(accountId)}/messaging/greeting", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<MetaGreeting>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>What the network is delivering to the FoPost webhook for this account.</summary>
+    public async Task<WebhookSubscription> GetWebhookSubscriptionAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/webhook-subscription", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<WebhookSubscription>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Subscribe to every field this account needs, lapsed or not.</summary>
+    public async Task<WebhookSubscription> ResubscribeWebhookAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .PostAsync($"{AccountPath(accountId)}/webhook-subscription", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<WebhookSubscription>(FoPostHttpClient.Unwrap(response));
+    }
 
     // ── Discord (bot connections) ────────────────────────────────────────
 

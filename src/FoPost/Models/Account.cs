@@ -213,6 +213,115 @@ public sealed class TelegramBotCommands : FoPostModel
     public IList<TelegramBotCommand> Commands { get; set; } = new List<TelegramBotCommand>();
 }
 
+/// <summary>A tappable prompt Messenger or Instagram shows before the first message.</summary>
+public sealed class MetaIceBreaker : FoPostModel
+{
+    /// <summary>Up to 80 characters.</summary>
+    [JsonPropertyName("question")]
+    public string Question { get; set; } = string.Empty;
+
+    /// <summary>What your webhook receives when the prompt is tapped.</summary>
+    [JsonPropertyName("payload")]
+    public string Payload { get; set; } = string.Empty;
+}
+
+/// <summary>The ice breakers set on one account.</summary>
+public sealed class MetaIceBreakers : FoPostModel
+{
+    [JsonPropertyName("ice_breakers")]
+    public IList<MetaIceBreaker> IceBreakers { get; set; } = new List<MetaIceBreaker>();
+}
+
+/// <summary>
+/// A persistent-menu item: a <c>postback</c> carrying <see cref="Payload"/>, or a
+/// <c>web_url</c> carrying an http(s) <see cref="Url"/>. The unused one stays null.
+/// </summary>
+public sealed class MetaMenuItem : FoPostModel
+{
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = string.Empty;
+
+    [JsonPropertyName("title")]
+    public string Title { get; set; } = string.Empty;
+
+    [JsonPropertyName("payload")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Payload { get; set; }
+
+    [JsonPropertyName("url")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Url { get; set; }
+
+    /// <summary>An item that sends <paramref name="payload"/> to your webhook when tapped.</summary>
+    public static MetaMenuItem Postback(string title, string payload) =>
+        new() { Type = "postback", Title = title, Payload = payload };
+
+    /// <summary>An item that opens <paramref name="url"/>.</summary>
+    public static MetaMenuItem Link(string title, string url) =>
+        new() { Type = "web_url", Title = title, Url = url };
+}
+
+/// <summary>One locale's menu; <c>default</c> is the fallback every language uses.</summary>
+public sealed class MetaPersistentMenuEntry : FoPostModel
+{
+    [JsonPropertyName("locale")]
+    public string Locale { get; set; } = "default";
+
+    [JsonPropertyName("call_to_actions")]
+    public IList<MetaMenuItem> CallToActions { get; set; } = new List<MetaMenuItem>();
+
+    [JsonPropertyName("composer_input_disabled")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? ComposerInputDisabled { get; set; }
+
+    /// <summary>The default-locale menu, the one every language falls back to.</summary>
+    public static MetaPersistentMenuEntry DefaultLocale(IEnumerable<MetaMenuItem> items) =>
+        new() { Locale = "default", CallToActions = items.ToList() };
+}
+
+/// <summary>The persistent menu set on one account, one entry per locale.</summary>
+public sealed class MetaPersistentMenu : FoPostModel
+{
+    [JsonPropertyName("persistent_menu")]
+    public IList<MetaPersistentMenuEntry> PersistentMenu { get; set; } = new List<MetaPersistentMenuEntry>();
+}
+
+/// <summary>One locale's greeting, up to 160 characters.</summary>
+public sealed class MetaGreetingText : FoPostModel
+{
+    [JsonPropertyName("locale")]
+    public string Locale { get; set; } = "default";
+
+    [JsonPropertyName("text")]
+    public string Text { get; set; } = string.Empty;
+
+    /// <summary>The default-locale greeting.</summary>
+    public static MetaGreetingText Of(string text) => new() { Text = text };
+}
+
+/// <summary>The greeting set on one account, one entry per locale.</summary>
+public sealed class MetaGreeting : FoPostModel
+{
+    [JsonPropertyName("greeting")]
+    public IList<MetaGreetingText> Greeting { get; set; } = new List<MetaGreetingText>();
+}
+
+/// <summary>
+/// What the network delivers to the FoPost webhook for one account. <see cref="Subscribed"/>
+/// is false when the subscription lapsed or a required field is missing.
+/// </summary>
+public sealed class WebhookSubscription : FoPostModel
+{
+    [JsonPropertyName("subscribed")]
+    public bool Subscribed { get; set; }
+
+    [JsonPropertyName("fields")]
+    public IList<string> Fields { get; set; } = new List<string>();
+
+    [JsonPropertyName("missing_fields")]
+    public IList<string> MissingFields { get; set; } = new List<string>();
+}
+
 /// <summary>A channel the Slack app can post to; <see cref="IsCurrent"/> marks the one this account posts to.</summary>
 public sealed class SlackChannel : FoPostModel
 {
