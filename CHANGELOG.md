@@ -8,6 +8,14 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 
 ### Added
 
+- Meta messaging settings on `client.Accounts`: `GetIceBreakersAsync`, `SetIceBreakersAsync` and
+  `DeleteIceBreakersAsync` (Facebook Pages and Instagram), plus `GetPersistentMenuAsync`,
+  `SetPersistentMenuAsync`, `DeletePersistentMenuAsync`, `GetGreetingAsync`, `SetGreetingAsync`
+  and `DeleteGreetingAsync` (Facebook Pages). A network without a field answers 400.
+- `client.Accounts.GetWebhookSubscriptionAsync` reports whether the network is still delivering
+  events for an account, and `ResubscribeWebhookAsync` puts a lapsed subscription back.
+- `client.Inbox.HandoverAsync` passes a Messenger thread to another Meta app, or takes it back
+  when no `appId` is given (`inbox` scope, plus `publish`).
 - `client.Accounts.ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync` and
   `UpdateSlackIdentityAsync` (`UpdateSlackIdentityOptions`) for a Slack account. All four need the
   `accounts` scope; a webhook-connected account answers 409 `webhook_connection`.
