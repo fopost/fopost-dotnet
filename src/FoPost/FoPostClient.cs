@@ -35,6 +35,7 @@ public sealed class FoPostClient : IDisposable
         AccountGroups = new AccountGroupsResource(_http);
         Workspaces = new WorkspacesResource(_http);
         Labels = new LabelsResource(_http);
+        Activity = new ActivityResource(_http);
         Ai = new AiResource(_http);
         Inbox = new InboxResource(_http);
         Contacts = new ContactsResource(_http);
@@ -60,6 +61,9 @@ public sealed class FoPostClient : IDisposable
     public WorkspacesResource Workspaces { get; }
 
     public LabelsResource Labels { get; }
+
+    /// <summary>What happened in a workspace, including the security audit log.</summary>
+    public ActivityResource Activity { get; }
 
     public AiResource Ai { get; }
 
