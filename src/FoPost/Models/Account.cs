@@ -376,3 +376,194 @@ public sealed class SlackIdentity : FoPostModel
     [JsonPropertyName("icon_emoji")]
     public string? IconEmoji { get; set; }
 }
+
+// ─── Discord (bot connections) ───────────────────────────────────────────
+
+/// <summary>A Discord text channel the bot can post to; <see cref="IsCurrent"/> marks this account's.</summary>
+public sealed class DiscordChannel : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Discord's channel type: 0 text, 5 announcement, 15 forum.</summary>
+    [JsonPropertyName("type")]
+    public int Type { get; set; }
+
+    [JsonPropertyName("parent_id")]
+    public string? ParentId { get; set; }
+
+    [JsonPropertyName("nsfw")]
+    public bool Nsfw { get; set; }
+
+    [JsonPropertyName("is_current")]
+    public bool IsCurrent { get; set; }
+}
+
+/// <summary>The nickname and avatar the bot wears in the server; null means its own.</summary>
+public sealed class DiscordIdentity : FoPostModel
+{
+    [JsonPropertyName("username")]
+    public string? Username { get; set; }
+
+    [JsonPropertyName("avatar_url")]
+    public string? AvatarUrl { get; set; }
+}
+
+/// <summary>A message in the connected channel.</summary>
+public sealed class DiscordMessage : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("channel_id")]
+    public string ChannelId { get; set; } = string.Empty;
+
+    [JsonPropertyName("content")]
+    public string Content { get; set; } = string.Empty;
+
+    [JsonPropertyName("author_id")]
+    public string AuthorId { get; set; } = string.Empty;
+
+    [JsonPropertyName("author_name")]
+    public string AuthorName { get; set; } = string.Empty;
+
+    [JsonPropertyName("pinned")]
+    public bool Pinned { get; set; }
+
+    [JsonPropertyName("created_at")]
+    public string? CreatedAt { get; set; }
+}
+
+/// <summary>A message the bot put somewhere.</summary>
+public sealed class DiscordMessageRef : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("channel_id")]
+    public string ChannelId { get; set; } = string.Empty;
+}
+
+/// <summary>A thread started on a message.</summary>
+public sealed class DiscordThread : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("parent_id")]
+    public string? ParentId { get; set; }
+}
+
+/// <summary>
+/// An event on the server's calendar. <see cref="ChannelId"/> names a voice or stage channel;
+/// otherwise <see cref="Location"/> says where it happens.
+/// </summary>
+public sealed class DiscordScheduledEvent : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("channel_id")]
+    public string? ChannelId { get; set; }
+
+    [JsonPropertyName("location")]
+    public string? Location { get; set; }
+
+    [JsonPropertyName("start_time")]
+    public string StartTime { get; set; } = string.Empty;
+
+    [JsonPropertyName("end_time")]
+    public string? EndTime { get; set; }
+
+    /// <summary>scheduled, active, completed or canceled.</summary>
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = "scheduled";
+
+    [JsonPropertyName("user_count")]
+    public int? UserCount { get; set; }
+}
+
+/// <summary>A person in the connected server; <see cref="Id"/> is the member id for a DM or a role.</summary>
+public sealed class DiscordMember : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("username")]
+    public string Username { get; set; } = string.Empty;
+
+    [JsonPropertyName("display_name")]
+    public string? DisplayName { get; set; }
+
+    /// <summary>Nickname in this server.</summary>
+    [JsonPropertyName("nick")]
+    public string? Nick { get; set; }
+
+    [JsonPropertyName("avatar")]
+    public string? Avatar { get; set; }
+
+    [JsonPropertyName("is_bot")]
+    public bool IsBot { get; set; }
+
+    [JsonPropertyName("roles")]
+    public IList<string> Roles { get; set; } = new List<string>();
+
+    [JsonPropertyName("joined_at")]
+    public string? JoinedAt { get; set; }
+}
+
+/// <summary>
+/// A role in the connected server. A managed role belongs to an integration and cannot be edited;
+/// <see cref="Permissions"/> is Discord's bitfield as a decimal string.
+/// </summary>
+public sealed class DiscordRole : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("color")]
+    public int Color { get; set; }
+
+    [JsonPropertyName("hoist")]
+    public bool Hoist { get; set; }
+
+    [JsonPropertyName("mentionable")]
+    public bool Mentionable { get; set; }
+
+    [JsonPropertyName("managed")]
+    public bool Managed { get; set; }
+
+    [JsonPropertyName("position")]
+    public int Position { get; set; }
+
+    [JsonPropertyName("permissions")]
+    public string Permissions { get; set; } = "0";
+}
+
+/// <summary>What a Discord delete, pin or role assignment answers.</summary>
+public sealed class DiscordAck : FoPostModel
+{
+    [JsonPropertyName("deleted")]
+    public bool? Deleted { get; set; }
+
+    [JsonPropertyName("pinned")]
+    public bool? Pinned { get; set; }
+
+    [JsonPropertyName("assigned")]
+    public bool? Assigned { get; set; }
+}

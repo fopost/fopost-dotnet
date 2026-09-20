@@ -352,5 +352,378 @@ public sealed class AccountsResource
         return Require<WebhookSubscription>(FoPostHttpClient.Unwrap(response));
     }
 
+    // ── Discord (bot connections) ────────────────────────────────────────
+
+    /// <summary>
+    /// Text channels the bot can post to in the connected server. A 409 <c>webhook_connection</c>
+    /// means the account posts through a webhook; upgrade it to the bot first. The same applies to
+    /// every other Discord call here.
+    /// </summary>
+    public async Task<IReadOnlyList<DiscordChannel>> ListDiscordChannelsAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync(DiscordPath(accountId, "/channels"), null, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<DiscordChannel>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Move the account to another channel in the same server.</summary>
+    public async Task<DiscordChannel> SwitchDiscordChannelAsync(
+        string accountId,
+        string channelId,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["channel_id"] = channelId };
+        var response = await _http
+            .RequestAsync(HttpMethod.Patch, DiscordPath(accountId, "/channels/current"), body, null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<DiscordChannel>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>The nickname and avatar the bot wears in the server.</summary>
+    public async Task<DiscordIdentity> GetDiscordIdentityAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync(DiscordPath(accountId, "/identity"), null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<DiscordIdentity>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Change the nickname or avatar the bot wears. Only the fields you set are sent.</summary>
+    public async Task<DiscordIdentity> UpdateDiscordIdentityAsync(
+        string accountId,
+        UpdateDiscordIdentityOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var body = new Dictionary<string, object?>();
+        if (options.Username.IsSet)
+        {
+            body["username"] = options.Username.Value;
+        }
+        if (options.AvatarUrl.IsSet)
+        {
+            body["avatar_url"] = options.AvatarUrl.Value;
+        }
+
+        var response = await _http
+            .RequestAsync(HttpMethod.Patch, DiscordPath(accountId, "/identity"), body, null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<DiscordIdentity>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Pinned messages in the account's channel.</summary>
+    public async Task<IReadOnlyList<DiscordMessage>> ListDiscordPinsAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync(DiscordPath(accountId, "/messages/pinned"), null, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<DiscordMessage>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Remove a message from the account's channel.</summary>
+    public async Task<DiscordAck> DeleteDiscordMessageAsync(
+        string accountId,
+        string messageId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .DeleteAsync(DiscordPath(accountId, $"/messages/{Uri.EscapeDataString(messageId)}"), null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<DiscordAck>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Pin a message in the account's channel.</summary>
+    public async Task<DiscordAck> PinDiscordMessageAsync(
+        string accountId,
+        string messageId,
+        CancellationToken cancellationToken = default)
+    {
+        var path = DiscordPath(accountId, $"/messages/{Uri.EscapeDataString(messageId)}/pin");
+        var response = await _http.PostAsync(path, null, cancellationToken).ConfigureAwait(false);
+        return Require<DiscordAck>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Unpin a message in the account's channel.</summary>
+    public async Task<DiscordAck> UnpinDiscordMessageAsync(
+        string accountId,
+        string messageId,
+        CancellationToken cancellationToken = default)
+    {
+        var path = DiscordPath(accountId, $"/messages/{Uri.EscapeDataString(messageId)}/pin");
+        var response = await _http.DeleteAsync(path, null, cancellationToken).ConfigureAwait(false);
+        return Require<DiscordAck>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Publish an announcement-channel message to every server following the channel.</summary>
+    public async Task<DiscordMessageRef> CrosspostDiscordMessageAsync(
+        string accountId,
+        string messageId,
+        CancellationToken cancellationToken = default)
+    {
+        var path = DiscordPath(accountId, $"/messages/{Uri.EscapeDataString(messageId)}/crosspost");
+        var response = await _http.PostAsync(path, null, cancellationToken).ConfigureAwait(false);
+        return Require<DiscordMessageRef>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
+    /// Start a thread on a message. <paramref name="autoArchiveDuration"/> is 60, 1440, 4320 or
+    /// 10080 minutes, or null for the server's default.
+    /// </summary>
+    public async Task<DiscordThread> CreateDiscordThreadAsync(
+        string accountId,
+        string messageId,
+        string name,
+        int? autoArchiveDuration = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["name"] = name };
+        if (autoArchiveDuration is not null)
+        {
+            body["auto_archive_duration"] = autoArchiveDuration;
+        }
+
+        var path = DiscordPath(accountId, $"/messages/{Uri.EscapeDataString(messageId)}/thread");
+        var response = await _http.PostAsync(path, body, cancellationToken).ConfigureAwait(false);
+        return Require<DiscordThread>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Send one message to a member of the server.</summary>
+    public async Task<DiscordMessageRef> SendDiscordDmAsync(
+        string accountId,
+        string memberId,
+        string content,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["member_id"] = memberId, ["content"] = content };
+        var response = await _http
+            .PostAsync(DiscordPath(accountId, "/dm"), body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<DiscordMessageRef>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>The server's scheduled events.</summary>
+    public async Task<IReadOnlyList<DiscordScheduledEvent>> ListDiscordEventsAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync(DiscordPath(accountId, "/events"), null, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<DiscordScheduledEvent>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>One scheduled event.</summary>
+    public async Task<DiscordScheduledEvent> GetDiscordEventAsync(
+        string accountId,
+        string eventId,
+        CancellationToken cancellationToken = default)
+    {
+        var path = DiscordPath(accountId, $"/events/{Uri.EscapeDataString(eventId)}");
+        var response = await _http.GetAsync(path, null, cancellationToken).ConfigureAwait(false);
+        return Require<DiscordScheduledEvent>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Add an event to the server's calendar.</summary>
+    public async Task<DiscordScheduledEvent> CreateDiscordEventAsync(
+        string accountId,
+        DiscordEventOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await _http
+            .PostAsync(DiscordPath(accountId, "/events"), EventBody(options), cancellationToken)
+            .ConfigureAwait(false);
+        return Require<DiscordScheduledEvent>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Change a scheduled event; only the fields you set are sent.</summary>
+    public async Task<DiscordScheduledEvent> UpdateDiscordEventAsync(
+        string accountId,
+        string eventId,
+        DiscordEventOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var path = DiscordPath(accountId, $"/events/{Uri.EscapeDataString(eventId)}");
+        var response = await _http
+            .RequestAsync(HttpMethod.Patch, path, EventBody(options), null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<DiscordScheduledEvent>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Remove a scheduled event.</summary>
+    public async Task<DiscordAck> DeleteDiscordEventAsync(
+        string accountId,
+        string eventId,
+        CancellationToken cancellationToken = default)
+    {
+        var path = DiscordPath(accountId, $"/events/{Uri.EscapeDataString(eventId)}");
+        var response = await _http.DeleteAsync(path, null, cancellationToken).ConfigureAwait(false);
+        return Require<DiscordAck>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
+    /// The server's roster, or the members whose name starts with <paramref name="query"/>.
+    /// </summary>
+    public async Task<IReadOnlyList<DiscordMember>> ListDiscordMembersAsync(
+        string accountId,
+        string? query = null,
+        int? limit = null,
+        CancellationToken cancellationToken = default)
+    {
+        var search = new Dictionary<string, object?> { ["q"] = query, ["limit"] = limit };
+        var response = await _http
+            .GetAsync(DiscordPath(accountId, "/members"), search, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<DiscordMember>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>One member of the server.</summary>
+    public async Task<DiscordMember> GetDiscordMemberAsync(
+        string accountId,
+        string memberId,
+        CancellationToken cancellationToken = default)
+    {
+        var path = DiscordPath(accountId, $"/members/{Uri.EscapeDataString(memberId)}");
+        var response = await _http.GetAsync(path, null, cancellationToken).ConfigureAwait(false);
+        return Require<DiscordMember>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>The server's roles, highest first.</summary>
+    public async Task<IReadOnlyList<DiscordRole>> ListDiscordRolesAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync(DiscordPath(accountId, "/roles"), null, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<DiscordRole>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Add a role to the server.</summary>
+    public async Task<DiscordRole> CreateDiscordRoleAsync(
+        string accountId,
+        DiscordRoleOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await _http
+            .PostAsync(DiscordPath(accountId, "/roles"), RoleBody(options), cancellationToken)
+            .ConfigureAwait(false);
+        return Require<DiscordRole>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Change a role on the server; only the fields you set are sent.</summary>
+    public async Task<DiscordRole> UpdateDiscordRoleAsync(
+        string accountId,
+        string roleId,
+        DiscordRoleOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var path = DiscordPath(accountId, $"/roles/{Uri.EscapeDataString(roleId)}");
+        var response = await _http
+            .RequestAsync(HttpMethod.Patch, path, RoleBody(options), null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<DiscordRole>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Remove a role from the server.</summary>
+    public async Task<DiscordAck> DeleteDiscordRoleAsync(
+        string accountId,
+        string roleId,
+        CancellationToken cancellationToken = default)
+    {
+        var path = DiscordPath(accountId, $"/roles/{Uri.EscapeDataString(roleId)}");
+        var response = await _http.DeleteAsync(path, null, cancellationToken).ConfigureAwait(false);
+        return Require<DiscordAck>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Give a member a role.</summary>
+    public async Task<DiscordAck> AddDiscordMemberRoleAsync(
+        string accountId,
+        string roleId,
+        string memberId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .PutAsync(MemberRolePath(accountId, roleId, memberId), null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<DiscordAck>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Take a role from a member.</summary>
+    public async Task<DiscordAck> RemoveDiscordMemberRoleAsync(
+        string accountId,
+        string roleId,
+        string memberId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .DeleteAsync(MemberRolePath(accountId, roleId, memberId), null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<DiscordAck>(FoPostHttpClient.Unwrap(response));
+    }
+
+    private static Dictionary<string, object?> EventBody(DiscordEventOptions options)
+    {
+        var body = new Dictionary<string, object?>();
+        Set(body, "name", options.Name);
+        Set(body, "description", options.Description);
+        Set(body, "start_time", options.StartTime);
+        Set(body, "end_time", options.EndTime);
+        Set(body, "channel_id", options.ChannelId);
+        Set(body, "location", options.Location);
+        Set(body, "status", options.Status);
+        return body;
+    }
+
+    private static Dictionary<string, object?> RoleBody(DiscordRoleOptions options)
+    {
+        var body = new Dictionary<string, object?>();
+        Set(body, "name", options.Name);
+        if (options.Color is not null)
+        {
+            body["color"] = options.Color;
+        }
+        if (options.Hoist is not null)
+        {
+            body["hoist"] = options.Hoist;
+        }
+        if (options.Mentionable is not null)
+        {
+            body["mentionable"] = options.Mentionable;
+        }
+        Set(body, "permissions", options.Permissions);
+        return body;
+    }
+
+    // A field the caller left null never goes out, so Discord keeps it as it is.
+    private static void Set(Dictionary<string, object?> body, string key, string? value)
+    {
+        if (value is not null)
+        {
+            body[key] = value;
+        }
+    }
+
+    private static string DiscordPath(string accountId, string suffix) =>
+        $"{AccountPath(accountId)}/discord{suffix}";
+
+    private static string MemberRolePath(string accountId, string roleId, string memberId) =>
+        DiscordPath(accountId, $"/roles/{Uri.EscapeDataString(roleId)}/members/{Uri.EscapeDataString(memberId)}");
+
     private static string AccountPath(string accountId) => $"/v1/accounts/{Uri.EscapeDataString(accountId)}";
 }
