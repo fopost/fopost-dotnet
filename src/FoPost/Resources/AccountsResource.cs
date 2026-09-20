@@ -726,4 +726,315 @@ public sealed class AccountsResource
         DiscordPath(accountId, $"/roles/{Uri.EscapeDataString(roleId)}/members/{Uri.EscapeDataString(memberId)}");
 
     private static string AccountPath(string accountId) => $"/v1/accounts/{Uri.EscapeDataString(accountId)}";
+    // --- Per-network extras ------------------------------------------------
+
+    /// <summary>Boards this Pinterest connection can pin to.</summary>
+    public async Task<IReadOnlyList<PinterestBoard>> ListPinterestBoardsAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/pinterest/boards", null, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<PinterestBoard>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Create a board on the connected Pinterest account.</summary>
+    public async Task<PinterestBoard> CreatePinterestBoardAsync(
+        string accountId,
+        CreatePinterestBoardOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var body = new Dictionary<string, object?> { ["name"] = options.Name };
+        if (options.Description is not null)
+        {
+            body["description"] = options.Description;
+        }
+        if (options.Privacy is not null)
+        {
+            body["privacy"] = options.Privacy;
+        }
+
+        var response = await _http
+            .PostAsync($"{AccountPath(accountId)}/pinterest/boards", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<PinterestBoard>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>The channel's own playlists, with the stored default marked.</summary>
+    public async Task<IReadOnlyList<YouTubePlaylist>> ListYouTubePlaylistsAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/youtube/playlists", null, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<YouTubePlaylist>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Create a playlist on the connected channel.</summary>
+    public async Task<YouTubePlaylist> CreateYouTubePlaylistAsync(
+        string accountId,
+        CreateYouTubePlaylistOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var body = new Dictionary<string, object?> { ["title"] = options.Title };
+        if (options.Description is not null)
+        {
+            body["description"] = options.Description;
+        }
+        if (options.Privacy is not null)
+        {
+            body["privacy"] = options.Privacy;
+        }
+
+        var response = await _http
+            .PostAsync($"{AccountPath(accountId)}/youtube/playlists", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<YouTubePlaylist>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
+    /// The playlist a new video joins when the post picks none. A null <paramref name="playlistId"/>
+    /// clears it. Returns what is stored afterwards.
+    /// </summary>
+    public async Task<string?> SetDefaultYouTubePlaylistAsync(
+        string accountId,
+        string? playlistId,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["playlist_id"] = playlistId };
+        var response = await _http
+            .PutAsync($"{AccountPath(accountId)}/youtube/playlists/default", body, cancellationToken)
+            .ConfigureAwait(false);
+        var data = FoPostHttpClient.Unwrap(response);
+        return data?["playlist_id"]?.GetValue<string>();
+    }
+
+    /// <summary>Caption tracks on one of the channel's videos.</summary>
+    public async Task<IReadOnlyList<YouTubeCaptionTrack>> ListYouTubeCaptionsAsync(
+        string accountId,
+        string videoId,
+        CancellationToken cancellationToken = default)
+    {
+        var path = $"{AccountPath(accountId)}/youtube/videos/{Uri.EscapeDataString(videoId)}/captions";
+        var response = await _http.GetAsync(path, null, cancellationToken).ConfigureAwait(false);
+        return ToList<YouTubeCaptionTrack>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Upload a caption track to a video.</summary>
+    public async Task<YouTubeCaptionTrack> UploadYouTubeCaptionsAsync(
+        string accountId,
+        string videoId,
+        UploadYouTubeCaptionsOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var body = new Dictionary<string, object?>
+        {
+            ["language"] = options.Language,
+            ["body"] = options.Body,
+        };
+        if (options.Name is not null)
+        {
+            body["name"] = options.Name;
+        }
+        if (options.IsDraft is not null)
+        {
+            body["is_draft"] = options.IsDraft;
+        }
+
+        var path = $"{AccountPath(accountId)}/youtube/videos/{Uri.EscapeDataString(videoId)}/captions";
+        var response = await _http.PostAsync(path, body, cancellationToken).ConfigureAwait(false);
+        return Require<YouTubeCaptionTrack>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>One caption track read back as text.</summary>
+    public async Task<YouTubeTranscript> ReadYouTubeTranscriptAsync(
+        string accountId,
+        string captionId,
+        CancellationToken cancellationToken = default)
+    {
+        var path = $"{AccountPath(accountId)}/youtube/captions/{Uri.EscapeDataString(captionId)}";
+        var response = await _http.GetAsync(path, null, cancellationToken).ConfigureAwait(false);
+        return Require<YouTubeTranscript>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>What a post from this Bluesky connection is written in when it does not say.</summary>
+    public async Task<BlueskyLanguages> GetBlueskyLanguagesAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/bluesky/languages", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<BlueskyLanguages>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Store up to three BCP-47 tags. An empty list clears the default.</summary>
+    public async Task<BlueskyLanguages> SetBlueskyLanguagesAsync(
+        string accountId,
+        IEnumerable<string> languages,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?>
+        {
+            ["languages"] = languages?.ToList() ?? new List<string>(),
+        };
+        var response = await _http
+            .PutAsync($"{AccountPath(accountId)}/bluesky/languages", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<BlueskyLanguages>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>The switches TikTok enforces at publish time, changed in the TikTok app.</summary>
+    public async Task<TikTokCreatorInfo> GetTikTokCreatorInfoAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/tiktok/creator-info", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<TikTokCreatorInfo>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
+    /// TikTok's Commercial Music Library. Needs the Marketing API product on the TikTok
+    /// app; without it the call fails with 403 rather than answering an empty list.
+    /// </summary>
+    public async Task<IReadOnlyList<TikTokMusic>> SearchTikTokMusicAsync(
+        string accountId,
+        string query,
+        TikTokSearchOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/tiktok/music", SearchQuery(query, options), cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<TikTokMusic>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Places a post can be tagged with. Same TikTok product as the music library.</summary>
+    public async Task<IReadOnlyList<TikTokPlace>> SearchTikTokLocationsAsync(
+        string accountId,
+        string query,
+        TikTokSearchOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/tiktok/locations", SearchQuery(query, options), cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<TikTokPlace>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Resolves a share link to one of this account's own videos, for repurposing.</summary>
+    public async Task<TikTokVideoSource> LookupTikTokVideoAsync(
+        string accountId,
+        string url,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["url"] = url };
+        var response = await _http
+            .PostAsync($"{AccountPath(accountId)}/tiktok/video-download", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<TikTokVideoSource>(FoPostHttpClient.Unwrap(response));
+    }
+
+    private static Dictionary<string, object?> SearchQuery(string query, TikTokSearchOptions? options)
+    {
+        var result = new Dictionary<string, object?> { ["q"] = query };
+        if (options?.Limit is not null)
+        {
+            result["limit"] = options.Limit;
+        }
+
+        return result;
+    }
+
+    /// <summary>Tracks a Reel can carry. With no query Instagram answers with what is trending.</summary>
+    public async Task<IReadOnlyList<InstagramAudio>> SearchInstagramAudioAsync(
+        string accountId,
+        InstagramAudioSearchOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new Dictionary<string, object?>();
+        if (options?.Query is not null)
+        {
+            query["q"] = options.Query;
+        }
+        if (options?.AudioType is not null)
+        {
+            query["audio_type"] = options.AudioType;
+        }
+
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/instagram/audio", query, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<InstagramAudio>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>How many posts are left before Instagram refuses the next one.</summary>
+    public async Task<InstagramPublishingLimit> GetInstagramPublishingLimitAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/instagram/publishing-limit", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<InstagramPublishingLimit>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
+    /// Stories still inside their 24 hours, posted through FoPost or not. Asking for insights costs
+    /// one extra call per story.
+    /// </summary>
+    public async Task<IReadOnlyList<InstagramStory>> ListInstagramStoriesAsync(
+        string accountId,
+        bool insights = false,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new Dictionary<string, object?>();
+        if (insights)
+        {
+            query["insights"] = true;
+        }
+
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/instagram/stories", query, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<InstagramStory>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>The insight set for one story.</summary>
+    public async Task<InstagramStoryInsights> GetInstagramStoryInsightsAsync(
+        string accountId,
+        string storyId,
+        CancellationToken cancellationToken = default)
+    {
+        var path = $"{AccountPath(accountId)}/instagram/stories/{Uri.EscapeDataString(storyId)}/insights";
+        var response = await _http.GetAsync(path, null, cancellationToken).ConfigureAwait(false);
+        return Require<InstagramStoryInsights>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
+    /// Organizations a LinkedIn post can mention. People are not searchable: LinkedIn has no public
+    /// person search, so a member mention needs a URN the caller already holds.
+    /// </summary>
+    public async Task<IReadOnlyList<LinkedInMention>> SearchLinkedInMentionsAsync(
+        string accountId,
+        string query,
+        CancellationToken cancellationToken = default)
+    {
+        var parameters = new Dictionary<string, object?> { ["q"] = query };
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/linkedin/mentions", parameters, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<LinkedInMention>(FoPostHttpClient.Unwrap(response));
+    }
+
 }
