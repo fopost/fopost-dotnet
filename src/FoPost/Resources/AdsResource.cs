@@ -5,7 +5,8 @@ namespace FoPost.Resources;
 
 /// <summary>
 /// <c>client.Ads</c> — boosts and ads run from a connected ad account, plus the
-/// audiences, targeting, and lead forms behind them. Needs the <c>ads</c> scope.
+/// catalogs, audiences, targeting, predictions, public ad archive, and lead
+/// forms behind them. Needs the <c>ads</c> scope.
 /// </summary>
 /// <remarks>
 /// The calls that spend money — <see cref="BoostAsync"/>,
@@ -780,6 +781,582 @@ public sealed class AdsResource
     private static string ObjectPath(string kind, string id) => $"/v1/ads/{kind}/{Uri.EscapeDataString(id)}";
 
     private static string LeadFormPath(string formId) => $"/v1/ads/lead-forms/{Uri.EscapeDataString(formId)}";
+
+    // ─── Goals ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// The goals this connection's ad platform can run right now. Ask rather than assume: a goal
+    /// the deployment is not set up for is absent here and is refused if you send it anyway.
+    /// </summary>
+    public async Task<IReadOnlyList<string>> GoalsAsync(
+        string connectionId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync("/v1/ads/goals", MetaQuery(workspaceId, connectionId), cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<string>(FoPostHttpClient.Unwrap(body));
+    }
+
+    // ─── Product catalogs ───────────────────────────────────────────
+
+    /// <summary>Catalogs the connection's business portfolios reach. Read live, never stored.</summary>
+    public async Task<ProductCatalogsResult> CatalogsAsync(
+        string connectionId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync("/v1/ads/catalogs", MetaQuery(workspaceId, connectionId), cancellationToken)
+            .ConfigureAwait(false);
+        return Require<ProductCatalogsResult>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>
+    /// Creates a catalog on the connection's business portfolio. Needs the <c>publish</c> scope as
+    /// well as <c>ads</c>.
+    /// </summary>
+    public Task<ProductCatalog> CreateCatalogAsync(
+        CreateCatalogOptions options,
+        CancellationToken cancellationToken = default) =>
+        PostObject<ProductCatalog>("/v1/ads/catalogs", options, cancellationToken);
+
+    public Task<ProductCatalog> GetCatalogAsync(
+        string catalogId,
+        string connectionId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default) =>
+        GetObject<ProductCatalog>(ObjectPath("catalogs", catalogId), connectionId, workspaceId, cancellationToken);
+
+    /// <summary>Renames a catalog. Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
+    public Task<ProductCatalog> UpdateCatalogAsync(
+        string catalogId,
+        string workspaceId,
+        string connectionId,
+        UpdateCatalogOptions options,
+        CancellationToken cancellationToken = default) =>
+        PatchObject<ProductCatalog>(
+            ObjectPath("catalogs", catalogId),
+            workspaceId,
+            connectionId,
+            options,
+            cancellationToken);
+
+    /// <summary>
+    /// Deletes the catalog with every product, feed and set in it. Needs the <c>publish</c> scope
+    /// as well as <c>ads</c>.
+    /// </summary>
+    public Task DeleteCatalogAsync(
+        string catalogId,
+        string workspaceId,
+        string connectionId,
+        CancellationToken cancellationToken = default) =>
+        DeleteObject(ObjectPath("catalogs", catalogId), workspaceId, connectionId, cancellationToken);
+
+    /// <summary>One page of products; pass <c>NextCursor</c> back as <c>after</c>.</summary>
+    public async Task<CatalogProductsPage> CatalogProductsAsync(
+        string catalogId,
+        string connectionId,
+        string? workspaceId = null,
+        string? after = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = MetaQuery(workspaceId, connectionId);
+        query["after"] = after;
+        var body = await _http
+            .GetAsync($"{ObjectPath("catalogs", catalogId)}/products", query, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<CatalogProductsPage>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>
+    /// Up to 500 upserts and deletes in one batch, keyed by your own retailer id. Needs the
+    /// <c>publish</c> scope as well as <c>ads</c>.
+    /// </summary>
+    public Task<CatalogBatchResult> WriteCatalogProductsAsync(
+        string catalogId,
+        CatalogProductBatchOptions options,
+        CancellationToken cancellationToken = default) =>
+        PostObject<CatalogBatchResult>(
+            $"{ObjectPath("catalogs", catalogId)}/products",
+            options,
+            cancellationToken);
+
+    public async Task<IReadOnlyList<ProductFeed>> ProductFeedsAsync(
+        string catalogId,
+        string connectionId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync(
+                $"{ObjectPath("catalogs", catalogId)}/feeds",
+                MetaQuery(workspaceId, connectionId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<ProductFeed>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
+    public Task<ProductFeed> CreateProductFeedAsync(
+        string catalogId,
+        CreateProductFeedOptions options,
+        CancellationToken cancellationToken = default) =>
+        PostObject<ProductFeed>($"{ObjectPath("catalogs", catalogId)}/feeds", options, cancellationToken);
+
+    /// <summary>Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
+    public Task DeleteProductFeedAsync(
+        string catalogId,
+        string feedId,
+        string workspaceId,
+        string connectionId,
+        CancellationToken cancellationToken = default) =>
+        DeleteObject(FeedPath(catalogId, feedId), workspaceId, connectionId, cancellationToken);
+
+    /// <summary>Each run the ad platform made of the feed.</summary>
+    public async Task<IReadOnlyList<ProductFeedUpload>> FeedUploadsAsync(
+        string catalogId,
+        string feedId,
+        string connectionId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync(
+                $"{FeedPath(catalogId, feedId)}/uploads",
+                MetaQuery(workspaceId, connectionId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<ProductFeedUpload>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>
+    /// Fetches the feed now and returns the id of the run. Needs the <c>publish</c> scope as well
+    /// as <c>ads</c>.
+    /// </summary>
+    public async Task<string> StartFeedUploadAsync(
+        string catalogId,
+        string feedId,
+        StartFeedUploadOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await _http
+            .PostAsync($"{FeedPath(catalogId, feedId)}/uploads", options, cancellationToken)
+            .ConfigureAwait(false);
+        var id = FoPostHttpClient.Unwrap(response)?["id"]?.GetValue<string>();
+        return id ?? throw new FoPostException("The API returned no id for the upload", 201);
+    }
+
+    /// <summary>A catalog ad runs from a product set, not the whole catalog.</summary>
+    public async Task<IReadOnlyList<ProductSet>> ProductSetsAsync(
+        string catalogId,
+        string connectionId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync(
+                $"{ObjectPath("catalogs", catalogId)}/product-sets",
+                MetaQuery(workspaceId, connectionId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<ProductSet>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
+    public Task<ProductSet> CreateProductSetAsync(
+        string catalogId,
+        ProductSetOptions options,
+        CancellationToken cancellationToken = default) =>
+        PostObject<ProductSet>($"{ObjectPath("catalogs", catalogId)}/product-sets", options, cancellationToken);
+
+    /// <summary>Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
+    public Task<ProductSet> UpdateProductSetAsync(
+        string catalogId,
+        string setId,
+        string workspaceId,
+        string connectionId,
+        ProductSetOptions options,
+        CancellationToken cancellationToken = default) =>
+        PatchObject<ProductSet>(
+            ProductSetPath(catalogId, setId),
+            workspaceId,
+            connectionId,
+            options,
+            cancellationToken);
+
+    /// <summary>Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
+    public Task DeleteProductSetAsync(
+        string catalogId,
+        string setId,
+        string workspaceId,
+        string connectionId,
+        CancellationToken cancellationToken = default) =>
+        DeleteObject(ProductSetPath(catalogId, setId), workspaceId, connectionId, cancellationToken);
+
+    // ─── Reach and frequency ────────────────────────────────────────
+
+    public async Task<ReachFrequencyResult> ReachFrequencyAsync(
+        string connectionId,
+        string adAccountId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync("/v1/ads/reach-frequency", AccountQuery(workspaceId, connectionId, adAccountId), cancellationToken)
+            .ConfigureAwait(false);
+        return Require<ReachFrequencyResult>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>Prices a flight. Nothing is bought until you reserve it.</summary>
+    public Task<ReachFrequencyPrediction> CreateReachFrequencyAsync(
+        CreateReachFrequencyOptions options,
+        CancellationToken cancellationToken = default) =>
+        PostObject<ReachFrequencyPrediction>("/v1/ads/reach-frequency", options, cancellationToken);
+
+    public async Task<ReachFrequencyPrediction> GetReachFrequencyAsync(
+        string predictionId,
+        string connectionId,
+        string adAccountId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync(
+                ObjectPath("reach-frequency", predictionId),
+                AccountQuery(workspaceId, connectionId, adAccountId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Require<ReachFrequencyPrediction>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>
+    /// Holds the inventory the prediction priced. Needs the <c>publish</c> scope as well as
+    /// <c>ads</c>.
+    /// </summary>
+    public Task<ReachFrequencyPrediction> ReserveReachFrequencyAsync(
+        string predictionId,
+        ReachFrequencyActionOptions options,
+        CancellationToken cancellationToken = default) =>
+        PostObject<ReachFrequencyPrediction>(
+            $"{ObjectPath("reach-frequency", predictionId)}/reserve",
+            options,
+            cancellationToken);
+
+    /// <summary>Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
+    public Task<ReachFrequencyPrediction> CancelReachFrequencyAsync(
+        string predictionId,
+        ReachFrequencyActionOptions options,
+        CancellationToken cancellationToken = default) =>
+        PostObject<ReachFrequencyPrediction>(
+            $"{ObjectPath("reach-frequency", predictionId)}/cancel",
+            options,
+            cancellationToken);
+
+    // ─── Ad Library ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// The public ad archive: ads anyone is running, by keyword or by Page. Read live on every
+    /// call and stored nowhere, so an ad that stops running is simply absent from the next search.
+    /// <paramref name="countries"/> are two-letter codes the ad reached.
+    /// </summary>
+    public async Task<AdLibraryPage> LibraryAsync(
+        string connectionId,
+        IEnumerable<string> countries,
+        string? query = null,
+        IEnumerable<string>? pageIds = null,
+        string? activeStatus = null,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(countries);
+
+        var parameters = MetaQuery(workspaceId, connectionId);
+        parameters["countries"] = string.Join(",", countries);
+        parameters["q"] = query;
+        parameters["page_ids"] = pageIds is null ? null : string.Join(",", pageIds);
+        parameters["active_status"] = activeStatus;
+        var body = await _http.GetAsync("/v1/ads/library", parameters, cancellationToken).ConfigureAwait(false);
+        return Require<AdLibraryPage>(FoPostHttpClient.Unwrap(body));
+    }
+
+    // ─── Partnership ads ────────────────────────────────────────────
+
+    /// <summary>Creators who allowlisted this Page to run partnership ads on their posts.</summary>
+    public async Task<IReadOnlyList<PartnershipCreator>> PartnershipCreatorsAsync(
+        string connectionId,
+        string pageId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = MetaQuery(workspaceId, connectionId);
+        query["page_id"] = pageId;
+        var body = await _http
+            .GetAsync("/v1/ads/partnership/creators", query, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<PartnershipCreator>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>Asks a creator for permission and returns the list as it now stands.</summary>
+    public async Task<IReadOnlyList<PartnershipCreator>> RequestPartnershipAsync(
+        PartnershipOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var body = await _http
+            .PostAsync("/v1/ads/partnership/creators", options, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<PartnershipCreator>(FoPostHttpClient.Unwrap(body));
+    }
+
+    public async Task RevokePartnershipAsync(
+        string creatorId,
+        string workspaceId,
+        string connectionId,
+        string pageId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = MetaQuery(workspaceId, connectionId);
+        query["page_id"] = pageId;
+        await _http
+            .RequestAsync(
+                HttpMethod.Delete,
+                $"/v1/ads/partnership/creators/{Uri.EscapeDataString(creatorId)}",
+                null,
+                query,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    // ─── Ad account settings ────────────────────────────────────────
+
+    /// <summary>Who changed what on the ad account, and when. Dates are <c>YYYY-MM-DD</c>.</summary>
+    public async Task<AdActivityResult> AccountActivityAsync(
+        string connectionId,
+        string adAccountId,
+        string? since = null,
+        string? until = null,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = AccountQuery(workspaceId, connectionId, adAccountId);
+        query["since"] = since;
+        query["until"] = until;
+        var body = await _http
+            .GetAsync("/v1/ads/account/activity", query, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<AdActivityResult>(FoPostHttpClient.Unwrap(body));
+    }
+
+    public async Task<IReadOnlyList<AdLabel>> LabelsAsync(
+        string connectionId,
+        string adAccountId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync("/v1/ads/account/labels", AccountQuery(workspaceId, connectionId, adAccountId), cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<AdLabel>(FoPostHttpClient.Unwrap(body));
+    }
+
+    public Task<AdLabel> CreateLabelAsync(
+        AdLabelOptions options,
+        CancellationToken cancellationToken = default) =>
+        PostObject<AdLabel>("/v1/ads/account/labels", options, cancellationToken);
+
+    public Task<AdLabel> UpdateLabelAsync(
+        string labelId,
+        string workspaceId,
+        string connectionId,
+        AdLabelOptions options,
+        CancellationToken cancellationToken = default) =>
+        PatchObject<AdLabel>(LabelPath(labelId), workspaceId, connectionId, options, cancellationToken);
+
+    public Task DeleteLabelAsync(
+        string labelId,
+        string workspaceId,
+        string connectionId,
+        string adAccountId,
+        CancellationToken cancellationToken = default) =>
+        DeleteAccountObject(LabelPath(labelId), workspaceId, connectionId, adAccountId, cancellationToken);
+
+    /// <summary>Keeps whatever labels the object already carries.</summary>
+    public async Task ApplyLabelAsync(
+        string labelId,
+        ApplyAdLabelOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        await _http.PostAsync($"{LabelPath(labelId)}/apply", options, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<IReadOnlyList<AdStudy>> StudiesAsync(
+        string connectionId,
+        string adAccountId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync("/v1/ads/account/studies", AccountQuery(workspaceId, connectionId, adAccountId), cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<AdStudy>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>Splits traffic evenly across the cells for the length of the flight.</summary>
+    public Task<AdStudy> CreateStudyAsync(
+        CreateAdStudyOptions options,
+        CancellationToken cancellationToken = default) =>
+        PostObject<AdStudy>("/v1/ads/account/studies", options, cancellationToken);
+
+    public async Task<AdStudy> GetStudyAsync(
+        string studyId,
+        string connectionId,
+        string adAccountId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync(StudyPath(studyId), AccountQuery(workspaceId, connectionId, adAccountId), cancellationToken)
+            .ConfigureAwait(false);
+        return Require<AdStudy>(FoPostHttpClient.Unwrap(body));
+    }
+
+    public Task DeleteStudyAsync(
+        string studyId,
+        string workspaceId,
+        string connectionId,
+        string adAccountId,
+        CancellationToken cancellationToken = default) =>
+        DeleteAccountObject(StudyPath(studyId), workspaceId, connectionId, adAccountId, cancellationToken);
+
+    /// <summary>How many iOS 14 campaigns the account may run at once, per app.</summary>
+    public async Task<IReadOnlyList<IosCampaignLimits>> IosCampaignLimitsAsync(
+        string connectionId,
+        string adAccountId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync(
+                "/v1/ads/account/ios-limits",
+                AccountQuery(workspaceId, connectionId, adAccountId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<IosCampaignLimits>(FoPostHttpClient.Unwrap(body));
+    }
+
+    public async Task<IReadOnlyList<HighDemandPeriod>> HighDemandPeriodsAsync(
+        string connectionId,
+        string adAccountId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync(
+                "/v1/ads/account/high-demand-periods",
+                AccountQuery(workspaceId, connectionId, adAccountId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<HighDemandPeriod>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>Tells the ad platform to expect heavier spend over a window, so pacing allows for it.</summary>
+    public Task<HighDemandPeriod> CreateHighDemandPeriodAsync(
+        CreateHighDemandPeriodOptions options,
+        CancellationToken cancellationToken = default) =>
+        PostObject<HighDemandPeriod>("/v1/ads/account/high-demand-periods", options, cancellationToken);
+
+    public Task DeleteHighDemandPeriodAsync(
+        string periodId,
+        string workspaceId,
+        string connectionId,
+        string adAccountId,
+        CancellationToken cancellationToken = default) =>
+        DeleteAccountObject(
+            $"/v1/ads/account/high-demand-periods/{Uri.EscapeDataString(periodId)}",
+            workspaceId,
+            connectionId,
+            adAccountId,
+            cancellationToken);
+
+    public async Task<IReadOnlyList<ValueRuleSet>> ValueRuleSetsAsync(
+        string connectionId,
+        string adAccountId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync(
+                "/v1/ads/account/value-rule-sets",
+                AccountQuery(workspaceId, connectionId, adAccountId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<ValueRuleSet>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>Weights conversions so some audiences count for more than others.</summary>
+    public Task<ValueRuleSet> CreateValueRuleSetAsync(
+        CreateValueRuleSetOptions options,
+        CancellationToken cancellationToken = default) =>
+        PostObject<ValueRuleSet>("/v1/ads/account/value-rule-sets", options, cancellationToken);
+
+    public Task DeleteValueRuleSetAsync(
+        string ruleSetId,
+        string workspaceId,
+        string connectionId,
+        string adAccountId,
+        CancellationToken cancellationToken = default) =>
+        DeleteAccountObject(
+            $"/v1/ads/account/value-rule-sets/{Uri.EscapeDataString(ruleSetId)}",
+            workspaceId,
+            connectionId,
+            adAccountId,
+            cancellationToken);
+
+    private async Task DeleteAccountObject(
+        string path,
+        string workspaceId,
+        string connectionId,
+        string adAccountId,
+        CancellationToken cancellationToken)
+    {
+        await _http
+            .RequestAsync(
+                HttpMethod.Delete,
+                path,
+                null,
+                AccountQuery(workspaceId, connectionId, adAccountId),
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private static Dictionary<string, object?> AccountQuery(
+        string? workspaceId,
+        string connectionId,
+        string adAccountId)
+    {
+        var query = MetaQuery(workspaceId, connectionId);
+        query["ad_account_id"] = adAccountId;
+        return query;
+    }
+
+    private static string FeedPath(string catalogId, string feedId) =>
+        $"{ObjectPath("catalogs", catalogId)}/feeds/{Uri.EscapeDataString(feedId)}";
+
+    private static string ProductSetPath(string catalogId, string setId) =>
+        $"{ObjectPath("catalogs", catalogId)}/product-sets/{Uri.EscapeDataString(setId)}";
+
+    private static string LabelPath(string labelId) =>
+        $"/v1/ads/account/labels/{Uri.EscapeDataString(labelId)}";
+
+    private static string StudyPath(string studyId) =>
+        $"/v1/ads/account/studies/{Uri.EscapeDataString(studyId)}";
 
     private static Dictionary<string, object?> MetaQuery(string? workspaceId, string connectionId) =>
         new() { ["workspace_id"] = workspaceId, ["connection_id"] = connectionId };

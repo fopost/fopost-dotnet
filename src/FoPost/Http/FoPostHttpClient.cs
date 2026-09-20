@@ -91,16 +91,25 @@ internal sealed class FoPostHttpClient : IDisposable
         var builder = new StringBuilder();
         foreach (var (key, value) in query)
         {
-            var encoded = FormatQueryValue(value);
-            if (encoded is null)
-            {
-                continue;
-            }
+            // A sequence repeats the bare parameter, which is how the API reads
+            // a multi-valued filter like daily_metrics.
+            var values = value is string || value is not IEnumerable<object?> items
+                ? new[] { value }
+                : items;
 
-            builder.Append(builder.Length == 0 ? string.Empty : "&")
-                .Append(Uri.EscapeDataString(key))
-                .Append('=')
-                .Append(Uri.EscapeDataString(encoded));
+            foreach (var item in values)
+            {
+                var encoded = FormatQueryValue(item);
+                if (encoded is null)
+                {
+                    continue;
+                }
+
+                builder.Append(builder.Length == 0 ? string.Empty : "&")
+                    .Append(Uri.EscapeDataString(key))
+                    .Append('=')
+                    .Append(Uri.EscapeDataString(encoded));
+            }
         }
 
         if (builder.Length == 0)

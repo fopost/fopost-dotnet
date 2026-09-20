@@ -9,6 +9,9 @@ public static class InboxItemTypes
     public const string Comment = "comment";
     public const string Mention = "mention";
     public const string Dm = "dm";
+
+    /// <summary>A rating left on the business: a Google Business review or a Facebook Page recommendation.</summary>
+    public const string Review = "review";
 }
 
 /// <summary>The states an inbox item moves through.</summary>
@@ -111,7 +114,7 @@ public sealed class InboxPostContext : FoPostModel
     public InboxPostRef? Published { get; set; }
 }
 
-/// <summary>A comment, mention, or DM read from a connected account.</summary>
+/// <summary>A comment, mention, review, or DM read from a connected account.</summary>
 public sealed class InboxItem : FoPostModel
 {
     [JsonPropertyName("id")]
@@ -149,6 +152,10 @@ public sealed class InboxItem : FoPostModel
 
     [JsonPropertyName("text")]
     public string? Text { get; set; }
+
+    /// <summary>Stars on a review, 1-5. Null on every other type.</summary>
+    [JsonPropertyName("rating")]
+    public int? Rating { get; set; }
 
     [JsonPropertyName("attachments")]
     public IList<InboxAttachment> Attachments { get; set; } = new List<InboxAttachment>();
@@ -225,6 +232,13 @@ public sealed class InboxItem : FoPostModel
     [JsonPropertyName("canPrivateReply")]
     public bool CanPrivateReply { get; set; }
 
+    /// <summary>
+    /// The platform's own state for a comment: <c>published</c>, <c>held</c>,
+    /// <c>spam</c> or <c>rejected</c>. Null where the platform does not report one.
+    /// </summary>
+    [JsonPropertyName("moderationStatus")]
+    public string? ModerationStatus { get; set; }
+
     /// <summary>The FoPost post this item was left under, when we published it.</summary>
     [JsonPropertyName("post")]
     public InboxPostRef? Post { get; set; }
@@ -236,7 +250,7 @@ public sealed class InboxItem : FoPostModel
     public InboxAccountRef? Account { get; set; }
 }
 
-/// <summary>One platform post with comments, or one post we were mentioned in.</summary>
+/// <summary>One platform post with comments, one post we were mentioned in, or one review.</summary>
 public sealed class InboxThread : FoPostModel
 {
     [JsonPropertyName("workspaceId")]
@@ -262,6 +276,10 @@ public sealed class InboxThread : FoPostModel
 
     [JsonPropertyName("lastCommentAuthor")]
     public string? LastCommentAuthor { get; set; }
+
+    /// <summary>Stars, on a review thread. Null on comments and mentions.</summary>
+    [JsonPropertyName("rating")]
+    public int? Rating { get; set; }
 
     [JsonPropertyName("post")]
     public InboxPostContext? Post { get; set; }
@@ -354,6 +372,13 @@ public sealed class InboxAccount : FoPostModel
     /// <summary>A new DM can be opened from this account by handle.</summary>
     [JsonPropertyName("canStartConversation")]
     public bool CanStartConversation { get; set; }
+
+    /// <summary>
+    /// The grant predates a permission the inbox read needs; the account is not
+    /// polled until someone reconnects it.
+    /// </summary>
+    [JsonPropertyName("reconnectRequired")]
+    public bool ReconnectRequired { get; set; }
 }
 
 /// <summary>What the inbox can read on one platform: <c>live</c>, <c>soon</c>, or <c>none</c>.</summary>
@@ -528,4 +553,18 @@ public sealed class InboxPage<T> : IReadOnlyList<T>
     public IEnumerator<T> GetEnumerator() => Items.GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+}
+
+/// <summary>
+/// The outcome of a Messenger thread hand-over. <see cref="AppId"/> is null when control
+/// was taken back.
+/// </summary>
+public sealed class InboxHandover : FoPostModel
+{
+    [JsonPropertyName("app_id")]
+    public string? AppId { get; set; }
+
+    /// <summary><c>passed</c> or <c>taken</c>.</summary>
+    [JsonPropertyName("control")]
+    public string Control { get; set; } = string.Empty;
 }
