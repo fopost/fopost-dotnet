@@ -398,6 +398,10 @@ public sealed class DiscordChannel : FoPostModel
     [JsonPropertyName("nsfw")]
     public bool Nsfw { get; set; }
 
+    /// <summary>False when a channel permission in Discord shuts the bot out.</summary>
+    [JsonPropertyName("can_post")]
+    public bool CanPost { get; set; }
+
     [JsonPropertyName("is_current")]
     public bool IsCurrent { get; set; }
 }
