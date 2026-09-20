@@ -444,3 +444,189 @@ public sealed class EstimateReachOptions : AdConnectionRequestOptions
     [JsonPropertyName("targeting")]
     public AdTargeting Targeting { get; set; } = new();
 }
+
+/// <summary>The body of <see cref="Resources.AdsResource.AuthorizeAsync"/>.</summary>
+public sealed class AuthorizeAdsOptions
+{
+    [JsonPropertyName("workspaceId")]
+    public string WorkspaceId { get; set; } = string.Empty;
+
+    /// <summary>One of the network's own connect methods; the first by default.</summary>
+    [JsonPropertyName("method")]
+    public string? Method { get; set; }
+
+    /// <summary>Dashboard path to land on after the network redirects back.</summary>
+    [JsonPropertyName("returnTo")]
+    public string? ReturnTo { get; set; }
+}
+
+/// <summary>
+/// One row of a company-list upload. At least one of <see cref="Name"/>, <see cref="Domain"/>,
+/// <see cref="PageUrl"/> or <see cref="Ticker"/> is required; the rows are never stored.
+/// </summary>
+public sealed class AdCompanyOptions
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("domain")]
+    public string? Domain { get; set; }
+
+    /// <summary>The company's page on the network.</summary>
+    [JsonPropertyName("pageUrl")]
+    public string? PageUrl { get; set; }
+
+    /// <summary>Stock ticker, where the network matches on one.</summary>
+    [JsonPropertyName("ticker")]
+    public string? Ticker { get; set; }
+
+    [JsonPropertyName("country")]
+    public string? Country { get; set; }
+}
+
+/// <summary>The shared body of a bid-pricing or supply-forecast request.</summary>
+public sealed class AdForecastOptions
+{
+    [JsonPropertyName("workspaceId")]
+    public string WorkspaceId { get; set; } = string.Empty;
+
+    [JsonPropertyName("connectionId")]
+    public string ConnectionId { get; set; } = string.Empty;
+
+    /// <summary>The ad account as the network addresses it.</summary>
+    [JsonPropertyName("adAccountId")]
+    public string AdAccountId { get; set; } = string.Empty;
+
+    /// <summary>One of <see cref="AdGoals"/>.</summary>
+    [JsonPropertyName("goal")]
+    public string Goal { get; set; } = string.Empty;
+
+    [JsonPropertyName("targeting")]
+    public AdTargeting Targeting { get; set; } = new();
+
+    [JsonPropertyName("placements")]
+    public IList<string>? Placements { get; set; }
+
+    /// <summary>CPC, CPM or CPV. Bid pricing only.</summary>
+    [JsonPropertyName("bidType")]
+    public string? BidType { get; set; }
+
+    /// <summary>The budget for the forecast window, minor units. Supply forecast only.</summary>
+    [JsonPropertyName("budgetMinor")]
+    public long? BudgetMinor { get; set; }
+}
+
+/// <summary>A new conversion rule on one ad account.</summary>
+public sealed class CreateConversionRuleOptions
+{
+    [JsonPropertyName("workspaceId")]
+    public string WorkspaceId { get; set; } = string.Empty;
+
+    [JsonPropertyName("connectionId")]
+    public string ConnectionId { get; set; } = string.Empty;
+
+    [JsonPropertyName("adAccountId")]
+    public string AdAccountId { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>purchase, lead, sign_up, add_to_cart, download, install, key_page_view or other.</summary>
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = string.Empty;
+
+    /// <summary>last_touch or each_campaign.</summary>
+    [JsonPropertyName("attribution")]
+    public string Attribution { get; set; } = string.Empty;
+
+    [JsonPropertyName("postClickWindowDays")]
+    public int? PostClickWindowDays { get; set; }
+
+    [JsonPropertyName("viewThroughWindowDays")]
+    public int? ViewThroughWindowDays { get; set; }
+
+    /// <summary>What one conversion is worth, minor units.</summary>
+    [JsonPropertyName("valueMinor")]
+    public long? ValueMinor { get; set; }
+
+    [JsonPropertyName("currency")]
+    public string? Currency { get; set; }
+}
+
+/// <summary>Changes to a conversion rule. Only the properties you set move.</summary>
+public sealed class UpdateConversionRuleOptions
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("type")]
+    public string? Type { get; set; }
+
+    [JsonPropertyName("attribution")]
+    public string? Attribution { get; set; }
+
+    [JsonPropertyName("postClickWindowDays")]
+    public int? PostClickWindowDays { get; set; }
+
+    [JsonPropertyName("viewThroughWindowDays")]
+    public int? ViewThroughWindowDays { get; set; }
+
+    [JsonPropertyName("valueMinor")]
+    public long? ValueMinor { get; set; }
+
+    [JsonPropertyName("currency")]
+    public string? Currency { get; set; }
+
+    [JsonPropertyName("enabled")]
+    public bool? Enabled { get; set; }
+}
+
+/// <summary>
+/// One conversion sent back to the network. It needs an <see cref="Email"/> or a
+/// <see cref="ClickId"/>; the address is hashed inside the API and nothing is stored.
+/// </summary>
+public sealed class ConversionEventOptions
+{
+    /// <summary>Epoch milliseconds.</summary>
+    [JsonPropertyName("happenedAt")]
+    public long HappenedAt { get; set; }
+
+    [JsonPropertyName("valueMinor")]
+    public long? ValueMinor { get; set; }
+
+    [JsonPropertyName("currency")]
+    public string? Currency { get; set; }
+
+    /// <summary>Your own id for the event, so a replay is counted once.</summary>
+    [JsonPropertyName("eventId")]
+    public string? EventId { get; set; }
+
+    [JsonPropertyName("email")]
+    public string? Email { get; set; }
+
+    /// <summary>The network's click id, as the landing page received it.</summary>
+    [JsonPropertyName("clickId")]
+    public string? ClickId { get; set; }
+}
+
+/// <summary>What an ad-library search narrows on. Dates are <c>YYYY-MM-DD</c>.</summary>
+public sealed class AdLibraryOptions
+{
+    public string? WorkspaceId { get; set; }
+
+    public string ConnectionId { get; set; } = string.Empty;
+
+    public string? Keyword { get; set; }
+
+    public string? Advertiser { get; set; }
+
+    /// <summary>ISO 3166-1 alpha-2 codes.</summary>
+    public IList<string>? Countries { get; set; }
+
+    public string? Since { get; set; }
+
+    public string? Until { get; set; }
+
+    /// <summary>The <c>NextCursor</c> from the previous page.</summary>
+    public string? Cursor { get; set; }
+}

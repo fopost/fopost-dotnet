@@ -71,17 +71,44 @@ public sealed class AdsResource
         CancellationToken cancellationToken = default) =>
         ListByWorkspace<AdSource>("/v1/ads/sources", workspaceId, cancellationToken);
 
+    /// <summary>The ad networks this deployment knows, with what each one supports.</summary>
+    public async Task<IReadOnlyList<AdProvider>> ProvidersAsync(CancellationToken cancellationToken = default)
+    {
+        var body = await _http.GetAsync("/v1/ads/providers", null, cancellationToken).ConfigureAwait(false);
+        return ToList<AdProvider>(FoPostHttpClient.Unwrap(body));
+    }
+
     /// <summary>The login URL that connects an ad account; the caller finishes it in a browser.</summary>
-    public async Task<string> AuthorizeMetaAsync(
+    public async Task<string> AuthorizeAsync(
+        string provider,
+        AuthorizeAdsOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var path = $"/v1/ads/connections/{Uri.EscapeDataString(provider)}/authorize";
+        var response = await _http.PostAsync(path, options, cancellationToken).ConfigureAwait(false);
+        var url = FoPostHttpClient.Unwrap(response)?["url"]?.GetValue<string>();
+        return url ?? throw new FoPostException("The API returned no authorize URL", 200);
+    }
+
+    /// <summary>The login URL that connects a Meta ad account.</summary>
+    [Obsolete("Use AuthorizeAsync with the provider id \"meta\".")]
+    public Task<string> AuthorizeMetaAsync(
         AuthorizeMetaAdsOptions options,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        var response = await _http.PostAsync("/v1/ads/connections/meta/authorize", options, cancellationToken)
-            .ConfigureAwait(false);
-        var url = FoPostHttpClient.Unwrap(response)?["url"]?.GetValue<string>();
-        return url ?? throw new FoPostException("The API returned no authorize URL", 200);
+        return AuthorizeAsync(
+            "meta",
+            new AuthorizeAdsOptions
+            {
+                WorkspaceId = options.WorkspaceId,
+                Method = options.Method,
+                ReturnTo = options.ReturnTo,
+            },
+            cancellationToken);
     }
 
     /// <summary>Also deletes every ad record created through the connection.</summary>
@@ -736,6 +763,230 @@ public sealed class AdsResource
         var id = FoPostHttpClient.Unwrap(response)?["id"]?.GetValue<string>();
         return id ?? throw new FoPostException("The API returned no id for the copy", 201);
     }
+
+    /// <summary>
+    /// Adds companies to a company-list audience and returns how many the network took. The rows
+    /// travel with the request and are never stored.
+    /// </summary>
+    public async Task<int> AddAudienceCompaniesAsync(
+        string audienceId,
+        string workspaceId,
+        string connectionId,
+        IEnumerable<AdCompanyOptions> companies,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(companies);
+
+        var body = new Dictionary<string, object?> { ["companies"] = companies.ToList() };
+        var response = await _http
+            .RequestAsync(
+                HttpMethod.Post,
+                $"{ObjectPath("audiences", audienceId)}/companies",
+                body,
+                MetaQuery(workspaceId, connectionId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return FoPostHttpClient.Unwrap(response)?["added"]?.GetValue<int>() ?? 0;
+    }
+
+    /// <summary>What the auction currently costs for that audience.</summary>
+    public async Task<BidPricing> BidPricingAsync(
+        AdForecastOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await _http.PostAsync("/v1/ads/linkedin/bid-pricing", options, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<BidPricing>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>What that audience would deliver at that budget.</summary>
+    public async Task<SupplyForecast> SupplyForecastAsync(
+        AdForecastOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await _http.PostAsync("/v1/ads/linkedin/supply-forecast", options, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<SupplyForecast>(FoPostHttpClient.Unwrap(response));
+    }
+
+    public async Task<IReadOnlyList<ConversionRule>> ConversionRulesAsync(
+        string? workspaceId,
+        string connectionId,
+        string adAccountId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = MetaQuery(workspaceId, connectionId);
+        query["ad_account_id"] = adAccountId;
+        var body = await _http.GetAsync("/v1/ads/linkedin/conversion-rules", query, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<ConversionRule>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>Creates a conversion rule and returns its id.</summary>
+    public async Task<string> CreateConversionRuleAsync(
+        CreateConversionRuleOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await _http.PostAsync("/v1/ads/linkedin/conversion-rules", options, cancellationToken)
+            .ConfigureAwait(false);
+        var id = FoPostHttpClient.Unwrap(response)?["id"]?.GetValue<string>();
+        return id ?? throw new FoPostException("The API returned no id for the rule", 201);
+    }
+
+    public async Task<ConversionRule> ConversionRuleAsync(
+        string ruleId,
+        string? workspaceId,
+        string connectionId,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync(ConversionRulePath(ruleId, ""), MetaQuery(workspaceId, connectionId), cancellationToken)
+            .ConfigureAwait(false);
+        return Require<ConversionRule>(FoPostHttpClient.Unwrap(body));
+    }
+
+    public async Task<ConversionRule> UpdateConversionRuleAsync(
+        string ruleId,
+        string workspaceId,
+        string connectionId,
+        UpdateConversionRuleOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await _http
+            .RequestAsync(
+                HttpMethod.Patch,
+                ConversionRulePath(ruleId, ""),
+                options,
+                MetaQuery(workspaceId, connectionId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Require<ConversionRule>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Turns the rule off; the network keeps the history.</summary>
+    public async Task DeleteConversionRuleAsync(
+        string ruleId,
+        string workspaceId,
+        string connectionId,
+        CancellationToken cancellationToken = default)
+    {
+        await _http
+            .RequestAsync(
+                HttpMethod.Delete,
+                ConversionRulePath(ruleId, ""),
+                null,
+                MetaQuery(workspaceId, connectionId),
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public Task<ConversionRule> AttachConversionRuleAsync(
+        string ruleId,
+        string workspaceId,
+        string connectionId,
+        string campaignId,
+        CancellationToken cancellationToken = default) =>
+        AssociationAsync(HttpMethod.Post, ruleId, workspaceId, connectionId, campaignId, cancellationToken);
+
+    public Task<ConversionRule> DetachConversionRuleAsync(
+        string ruleId,
+        string workspaceId,
+        string connectionId,
+        string campaignId,
+        CancellationToken cancellationToken = default) =>
+        AssociationAsync(HttpMethod.Delete, ruleId, workspaceId, connectionId, campaignId, cancellationToken);
+
+    /// <summary>What the rule recorded between two <c>YYYY-MM-DD</c> days, inclusive.</summary>
+    public async Task<ConversionMetrics> ConversionMetricsAsync(
+        string ruleId,
+        string? workspaceId,
+        string connectionId,
+        string since,
+        string until,
+        CancellationToken cancellationToken = default)
+    {
+        var query = MetaQuery(workspaceId, connectionId);
+        query["since"] = since;
+        query["until"] = until;
+        var body = await _http
+            .GetAsync(ConversionRulePath(ruleId, "/metrics"), query, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<ConversionMetrics>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>
+    /// Sends conversions back to the network and returns how many it took. Each event needs an
+    /// email or a click id; the address is hashed inside the API and nothing is stored.
+    /// </summary>
+    public async Task<int> SendConversionEventsAsync(
+        string ruleId,
+        string workspaceId,
+        string connectionId,
+        IEnumerable<ConversionEventOptions> events,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(events);
+
+        var body = new Dictionary<string, object?> { ["events"] = events.ToList() };
+        var response = await _http
+            .RequestAsync(
+                HttpMethod.Post,
+                ConversionRulePath(ruleId, "/events"),
+                body,
+                MetaQuery(workspaceId, connectionId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return FoPostHttpClient.Unwrap(response)?["accepted"]?.GetValue<int>() ?? 0;
+    }
+
+    /// <summary>The network's own public ad library, not the connection's ads.</summary>
+    public async Task<AdLibraryPage> AdLibraryAsync(
+        AdLibraryOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var query = MetaQuery(options.WorkspaceId, options.ConnectionId);
+        query["keyword"] = options.Keyword;
+        query["advertiser"] = options.Advertiser;
+        query["countries"] = options.Countries is null ? null : string.Join(",", options.Countries);
+        query["since"] = options.Since;
+        query["until"] = options.Until;
+        query["cursor"] = options.Cursor;
+        var body = await _http.GetAsync("/v1/ads/ad-library", query, cancellationToken).ConfigureAwait(false);
+        return Require<AdLibraryPage>(FoPostHttpClient.Unwrap(body));
+    }
+
+    private async Task<ConversionRule> AssociationAsync(
+        HttpMethod method,
+        string ruleId,
+        string workspaceId,
+        string connectionId,
+        string campaignId,
+        CancellationToken cancellationToken)
+    {
+        var body = new Dictionary<string, object?> { ["campaignId"] = campaignId };
+        var response = await _http
+            .RequestAsync(
+                method,
+                ConversionRulePath(ruleId, "/associations"),
+                body,
+                MetaQuery(workspaceId, connectionId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Require<ConversionRule>(FoPostHttpClient.Unwrap(response));
+    }
+
+    private static string ConversionRulePath(string ruleId, string suffix) =>
+        $"/v1/ads/linkedin/conversion-rules/{Uri.EscapeDataString(ruleId)}{suffix}";
 
     private async Task<IReadOnlyList<T>> ListByWorkspace<T>(
         string path,
