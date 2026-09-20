@@ -6,7 +6,7 @@ using static FoPost.Resources.ResourceHelpers;
 namespace FoPost.Resources;
 
 /// <summary>
-/// <c>client.Inbox</c> — comments, mentions, and DMs read from connected
+/// <c>client.Inbox</c> — comments, mentions, reviews, and DMs read from connected
 /// accounts, and the replies drafted for them. Needs the <c>inbox</c> scope.
 /// </summary>
 /// <example>
@@ -32,7 +32,7 @@ public sealed class InboxResource
 
     internal InboxResource(FoPostHttpClient http) => _http = http;
 
-    /// <summary>Comments, mentions, and DMs, newest first unless <c>Sort</c> says otherwise.</summary>
+    /// <summary>Comments, mentions, reviews, and DMs, newest first unless <c>Sort</c> says otherwise.</summary>
     public async Task<InboxPage<InboxItem>> ListAsync(
         ListInboxOptions? options = null,
         CancellationToken cancellationToken = default)
