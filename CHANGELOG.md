@@ -8,6 +8,10 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 
 ### Added
 
+- `InboxItem.ModerationStatus` carries the platform's own state for a comment
+  (`published`, `held`, `spam`, `rejected`), and `InboxAccount.ReconnectRequired`
+  flags an account connected before the inbox asked for a permission it needs.
+
 - `client.Accounts.ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync` and
   `UpdateSlackIdentityAsync` (`UpdateSlackIdentityOptions`) for a Slack account. All four need the
   `accounts` scope; a webhook-connected account answers 409 `webhook_connection`.
