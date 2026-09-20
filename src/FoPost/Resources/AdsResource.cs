@@ -228,6 +228,127 @@ public sealed class AdsResource
         return ToList<TargetingOption>(FoPostHttpClient.Unwrap(body));
     }
 
+    /// <summary>
+    /// TikTok's Business Centers. The one network-named read on this resource,
+    /// because no other network groups ad accounts this way.
+    /// </summary>
+    public async Task<IReadOnlyList<AdBusinessCenter>> TikTokBusinessCentersAsync(
+        string connectionId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http.GetAsync(
+                "/v1/ads/tiktok/business-centers",
+                MetaQuery(workspaceId, connectionId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<AdBusinessCenter>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>The accounts an ad can run as; an identity id is a page id.</summary>
+    public async Task<IReadOnlyList<AdIdentity>> TikTokIdentitiesAsync(
+        string connectionId,
+        string adAccountId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = MetaQuery(workspaceId, connectionId);
+        query["ad_account_id"] = adAccountId;
+        var body = await _http.GetAsync("/v1/ads/tiktok/identities", query, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<AdIdentity>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>Posts already live under an identity, each a candidate Spark ad.</summary>
+    public async Task<IReadOnlyList<SparkPost>> SparkPostsAsync(
+        string connectionId,
+        string adAccountId,
+        string identityId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = MetaQuery(workspaceId, connectionId);
+        query["ad_account_id"] = adAccountId;
+        query["identity_id"] = identityId;
+        var body = await _http.GetAsync("/v1/ads/spark-posts", query, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<SparkPost>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>
+    /// Offline conversions against a pixel the ad account owns. Identifiers are
+    /// hashed before anything leaves FoPost; returns how many the network took.
+    /// </summary>
+    public async Task<long> UploadConversionsAsync(
+        UploadConversionsOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await _http.PostAsync("/v1/ads/conversions", options, cancellationToken)
+            .ConfigureAwait(false);
+        return FoPostHttpClient.Unwrap(response)?["accepted"]?.GetValue<long>() ?? 0;
+    }
+
+    /// <summary>One page of an ad's comments; pass <c>nextCursor</c> back as <c>after</c>.</summary>
+    public async Task<AdCommentsPage> CommentsAsync(
+        string connectionId,
+        string adId,
+        string? after = null,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = MetaQuery(workspaceId, connectionId);
+        query["ad_id"] = adId;
+        query["after"] = after;
+        var body = await _http.GetAsync("/v1/ads/comments", query, cancellationToken).ConfigureAwait(false);
+        return Require<AdCommentsPage>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>
+    /// Answer a comment on an ad; returns the reply's id on the network. Needs
+    /// the <c>publish</c> scope as well as <c>ads</c>.
+    /// </summary>
+    public async Task<string> ReplyToCommentAsync(
+        string commentId,
+        AdCommentOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await _http.PostAsync(CommentPath(commentId) + "/reply", options, cancellationToken)
+            .ConfigureAwait(false);
+        return FoPostHttpClient.Unwrap(response)?["replyId"]?.GetValue<string>() ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Hide or show a comment on an ad. Needs the <c>publish</c> scope as well
+    /// as <c>ads</c>.
+    /// </summary>
+    public async Task SetCommentHiddenAsync(
+        string commentId,
+        AdCommentOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        await _http.PostAsync(CommentPath(commentId) + "/hide", options, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Remove a comment from the ad on the network. One already gone succeeds.
+    /// Needs the <c>publish</c> scope as well as <c>ads</c>.
+    /// </summary>
+    public async Task DeleteCommentAsync(
+        string commentId,
+        AdCommentOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        await _http.DeleteAsync(CommentPath(commentId), options, cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>Each connection's Page with the lead forms on it.</summary>
     public Task<IReadOnlyList<LeadFormSource>> LeadFormsAsync(
         string? workspaceId = null,
@@ -754,6 +875,8 @@ public sealed class AdsResource
     private static string ObjectPath(string kind, string id) => $"/v1/ads/{kind}/{Uri.EscapeDataString(id)}";
 
     private static string LeadFormPath(string formId) => $"/v1/ads/lead-forms/{Uri.EscapeDataString(formId)}";
+
+    private static string CommentPath(string commentId) => $"/v1/ads/comments/{Uri.EscapeDataString(commentId)}";
 
     private static Dictionary<string, object?> MetaQuery(string? workspaceId, string connectionId) =>
         new() { ["workspace_id"] = workspaceId, ["connection_id"] = connectionId };
