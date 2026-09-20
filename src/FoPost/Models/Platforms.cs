@@ -42,13 +42,15 @@ public static class Platforms
     public const string Whop = "whop";
     public const string Skool = "skool";
 
+    public const string WhatsApp = "whatsapp";
+
     /// <summary>Every platform name, in the order the API declares them.</summary>
     public static IReadOnlyList<string> All { get; } = new[]
     {
         Twitter, Instagram, InstagramBusiness, Facebook, LinkedIn, TikTok, YouTube,
         Bluesky, Threads, Mastodon, Lemmy, Pinterest, Telegram, Twitch, Discord,
         Slack, Reddit, Tumblr, Dribbble, MeWe, DevTo, Hashnode, Medium, Substack,
-        GoogleBusiness, Kick, Listmonk, WordPress, Nostr, Whop, Skool,
+        GoogleBusiness, Kick, Listmonk, WordPress, Nostr, Whop, Skool, WhatsApp,
     };
 }
 

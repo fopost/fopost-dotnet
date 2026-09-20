@@ -8,6 +8,18 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 
 ### Added
 
+- `Whatsapp` for a WhatsApp Business connection: the business profile
+  (`GetProfileAsync`, `UpdateProfileAsync`, `RequestDisplayNameAsync`,
+  `SetUsernameAsync`), message templates including the platform's own library
+  (`ListTemplatesAsync`, `CreateTemplateAsync`, `ImportTemplateAsync`, …), groups,
+  blocking, commerce settings and flows (`CreateFlowAsync`, `UploadFlowJsonAsync`,
+  `PublishFlowAsync`, `ListFlowResponsesAsync`, …), plus `GetAccountEventsAsync`.
+  All need the `accounts` scope.
+- `Whatsapp.CreateSandboxSessionAsync` and `ListSandboxSessionsAsync` invite a
+  tester to the platform-owned WhatsApp test number. Inviting sends a template, so
+  it needs the `publish` scope.
+- `Platforms.WhatsApp`.
+
 - `client.Accounts.ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync` and
   `UpdateSlackIdentityAsync` (`UpdateSlackIdentityOptions`) for a Slack account. All four need the
   `accounts` scope; a webhook-connected account answers 409 `webhook_connection`.

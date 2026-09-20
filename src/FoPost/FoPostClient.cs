@@ -40,6 +40,7 @@ public sealed class FoPostClient : IDisposable
         Ads = new AdsResource(_http);
         Validate = new ValidateResource(_http);
         Media = new MediaResource(_http);
+        Whatsapp = new WhatsappResource(_http);
     }
 
     public FoPostClient(string apiKey)
@@ -66,6 +67,9 @@ public sealed class FoPostClient : IDisposable
     public ValidateResource Validate { get; }
 
     public MediaResource Media { get; }
+
+    /// <summary>WhatsApp Business: templates, flows, groups, blocking and commerce.</summary>
+    public WhatsappResource Whatsapp { get; }
 
     public string BaseUrl => _http.BaseUrl;
 
