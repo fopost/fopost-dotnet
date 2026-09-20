@@ -213,6 +213,115 @@ public sealed class TelegramBotCommands : FoPostModel
     public IList<TelegramBotCommand> Commands { get; set; } = new List<TelegramBotCommand>();
 }
 
+/// <summary>A tappable prompt Messenger or Instagram shows before the first message.</summary>
+public sealed class MetaIceBreaker : FoPostModel
+{
+    /// <summary>Up to 80 characters.</summary>
+    [JsonPropertyName("question")]
+    public string Question { get; set; } = string.Empty;
+
+    /// <summary>What your webhook receives when the prompt is tapped.</summary>
+    [JsonPropertyName("payload")]
+    public string Payload { get; set; } = string.Empty;
+}
+
+/// <summary>The ice breakers set on one account.</summary>
+public sealed class MetaIceBreakers : FoPostModel
+{
+    [JsonPropertyName("ice_breakers")]
+    public IList<MetaIceBreaker> IceBreakers { get; set; } = new List<MetaIceBreaker>();
+}
+
+/// <summary>
+/// A persistent-menu item: a <c>postback</c> carrying <see cref="Payload"/>, or a
+/// <c>web_url</c> carrying an http(s) <see cref="Url"/>. The unused one stays null.
+/// </summary>
+public sealed class MetaMenuItem : FoPostModel
+{
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = string.Empty;
+
+    [JsonPropertyName("title")]
+    public string Title { get; set; } = string.Empty;
+
+    [JsonPropertyName("payload")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Payload { get; set; }
+
+    [JsonPropertyName("url")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Url { get; set; }
+
+    /// <summary>An item that sends <paramref name="payload"/> to your webhook when tapped.</summary>
+    public static MetaMenuItem Postback(string title, string payload) =>
+        new() { Type = "postback", Title = title, Payload = payload };
+
+    /// <summary>An item that opens <paramref name="url"/>.</summary>
+    public static MetaMenuItem Link(string title, string url) =>
+        new() { Type = "web_url", Title = title, Url = url };
+}
+
+/// <summary>One locale's menu; <c>default</c> is the fallback every language uses.</summary>
+public sealed class MetaPersistentMenuEntry : FoPostModel
+{
+    [JsonPropertyName("locale")]
+    public string Locale { get; set; } = "default";
+
+    [JsonPropertyName("call_to_actions")]
+    public IList<MetaMenuItem> CallToActions { get; set; } = new List<MetaMenuItem>();
+
+    [JsonPropertyName("composer_input_disabled")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? ComposerInputDisabled { get; set; }
+
+    /// <summary>The default-locale menu, the one every language falls back to.</summary>
+    public static MetaPersistentMenuEntry DefaultLocale(IEnumerable<MetaMenuItem> items) =>
+        new() { Locale = "default", CallToActions = items.ToList() };
+}
+
+/// <summary>The persistent menu set on one account, one entry per locale.</summary>
+public sealed class MetaPersistentMenu : FoPostModel
+{
+    [JsonPropertyName("persistent_menu")]
+    public IList<MetaPersistentMenuEntry> PersistentMenu { get; set; } = new List<MetaPersistentMenuEntry>();
+}
+
+/// <summary>One locale's greeting, up to 160 characters.</summary>
+public sealed class MetaGreetingText : FoPostModel
+{
+    [JsonPropertyName("locale")]
+    public string Locale { get; set; } = "default";
+
+    [JsonPropertyName("text")]
+    public string Text { get; set; } = string.Empty;
+
+    /// <summary>The default-locale greeting.</summary>
+    public static MetaGreetingText Of(string text) => new() { Text = text };
+}
+
+/// <summary>The greeting set on one account, one entry per locale.</summary>
+public sealed class MetaGreeting : FoPostModel
+{
+    [JsonPropertyName("greeting")]
+    public IList<MetaGreetingText> Greeting { get; set; } = new List<MetaGreetingText>();
+}
+
+/// <summary>
+/// What the network delivers to the FoPost webhook for one account. <see cref="Subscribed"/>
+/// is false when the subscription lapsed or a required field is missing.
+/// </summary>
+public sealed class WebhookSubscription : FoPostModel
+{
+    [JsonPropertyName("subscribed")]
+    public bool Subscribed { get; set; }
+
+    [JsonPropertyName("fields")]
+    public IList<string> Fields { get; set; } = new List<string>();
+
+    [JsonPropertyName("missing_fields")]
+    public IList<string> MissingFields { get; set; } = new List<string>();
+}
+
 /// <summary>A channel the Slack app can post to; <see cref="IsCurrent"/> marks the one this account posts to.</summary>
 public sealed class SlackChannel : FoPostModel
 {
@@ -266,4 +375,195 @@ public sealed class SlackIdentity : FoPostModel
 
     [JsonPropertyName("icon_emoji")]
     public string? IconEmoji { get; set; }
+}
+
+// ─── Discord (bot connections) ───────────────────────────────────────────
+
+/// <summary>A Discord text channel the bot can post to; <see cref="IsCurrent"/> marks this account's.</summary>
+public sealed class DiscordChannel : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Discord's channel type: 0 text, 5 announcement, 15 forum.</summary>
+    [JsonPropertyName("type")]
+    public int Type { get; set; }
+
+    [JsonPropertyName("parent_id")]
+    public string? ParentId { get; set; }
+
+    [JsonPropertyName("nsfw")]
+    public bool Nsfw { get; set; }
+
+    [JsonPropertyName("is_current")]
+    public bool IsCurrent { get; set; }
+}
+
+/// <summary>The nickname and avatar the bot wears in the server; null means its own.</summary>
+public sealed class DiscordIdentity : FoPostModel
+{
+    [JsonPropertyName("username")]
+    public string? Username { get; set; }
+
+    [JsonPropertyName("avatar_url")]
+    public string? AvatarUrl { get; set; }
+}
+
+/// <summary>A message in the connected channel.</summary>
+public sealed class DiscordMessage : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("channel_id")]
+    public string ChannelId { get; set; } = string.Empty;
+
+    [JsonPropertyName("content")]
+    public string Content { get; set; } = string.Empty;
+
+    [JsonPropertyName("author_id")]
+    public string AuthorId { get; set; } = string.Empty;
+
+    [JsonPropertyName("author_name")]
+    public string AuthorName { get; set; } = string.Empty;
+
+    [JsonPropertyName("pinned")]
+    public bool Pinned { get; set; }
+
+    [JsonPropertyName("created_at")]
+    public string? CreatedAt { get; set; }
+}
+
+/// <summary>A message the bot put somewhere.</summary>
+public sealed class DiscordMessageRef : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("channel_id")]
+    public string ChannelId { get; set; } = string.Empty;
+}
+
+/// <summary>A thread started on a message.</summary>
+public sealed class DiscordThread : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("parent_id")]
+    public string? ParentId { get; set; }
+}
+
+/// <summary>
+/// An event on the server's calendar. <see cref="ChannelId"/> names a voice or stage channel;
+/// otherwise <see cref="Location"/> says where it happens.
+/// </summary>
+public sealed class DiscordScheduledEvent : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("channel_id")]
+    public string? ChannelId { get; set; }
+
+    [JsonPropertyName("location")]
+    public string? Location { get; set; }
+
+    [JsonPropertyName("start_time")]
+    public string StartTime { get; set; } = string.Empty;
+
+    [JsonPropertyName("end_time")]
+    public string? EndTime { get; set; }
+
+    /// <summary>scheduled, active, completed or canceled.</summary>
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = "scheduled";
+
+    [JsonPropertyName("user_count")]
+    public int? UserCount { get; set; }
+}
+
+/// <summary>A person in the connected server; <see cref="Id"/> is the member id for a DM or a role.</summary>
+public sealed class DiscordMember : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("username")]
+    public string Username { get; set; } = string.Empty;
+
+    [JsonPropertyName("display_name")]
+    public string? DisplayName { get; set; }
+
+    /// <summary>Nickname in this server.</summary>
+    [JsonPropertyName("nick")]
+    public string? Nick { get; set; }
+
+    [JsonPropertyName("avatar")]
+    public string? Avatar { get; set; }
+
+    [JsonPropertyName("is_bot")]
+    public bool IsBot { get; set; }
+
+    [JsonPropertyName("roles")]
+    public IList<string> Roles { get; set; } = new List<string>();
+
+    [JsonPropertyName("joined_at")]
+    public string? JoinedAt { get; set; }
+}
+
+/// <summary>
+/// A role in the connected server. A managed role belongs to an integration and cannot be edited;
+/// <see cref="Permissions"/> is Discord's bitfield as a decimal string.
+/// </summary>
+public sealed class DiscordRole : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("color")]
+    public int Color { get; set; }
+
+    [JsonPropertyName("hoist")]
+    public bool Hoist { get; set; }
+
+    [JsonPropertyName("mentionable")]
+    public bool Mentionable { get; set; }
+
+    [JsonPropertyName("managed")]
+    public bool Managed { get; set; }
+
+    [JsonPropertyName("position")]
+    public int Position { get; set; }
+
+    [JsonPropertyName("permissions")]
+    public string Permissions { get; set; } = "0";
+}
+
+/// <summary>What a Discord delete, pin or role assignment answers.</summary>
+public sealed class DiscordAck : FoPostModel
+{
+    [JsonPropertyName("deleted")]
+    public bool? Deleted { get; set; }
+
+    [JsonPropertyName("pinned")]
+    public bool? Pinned { get; set; }
+
+    [JsonPropertyName("assigned")]
+    public bool? Assigned { get; set; }
 }

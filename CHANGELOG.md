@@ -26,6 +26,21 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
   `DeleteFieldAsync` for the custom columns a workspace keeps. All need the `inbox` scope.
 - `client.Contacts.ConversationAnalyticsAsync` reads `/v1/analytics/inbox/conversations`:
   volume and median reply time per thread. Needs the `analytics` scope.
+- Meta messaging settings on `client.Accounts`: `GetIceBreakersAsync`, `SetIceBreakersAsync` and
+  `DeleteIceBreakersAsync` (Facebook Pages and Instagram), plus `GetPersistentMenuAsync`,
+  `SetPersistentMenuAsync`, `DeletePersistentMenuAsync`, `GetGreetingAsync`, `SetGreetingAsync`
+  and `DeleteGreetingAsync` (Facebook Pages). A network without a field answers 400.
+- `client.Accounts.GetWebhookSubscriptionAsync` reports whether the network is still delivering
+  events for an account, and `ResubscribeWebhookAsync` puts a lapsed subscription back.
+- `client.Inbox.HandoverAsync` passes a Messenger thread to another Meta app, or takes it back
+  when no `appId` is given (`inbox` scope, plus `publish`).
+- `client.Knowledge`: the workspace knowledge base — `ListAsync`, `CreateAsync`
+  (`CreateKnowledgeSourceOptions`), `UpdateAsync` (`UpdateKnowledgeSourceOptions`),
+  `DeleteAsync`, `SyncAsync` and `SearchAsync` (`SearchKnowledgeOptions`), with the
+  `KnowledgeSource` and `KnowledgeMatch` models. A source is an FAQ, a note, a URL
+  on your own site or a plain-text/CSV media item; `SearchAsync` returns the passages
+  closest to a question, and is what grounds a drafted inbox reply in your own
+  answers. Needs the `inbox` scope.
 
 - `client.Accounts.ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync` and
   `UpdateSlackIdentityAsync` (`UpdateSlackIdentityOptions`) for a Slack account. All four need the

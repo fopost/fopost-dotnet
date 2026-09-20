@@ -40,6 +40,7 @@ public sealed class FoPostClient : IDisposable
         Contacts = new ContactsResource(_http);
         Broadcasts = new BroadcastsResource(_http);
         Sequences = new SequencesResource(_http);
+        Knowledge = new KnowledgeResource(_http);
         Ads = new AdsResource(_http);
         Validate = new ValidateResource(_http);
         Media = new MediaResource(_http);
@@ -75,6 +76,8 @@ public sealed class FoPostClient : IDisposable
 
     /// <summary>A series of messages on a delay, walked per enrolled contact.</summary>
     public SequencesResource Sequences { get; }
+    /// <summary>The workspace knowledge base, which grounds drafted replies.</summary>
+    public KnowledgeResource Knowledge { get; }
 
     public AdsResource Ads { get; }
 
