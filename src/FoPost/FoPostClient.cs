@@ -45,6 +45,7 @@ public sealed class FoPostClient : IDisposable
         Ads = new AdsResource(_http);
         Validate = new ValidateResource(_http);
         Media = new MediaResource(_http);
+        GoogleBusiness = new GoogleBusinessResource(_http);
     }
 
     public FoPostClient(string apiKey)
@@ -88,6 +89,9 @@ public sealed class FoPostClient : IDisposable
     public ValidateResource Validate { get; }
 
     public MediaResource Media { get; }
+
+    /// <summary>Manage a connected Google Business Profile location.</summary>
+    public GoogleBusinessResource GoogleBusiness { get; }
 
     public string BaseUrl => _http.BaseUrl;
 
