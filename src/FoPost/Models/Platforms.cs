@@ -22,6 +22,7 @@ public static class Platforms
     public const string Mastodon = "mastodon";
     public const string Lemmy = "lemmy";
     public const string Pinterest = "pinterest";
+    public const string Snapchat = "snapchat";
     public const string Telegram = "telegram";
     public const string Twitch = "twitch";
     public const string Discord = "discord";
@@ -46,7 +47,7 @@ public static class Platforms
     public static IReadOnlyList<string> All { get; } = new[]
     {
         Twitter, Instagram, InstagramBusiness, Facebook, LinkedIn, TikTok, YouTube,
-        Bluesky, Threads, Mastodon, Lemmy, Pinterest, Telegram, Twitch, Discord,
+        Bluesky, Threads, Mastodon, Lemmy, Pinterest, Snapchat, Telegram, Twitch, Discord,
         Slack, Reddit, Tumblr, Dribbble, MeWe, DevTo, Hashnode, Medium, Substack,
         GoogleBusiness, Kick, Listmonk, WordPress, Nostr, Whop, Skool,
     };

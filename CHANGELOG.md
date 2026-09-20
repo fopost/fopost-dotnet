@@ -55,6 +55,8 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
   closest to a question, and is what grounds a drafted inbox reply in your own
   answers. Needs the `inbox` scope.
 
+- `Platforms.Snapchat`, included in `Platforms.All`.
+
 - `client.Accounts.ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync` and
   `UpdateSlackIdentityAsync` (`UpdateSlackIdentityOptions`) for a Slack account. All four need the
   `accounts` scope; a webhook-connected account answers 409 `webhook_connection`.
