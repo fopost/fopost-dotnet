@@ -149,14 +149,19 @@ public class AdsTests
     {
         var handler = new StubHandler()
             .Json("""{"data":{"url":"https://ads.example/login?state=abc"}}""")
+            .Json("""{"data":{"url":"https://pinterest.example/login"}}""")
             .Json("""{"data":[{"id":"conn_1","provider":"meta","authType":"business","name":"Your Brand","businessId":"77","createdAt":"2026-09-01T00:00:00.000Z","workspaceId":"ws_1"}]}""")
             .Json("""{"message":"Connection removed"}""");
         using var test = new TestClient(handler);
 
-        var url = await test.Client.Ads.AuthorizeMetaAsync(new AuthorizeMetaAdsOptions { WorkspaceId = "ws_1", ReturnTo = "/ads" });
+        var url = await test.Client.Ads.AuthorizeAsync(new AuthorizeAdsOptions { WorkspaceId = "ws_1", ReturnTo = "/ads" });
         Assert.Equal("/v1/ads/connections/meta/authorize", handler.LastRequest.RequestUri!.AbsolutePath);
         Assert.Equal("""{"workspaceId":"ws_1","returnTo":"/ads"}""", handler.LastBody);
         Assert.Equal("https://ads.example/login?state=abc", url);
+
+        // The provider names the path, so a connection is not Meta-only.
+        await test.Client.Ads.AuthorizeAsync(new AuthorizeAdsOptions { WorkspaceId = "ws_1", Provider = "pinterest" });
+        Assert.Equal("/v1/ads/connections/pinterest/authorize", handler.LastRequest.RequestUri!.AbsolutePath);
 
         var connections = await test.Client.Ads.ConnectionsAsync("ws_1");
         Assert.Equal("business", Assert.Single(connections).AuthType);

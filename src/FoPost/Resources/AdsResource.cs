@@ -71,18 +71,30 @@ public sealed class AdsResource
         CancellationToken cancellationToken = default) =>
         ListByWorkspace<AdSource>("/v1/ads/sources", workspaceId, cancellationToken);
 
-    /// <summary>The login URL that connects an ad account; the caller finishes it in a browser.</summary>
-    public async Task<string> AuthorizeMetaAsync(
-        AuthorizeMetaAdsOptions options,
+    /// <summary>
+    /// The login URL that connects an ad account; the caller finishes it in a browser. The
+    /// options name the ad network; one that is not available on the deployment answers 503.
+    /// </summary>
+    public async Task<string> AuthorizeAsync(
+        AuthorizeAdsOptions options,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        var response = await _http.PostAsync("/v1/ads/connections/meta/authorize", options, cancellationToken)
+        var provider = string.IsNullOrEmpty(options.Provider) ? "meta" : options.Provider;
+        var response = await _http
+            .PostAsync($"/v1/ads/connections/{provider}/authorize", options, cancellationToken)
             .ConfigureAwait(false);
         var url = FoPostHttpClient.Unwrap(response)?["url"]?.GetValue<string>();
         return url ?? throw new FoPostException("The API returned no authorize URL", 200);
     }
+
+    /// <summary>The Meta login URL.</summary>
+    [Obsolete("Use AuthorizeAsync, which takes a Provider.")]
+    public Task<string> AuthorizeMetaAsync(
+        AuthorizeAdsOptions options,
+        CancellationToken cancellationToken = default) =>
+        AuthorizeAsync(options, cancellationToken);
 
     /// <summary>Also deletes every ad record created through the connection.</summary>
     public async Task DeleteConnectionAsync(

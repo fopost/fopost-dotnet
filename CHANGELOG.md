@@ -8,6 +8,10 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 
 ### Added
 
+- `Ads.AuthorizeAsync` takes a `Provider` on `AuthorizeAdsOptions`, so a connection can be
+  started on any ad network the API lists, not only Meta. `AuthorizeMetaAsync` delegates to it
+  and is obsolete.
+
 - `client.Accounts.ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync` and
   `UpdateSlackIdentityAsync` (`UpdateSlackIdentityOptions`) for a Slack account. All four need the
   `accounts` scope; a webhook-connected account answers 409 `webhook_connection`.

@@ -3,18 +3,31 @@ using System.Text.Json.Serialization;
 namespace FoPost;
 
 /// <summary>The body of <see cref="Resources.AdsResource.AuthorizeMetaAsync"/>.</summary>
-public sealed class AuthorizeMetaAdsOptions
+public class AuthorizeAdsOptions
 {
     [JsonPropertyName("workspaceId")]
     public string WorkspaceId { get; set; } = string.Empty;
 
-    /// <summary><c>business</c> (default) for a business login, <c>user</c> for a personal one.</summary>
+    /// <summary>
+    /// The ad network to connect; defaults to <c>meta</c>. It names the path, so it is not sent
+    /// in the body.
+    /// </summary>
+    [JsonIgnore]
+    public string Provider { get; set; } = "meta";
+
+    /// <summary>The network's own login method: <c>business</c> (default) or <c>user</c> on Meta.</summary>
     [JsonPropertyName("method")]
     public string? Method { get; set; }
 
     /// <summary>Dashboard path to land on after the ad platform redirects back.</summary>
     [JsonPropertyName("returnTo")]
     public string? ReturnTo { get; set; }
+}
+
+/// <summary>The body of the deprecated authorize call.</summary>
+[Obsolete("Use AuthorizeAdsOptions, which takes a Provider.")]
+public sealed class AuthorizeMetaAdsOptions : AuthorizeAdsOptions
+{
 }
 
 /// <summary>What a boost and an ad have in common. These are serialised as sent.</summary>
