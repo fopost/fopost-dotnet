@@ -9,6 +9,9 @@ public static class InboxItemTypes
     public const string Comment = "comment";
     public const string Mention = "mention";
     public const string Dm = "dm";
+
+    /// <summary>A rating left on the business: a Google Business review or a Facebook Page recommendation.</summary>
+    public const string Review = "review";
 }
 
 /// <summary>The states an inbox item moves through.</summary>
@@ -111,7 +114,7 @@ public sealed class InboxPostContext : FoPostModel
     public InboxPostRef? Published { get; set; }
 }
 
-/// <summary>A comment, mention, or DM read from a connected account.</summary>
+/// <summary>A comment, mention, review, or DM read from a connected account.</summary>
 public sealed class InboxItem : FoPostModel
 {
     [JsonPropertyName("id")]
@@ -149,6 +152,10 @@ public sealed class InboxItem : FoPostModel
 
     [JsonPropertyName("text")]
     public string? Text { get; set; }
+
+    /// <summary>Stars on a review, 1-5. Null on every other type.</summary>
+    [JsonPropertyName("rating")]
+    public int? Rating { get; set; }
 
     [JsonPropertyName("attachments")]
     public IList<InboxAttachment> Attachments { get; set; } = new List<InboxAttachment>();
@@ -236,7 +243,7 @@ public sealed class InboxItem : FoPostModel
     public InboxAccountRef? Account { get; set; }
 }
 
-/// <summary>One platform post with comments, or one post we were mentioned in.</summary>
+/// <summary>One platform post with comments, one post we were mentioned in, or one review.</summary>
 public sealed class InboxThread : FoPostModel
 {
     [JsonPropertyName("workspaceId")]
@@ -262,6 +269,10 @@ public sealed class InboxThread : FoPostModel
 
     [JsonPropertyName("lastCommentAuthor")]
     public string? LastCommentAuthor { get; set; }
+
+    /// <summary>Stars, on a review thread. Null on comments and mentions.</summary>
+    [JsonPropertyName("rating")]
+    public int? Rating { get; set; }
 
     [JsonPropertyName("post")]
     public InboxPostContext? Post { get; set; }
@@ -528,4 +539,18 @@ public sealed class InboxPage<T> : IReadOnlyList<T>
     public IEnumerator<T> GetEnumerator() => Items.GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+}
+
+/// <summary>
+/// The outcome of a Messenger thread hand-over. <see cref="AppId"/> is null when control
+/// was taken back.
+/// </summary>
+public sealed class InboxHandover : FoPostModel
+{
+    [JsonPropertyName("app_id")]
+    public string? AppId { get; set; }
+
+    /// <summary><c>passed</c> or <c>taken</c>.</summary>
+    [JsonPropertyName("control")]
+    public string Control { get; set; } = string.Empty;
 }

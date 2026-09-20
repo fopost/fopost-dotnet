@@ -6,7 +6,7 @@ using static FoPost.Resources.ResourceHelpers;
 namespace FoPost.Resources;
 
 /// <summary>
-/// <c>client.Inbox</c> — comments, mentions, and DMs read from connected
+/// <c>client.Inbox</c> — comments, mentions, reviews, and DMs read from connected
 /// accounts, and the replies drafted for them. Needs the <c>inbox</c> scope.
 /// </summary>
 /// <example>
@@ -32,7 +32,7 @@ public sealed class InboxResource
 
     internal InboxResource(FoPostHttpClient http) => _http = http;
 
-    /// <summary>Comments, mentions, and DMs, newest first unless <c>Sort</c> says otherwise.</summary>
+    /// <summary>Comments, mentions, reviews, and DMs, newest first unless <c>Sort</c> says otherwise.</summary>
     public async Task<InboxPage<InboxItem>> ListAsync(
         ListInboxOptions? options = null,
         CancellationToken cancellationToken = default)
@@ -331,6 +331,36 @@ public sealed class InboxResource
                 cancellationToken)
             .ConfigureAwait(false);
         return FoPostHttpClient.Unwrap(response)?["typing"]?.GetValue<bool>() ?? false;
+    }
+
+    /// <summary>
+    /// Pass a Messenger thread to another Meta app, or take it back when <paramref name="appId"/>
+    /// is null. Also needs the <c>publish</c> scope.
+    /// </summary>
+    public async Task<InboxHandover> HandoverAsync(
+        string conversationId,
+        string accountId,
+        string? appId = null,
+        string? metadata = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["account_id"] = accountId };
+        if (appId is not null)
+        {
+            body["app_id"] = appId;
+        }
+        if (metadata is not null)
+        {
+            body["metadata"] = metadata;
+        }
+
+        var response = await _http
+            .PostAsync(
+                $"/v1/inbox/conversations/{Uri.EscapeDataString(conversationId)}/handover",
+                body,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Require<InboxHandover>(FoPostHttpClient.Unwrap(response));
     }
 
     /// <summary>
