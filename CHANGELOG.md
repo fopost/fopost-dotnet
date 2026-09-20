@@ -8,6 +8,9 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 
 ### Added
 
+- `InboxItem.ModerationStatus` carries the platform's own state for a comment
+  (`published`, `held`, `spam`, `rejected`), and `InboxAccount.ReconnectRequired`
+  flags an account connected before the inbox asked for a permission it needs.
 - `client.Broadcasts`: one message into every conversation the workspace already has with a
   segment of its contacts. `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`,
   `DeleteAsync`, `SendAsync`, `CancelAsync` and `RecipientsAsync`. Reading needs the `inbox`
