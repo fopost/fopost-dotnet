@@ -259,6 +259,22 @@ public sealed class InboxResource
     public Task<InboxItem> UnlikeAsync(string itemId, CancellationToken cancellationToken = default) =>
         Act(itemId, "unlike", cancellationToken);
 
+    /// <summary>
+    /// Vote an item up or down where the network ranks by votes (Reddit). <paramref name="direction"/>
+    /// is <c>up</c>, <c>down</c>, or <c>none</c> to take an earlier vote back. An upvote is the same
+    /// call <see cref="LikeAsync"/> makes, so <c>Liked</c> moves with it. Needs the <c>publish</c> scope.
+    /// </summary>
+    public async Task<InboxItem> VoteAsync(
+        string itemId,
+        string direction,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["direction"] = direction };
+        var response = await _http.PostAsync($"{ItemPath(itemId)}/vote", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<InboxItem>(FoPostHttpClient.Unwrap(response));
+    }
+
     /// <summary>Pin our own comment. Needs the <c>publish</c> scope.</summary>
     public Task<InboxItem> PinAsync(string itemId, CancellationToken cancellationToken = default) =>
         Act(itemId, "pin", cancellationToken);

@@ -191,13 +191,13 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | Namespace    | Methods                                                                                                                            |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `Posts`      | `ListAsync`, `ListAllAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `PublishAsync`, `CancelAsync`, `RetryAsync`, `PreflightAsync`, `DuplicateAsync`, `DeliveriesAsync` |
-| `Accounts`   | `ListAsync`, `GetAsync`, `RenameAsync`, `MoveAsync`, `HealthAsync`, `CreateTelegramConnectCodeAsync`, `GetTelegramConnectStatusAsync`, `GetTelegramBotCommandsAsync`, `SetTelegramBotCommandsAsync`, `DeleteTelegramBotCommandsAsync`, `ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync`, `UpdateSlackIdentityAsync` |
+| `Accounts`   | `ListAsync`, `GetAsync`, `RenameAsync`, `MoveAsync`, `HealthAsync`, `CreateTelegramConnectCodeAsync`, `GetTelegramConnectStatusAsync`, `GetTelegramBotCommandsAsync`, `SetTelegramBotCommandsAsync`, `DeleteTelegramBotCommandsAsync`, `ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync`, `UpdateSlackIdentityAsync`, `ListRedditSubredditsAsync`, `ListRedditSubredditRulesAsync`, `ListRedditFlairsAsync`, `SetRedditDefaultSubredditAsync` |
 | `AccountGroups` | `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `SetMembersAsync`                                         |
 | `Workspaces` | `ListAsync`, `GetAsync`                                                                                                            |
 | `Labels`     | `ListAsync`                                                                                                                        |
 | `Ai`         | `CreditsAsync`, `GenerateCaptionAsync`, `RewriteAsync`, `RepurposeUrlAsync`                                                        |
-| `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `EditCommentAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `LikeAsync`, `UnlikeAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`, `DeleteAsync`, `StartConversationAsync`, `SetTypingAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
-| `Validate`   | `PostAsync`, `LengthAsync`, `MediaAsync`                                                                                           |
+| `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `EditCommentAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `LikeAsync`, `UnlikeAsync`, `VoteAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`, `DeleteAsync`, `StartConversationAsync`, `SetTypingAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
+| `Validate`   | `PostAsync`, `LengthAsync`, `MediaAsync`, `SubredditAsync`                                                                                           |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync` |
 | `Media`      | `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                                                              |
 
@@ -217,7 +217,7 @@ foreach (var platform in check.Platforms.Where(p => !p.Ready))
 ```
 
 `Inbox` needs an API key with the `inbox` scope; the calls that act on the platform as the account
-(`EditCommentAsync`, `LikeAsync`, `UnlikeAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`,
+(`EditCommentAsync`, `LikeAsync`, `UnlikeAsync`, `VoteAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`,
 `StartConversationAsync`, `SetTypingAsync`, a reply with media or quick replies, and deleting our
 own reply) need `publish` as well. `Ads` needs the `ads` scope, and the calls
 that spend money (`BoostAsync`, `CreateAsync`, `SetStatusAsync`, `DeleteAsync`, `BulkSetStatusAsync`,

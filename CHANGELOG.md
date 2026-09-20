@@ -11,6 +11,16 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 - `client.Accounts.ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync` and
   `UpdateSlackIdentityAsync` (`UpdateSlackIdentityOptions`) for a Slack account. All four need the
   `accounts` scope; a webhook-connected account answers 409 `webhook_connection`.
+- `client.Accounts.ListRedditSubredditsAsync`, `ListRedditSubredditRulesAsync`,
+  `ListRedditFlairsAsync` and `SetRedditDefaultSubredditAsync` cover a Reddit account's
+  destinations: the subreddits it is in, a subreddit's rules and post flairs, and where posts go
+  when one names no subreddit. All four need the `accounts` scope; an account connected before
+  those permissions were asked for answers 409 `reconnect_required`.
+- `client.Validate.SubredditAsync` asks whether a subreddit exists and takes a post from an
+  account, before a post exists (`posts` scope).
+- `client.Inbox.VoteAsync` votes an item up or down where the network ranks by votes, or takes an
+  earlier vote back with `none` (`inbox` and `publish`).
+- `SocialAccount.ReconnectRequired`, and the inbox item's `Vote` and `CanVote`.
 - `client.Accounts.CreateTelegramConnectCodeAsync` mints a one-time code that connects a Telegram
   chat when sent to the bot, and `GetTelegramConnectStatusAsync` polls its outcome.
 - `client.Accounts.GetTelegramBotCommandsAsync`, `SetTelegramBotCommandsAsync` and

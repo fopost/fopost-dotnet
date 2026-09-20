@@ -159,6 +159,64 @@ public sealed class AccountsResource
     }
 
     /// <summary>
+    /// Subreddits a Reddit account is in, busiest first, plus its own profile page. A 409
+    /// <c>reconnect_required</c> means the grant is short of a permission this read needs;
+    /// reconnect the account. The same applies to the other Reddit calls.
+    /// </summary>
+    public async Task<IReadOnlyList<RedditSubreddit>> ListRedditSubredditsAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/reddit/subreddits", null, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<RedditSubreddit>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>The rules a subreddit publishes, in its own order. Show them before publishing.</summary>
+    public async Task<RedditSubredditRules> ListRedditSubredditRulesAsync(
+        string accountId,
+        string subreddit,
+        CancellationToken cancellationToken = default)
+    {
+        var path = $"{AccountPath(accountId)}/reddit/subreddits/{Uri.EscapeDataString(subreddit)}/rules";
+        var response = await _http.GetAsync(path, null, cancellationToken).ConfigureAwait(false);
+        return Require<RedditSubredditRules>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
+    /// Post flairs one subreddit offers. A flair id is valid only there, and one from elsewhere
+    /// fails preflight.
+    /// </summary>
+    public async Task<RedditFlairs> ListRedditFlairsAsync(
+        string accountId,
+        string subreddit,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new Dictionary<string, object?> { ["subreddit"] = subreddit };
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/reddit/flairs", query, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<RedditFlairs>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
+    /// Where posts from this account go when a post names no subreddit. Pass null to fall back to
+    /// the account's own profile page, which always accepts a post.
+    /// </summary>
+    public async Task<RedditDefaultSubreddit> SetRedditDefaultSubredditAsync(
+        string accountId,
+        string? subreddit,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["subreddit"] = subreddit };
+        var response = await _http
+            .PutAsync($"{AccountPath(accountId)}/reddit/default-subreddit", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<RedditDefaultSubreddit>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
     /// Channels the Slack app can post to: every public channel, and private ones it was invited to.
     /// A 409 <c>webhook_connection</c> means the account posts through a webhook; reconnect it with
     /// the Slack app. The same applies to the other Slack calls.

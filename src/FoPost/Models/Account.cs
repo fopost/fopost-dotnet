@@ -44,6 +44,13 @@ public sealed class SocialAccount : FoPostModel
 
     [JsonPropertyName("last_health_check")]
     public DateTimeOffset? LastHealthCheck { get; set; }
+
+    /// <summary>
+    /// True when the account was connected before a permission it now needs was asked for.
+    /// Reconnecting it is the fix; nothing else changes.
+    /// </summary>
+    [JsonPropertyName("reconnect_required")]
+    public bool? ReconnectRequired { get; set; }
 }
 
 /// <summary>Token validity and last-check detail for one connected account.</summary>
@@ -266,4 +273,93 @@ public sealed class SlackIdentity : FoPostModel
 
     [JsonPropertyName("icon_emoji")]
     public string? IconEmoji { get; set; }
+}
+
+/// <summary>A subreddit a Reddit account is in, or its own profile page.</summary>
+public sealed class RedditSubreddit : FoPostModel
+{
+    /// <summary>The name, without the <c>r/</c> prefix.</summary>
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("title")]
+    public string? Title { get; set; }
+
+    [JsonPropertyName("subscribers")]
+    public long? Subscribers { get; set; }
+
+    [JsonPropertyName("over18")]
+    public bool Over18 { get; set; }
+
+    /// <summary>False where the account may read but not submit.</summary>
+    [JsonPropertyName("can_post")]
+    public bool CanPost { get; set; }
+
+    /// <summary>Whether the subreddit offers post flairs at all.</summary>
+    [JsonPropertyName("flair_enabled")]
+    public bool FlairEnabled { get; set; }
+
+    [JsonPropertyName("icon_url")]
+    public string? IconUrl { get; set; }
+
+    /// <summary>Where posts go when a post names no subreddit.</summary>
+    [JsonPropertyName("is_default")]
+    public bool IsDefault { get; set; }
+}
+
+/// <summary>One rule a subreddit publishes. <see cref="AppliesTo"/> is link, comment or all.</summary>
+public sealed class RedditSubredditRule : FoPostModel
+{
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("applies_to")]
+    public string? AppliesTo { get; set; }
+}
+
+/// <summary>A subreddit's rules, in its own order. Show them before publishing.</summary>
+public sealed class RedditSubredditRules : FoPostModel
+{
+    [JsonPropertyName("subreddit")]
+    public string Subreddit { get; set; } = string.Empty;
+
+    [JsonPropertyName("rules")]
+    public IList<RedditSubredditRule> Rules { get; set; } = new List<RedditSubredditRule>();
+}
+
+/// <summary>A post flair, valid only in the subreddit it came from.</summary>
+public sealed class RedditFlair : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("text")]
+    public string Text { get; set; } = string.Empty;
+
+    /// <summary>Whether the label may be replaced with your own text.</summary>
+    [JsonPropertyName("editable")]
+    public bool Editable { get; set; }
+}
+
+/// <summary>The post flairs one subreddit offers.</summary>
+public sealed class RedditFlairs : FoPostModel
+{
+    [JsonPropertyName("subreddit")]
+    public string Subreddit { get; set; } = string.Empty;
+
+    [JsonPropertyName("flairs")]
+    public IList<RedditFlair> Flairs { get; set; } = new List<RedditFlair>();
+}
+
+/// <summary>
+/// Where posts from a Reddit account go when a post names no subreddit. Null means the
+/// account's own profile page, which always accepts a post.
+/// </summary>
+public sealed class RedditDefaultSubreddit : FoPostModel
+{
+    [JsonPropertyName("subreddit")]
+    public string? Subreddit { get; set; }
 }
