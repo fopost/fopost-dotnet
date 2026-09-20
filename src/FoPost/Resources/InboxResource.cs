@@ -334,6 +334,36 @@ public sealed class InboxResource
     }
 
     /// <summary>
+    /// Pass a Messenger thread to another Meta app, or take it back when <paramref name="appId"/>
+    /// is null. Also needs the <c>publish</c> scope.
+    /// </summary>
+    public async Task<InboxHandover> HandoverAsync(
+        string conversationId,
+        string accountId,
+        string? appId = null,
+        string? metadata = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["account_id"] = accountId };
+        if (appId is not null)
+        {
+            body["app_id"] = appId;
+        }
+        if (metadata is not null)
+        {
+            body["metadata"] = metadata;
+        }
+
+        var response = await _http
+            .PostAsync(
+                $"/v1/inbox/conversations/{Uri.EscapeDataString(conversationId)}/handover",
+                body,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Require<InboxHandover>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
     /// Delete the comment on the platform, or our own reply. Deleting our own reply needs the
     /// <c>publish</c> scope.
     /// </summary>
