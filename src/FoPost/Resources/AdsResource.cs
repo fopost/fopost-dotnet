@@ -41,7 +41,17 @@ public sealed class AdsResource
 {
     private readonly FoPostHttpClient _http;
 
-    internal AdsResource(FoPostHttpClient http) => _http = http;
+    internal AdsResource(FoPostHttpClient http)
+    {
+        _http = http;
+        Google = new GoogleAdsResource(http);
+    }
+
+    /// <summary>
+    /// The Search surface no other network has: keywords, assets,
+    /// conversions, and raw GAQL.
+    /// </summary>
+    public GoogleAdsResource Google { get; }
 
     /// <summary>Boosts and ads created through FoPost, with insights from their last refresh.</summary>
     public Task<IReadOnlyList<Ad>> ListAsync(
@@ -80,6 +90,22 @@ public sealed class AdsResource
         ArgumentNullException.ThrowIfNull(options);
 
         var response = await _http.PostAsync("/v1/ads/connections/meta/authorize", options, cancellationToken)
+            .ConfigureAwait(false);
+        var url = FoPostHttpClient.Unwrap(response)?["url"]?.GetValue<string>();
+        return url ?? throw new FoPostException("The API returned no authorize URL", 200);
+    }
+
+    /// <summary>
+    /// The Google login URL. The caller finishes it in their own browser
+    /// session: the callback checks that the same user came back.
+    /// </summary>
+    public async Task<string> AuthorizeGoogleAsync(
+        AuthorizeGoogleAdsOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await _http.PostAsync("/v1/ads/connections/google/authorize", options, cancellationToken)
             .ConfigureAwait(false);
         var url = FoPostHttpClient.Unwrap(response)?["url"]?.GetValue<string>();
         return url ?? throw new FoPostException("The API returned no authorize URL", 200);

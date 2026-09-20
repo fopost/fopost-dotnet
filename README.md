@@ -392,3 +392,29 @@ dotnet pack src/FoPost/FoPost.csproj -c Release
 ## License
 
 MIT
+
+### Google Ads
+
+Campaigns, ad groups, ads, audiences, and insights are on `client.Ads` and dispatch by
+connection. What only Google has is under `client.Ads.Google`:
+
+```csharp
+var scope = new GoogleAdsScope { ConnectionId = "c4d5e6f7-…", CustomerId = "1234567890" };
+var keywords = await client.Ads.Google.KeywordsAsync(scope);
+
+await client.Ads.Google.CreateKeywordAsync(new CreateGoogleKeywordOptions
+{
+    WorkspaceId = "7d2b8c11-…",
+    ConnectionId = "c4d5e6f7-…",
+    CustomerId = "1234567890",
+    AdGroupId = "1234567890~adGroup~77",
+    Text = "running shoes",
+    MatchType = GoogleMatchTypes.Exact,
+});
+```
+
+Also `KeywordIdeasAsync`, `KeywordMetricsAsync`, `SearchTermsAsync`, `BidStrategiesAsync`,
+`AdScheduleAsync` and `SetAdScheduleAsync`, the negative keyword lists, `AssetsAsync` and
+`AssetGroupsAsync`, `LocalServicesLeadsAsync`, the conversion methods, and `QueryAsync` for
+a raw read-only GAQL SELECT. Changes need the `publish` scope as well as `ads`;
+`CustomerId` has to name an account the connection's grant reaches.
