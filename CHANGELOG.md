@@ -8,6 +8,24 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 
 ### Added
 
+- `client.Broadcasts`: one message into every conversation the workspace already has with a
+  segment of its contacts. `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`,
+  `DeleteAsync`, `SendAsync`, `CancelAsync` and `RecipientsAsync`. Reading needs the `inbox`
+  scope; `SendAsync` and `CancelAsync` also need `publish`.
+- `client.Sequences`: a series of messages on a delay. `ListAsync`, `GetAsync`, `CreateAsync`,
+  `UpdateAsync`, `DeleteAsync`, `EnrollAsync`, `UnenrollAsync` and `EnrollmentsAsync`.
+  `EnrollAsync` and `UnenrollAsync` need `publish`.
+- Both honour each network's messaging window server-side. Messenger and Instagram take a
+  business-initiated message only within 24 hours of the contact's last one, so recipients
+  outside it come back skipped with `SkipReasons.WindowClosed` and nothing is attempted — the
+  number sent is often lower than the audience.
+
+- `client.Contacts`: the people behind the inbox. `ListAsync`, `GetAsync`, `CreateAsync`,
+  `UpdateAsync`, `DeleteAsync`, `ConversationsAsync` (the threads one person appears in),
+  `ImportAsync` (CSV), and `ListFieldsAsync`/`CreateFieldAsync`/`UpdateFieldAsync`/
+  `DeleteFieldAsync` for the custom columns a workspace keeps. All need the `inbox` scope.
+- `client.Contacts.ConversationAnalyticsAsync` reads `/v1/analytics/inbox/conversations`:
+  volume and median reply time per thread. Needs the `analytics` scope.
 - Meta messaging settings on `client.Accounts`: `GetIceBreakersAsync`, `SetIceBreakersAsync` and
   `DeleteIceBreakersAsync` (Facebook Pages and Instagram), plus `GetPersistentMenuAsync`,
   `SetPersistentMenuAsync`, `DeletePersistentMenuAsync`, `GetGreetingAsync`, `SetGreetingAsync`
