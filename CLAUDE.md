@@ -53,11 +53,11 @@ src/FoPost/
   Models/
     FoPostModel.cs         base; unknown keys land in AdditionalData
     Optional.cs            struct sentinel for partial updates
-    Post.cs Account.cs Page.cs Media.cs Ai.cs Platforms.cs Inbox.cs Contacts.cs Ads.cs Validate.cs
+    Post.cs Account.cs Page.cs Media.cs Ai.cs Platforms.cs Inbox.cs Contacts.cs Broadcasts.cs Ads.cs Validate.cs
   Resources/
     PostsResource.cs AccountsResource.cs WorkspacesResource.cs LabelsResource.cs AiResource.cs
-    InboxResource.cs ContactsResource.cs AdsResource.cs ValidateResource.cs
-    PostOptions.cs AiOptions.cs InboxOptions.cs ContactOptions.cs AdsOptions.cs ValidateOptions.cs ResourceHelpers.cs
+    InboxResource.cs ContactsResource.cs BroadcastsResource.cs SequencesResource.cs AdsResource.cs ValidateResource.cs
+    PostOptions.cs AiOptions.cs InboxOptions.cs ContactOptions.cs BroadcastOptions.cs AdsOptions.cs ValidateOptions.cs ResourceHelpers.cs
 tests/FoPost.Tests/        xunit; TestServer.cs holds the stub handler and fixtures
 examples/CreatePost/       runnable create-and-publish sample, part of the solution
 ```
@@ -85,13 +85,20 @@ returns it → the resource calls `FoPostHttpClient.Unwrap(...)` and `ResourceHe
   sends only the named fields. `Optional<T>.Of(null)` explicitly clears; `Optional<T>.Unset` omits.
 - Every resource method is async and takes a trailing `CancellationToken`.
 
-**Resources wired today:** `Posts`, `Accounts`, `Workspaces`, `Labels`, `Ai`, `Inbox`, `Contacts`, `Ads`,
+**Resources wired today:** `Posts`, `Accounts`, `Workspaces`, `Labels`, `Ai`, `Inbox`, `Contacts`, `Broadcasts`, `Sequences`, `Ads`,
 `Media`, `Validate` (scope `posts`, wraps the three stateless `/v1/validate/*` checks).
 `Contacts` (scope `inbox`) covers `/v1/contacts/*` plus the `/v1/contacts/fields` family.
 Its list envelope is `{data, pagination}` with snake_case keys, so it builds a `ContactPage`
 rather than reusing `Page<T>` or `ReadMeta`. `CreateFieldAsync` puts the workspace on the
 query string because the handler reads it there, and `ConversationAnalyticsAsync` reaches
 `/v1/analytics/inbox/conversations` and needs the `analytics` scope instead.
+
+`Broadcasts` and `Sequences` (scope `inbox`) cover `/v1/broadcasts/*` and `/v1/sequences/*`.
+`SendAsync`, `CancelAsync`, `EnrollAsync` and `UnenrollAsync` also need `publish`, because they
+reach a platform. Both list envelopes are `{data, pagination}` like contacts, so both reuse
+`ContactPageMeta` through `BroadcastsResource.PaginationOf`. A recipient's `SkipReason` is the
+messaging window's record: `window_closed` means the network's 24-hour window had shut and
+nothing was attempted, so a sent count lower than the audience is correct rather than a failure.
 
 `Inbox` (scope `inbox`) skips `/v1/inbox/chat/*` (browser-encrypted X Chat) and the binary
 `/v1/inbox/{id}/attachments/{index}` stream. `Ads` (scope `ads`) wraps every `/v1/ads` route;

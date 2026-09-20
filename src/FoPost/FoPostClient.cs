@@ -38,6 +38,8 @@ public sealed class FoPostClient : IDisposable
         Ai = new AiResource(_http);
         Inbox = new InboxResource(_http);
         Contacts = new ContactsResource(_http);
+        Broadcasts = new BroadcastsResource(_http);
+        Sequences = new SequencesResource(_http);
         Ads = new AdsResource(_http);
         Validate = new ValidateResource(_http);
         Media = new MediaResource(_http);
@@ -64,6 +66,15 @@ public sealed class FoPostClient : IDisposable
 
     /// <summary>The people behind the inbox, and the fields kept about them.</summary>
     public ContactsResource Contacts { get; }
+
+    /// <summary>
+    /// One message into every conversation the workspace already has with a segment of its
+    /// contacts.
+    /// </summary>
+    public BroadcastsResource Broadcasts { get; }
+
+    /// <summary>A series of messages on a delay, walked per enrolled contact.</summary>
+    public SequencesResource Sequences { get; }
 
     public AdsResource Ads { get; }
 

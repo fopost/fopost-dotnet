@@ -209,6 +209,55 @@ var report = await client.Contacts.ConversationAnalyticsAsync(new ConversationAn
 });
 ```
 
+## Broadcasts and sequences
+
+A broadcast is one message into every conversation you already have with a segment of your contacts; a sequence is a series of them on a delay. Neither opens a cold DM.
+
+Nothing is sent into a closed messaging window: Messenger and Instagram take a business-initiated message only within 24 hours of the contact's last one, so recipients outside it come back skipped with `window_closed` rather than attempted. Telegram, Slack, Bluesky and Reddit have no window. The number sent is therefore often lower than the audience, and that is correct rather than a failure.
+
+Reading needs the `inbox` scope; `SendAsync`, `CancelAsync`, `EnrollAsync` and `UnenrollAsync` also need `publish`.
+
+```csharp
+var broadcast = await client.Broadcasts.CreateAsync(new CreateBroadcastOptions
+{
+    WorkspaceId = workspaceId,
+    AccountId = accountId,
+    Name = "September check-in",
+    Text = "New colours just landed. Want a look?",
+    Audience = AudienceFilter.OnPlatforms("instagram"),
+});
+
+// Recipients is how many contacts matched, not how many will be messaged.
+var sent = await client.Broadcasts.SendAsync(broadcast.Id);
+
+// Who was skipped, and why.
+var skipped = await client.Broadcasts.RecipientsAsync(
+    broadcast.Id,
+    new ListRecipientsOptions { Status = RecipientStatuses.Skipped });
+foreach (var recipient in skipped)
+{
+    Console.WriteLine($"{recipient.DisplayName}: {recipient.SkipReason}");
+}
+
+var sequence = await client.Sequences.CreateAsync(new CreateSequenceOptions
+{
+    WorkspaceId = workspaceId,
+    AccountId = accountId,
+    Name = "Welcome",
+    Steps = new[]
+    {
+        SequenceStep.Of(0, "Thanks for the follow — anything I can help with?"),
+        SequenceStep.Of(48, "Here is what people usually ask us first."),
+    },
+});
+
+// By id, or by the same audience filter a broadcast takes.
+await client.Sequences.EnrollAsync(sequence.Id, new EnrollOptions { ContactIds = new[] { contactId } });
+
+// Nothing further fires for them.
+await client.Sequences.UnenrollAsync(sequence.Id, new[] { contactId });
+```
+
 ## Error handling
 
 Every non-2xx response raises a `FoPostException` carrying the API's status, error code, and body.
