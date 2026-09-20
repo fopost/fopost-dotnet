@@ -86,6 +86,27 @@ public sealed class AccountsResource
     }
 
     /// <summary>
+    /// The numbers only this account's network reports, in its own vocabulary: ad-break
+    /// earnings, story taps, a retention curve, the search terms behind a listing. Keyed by the
+    /// platform's own metric names, read from the newest collected snapshot rather than fetched
+    /// live. Needs the <c>analytics</c> scope.
+    /// </summary>
+    /// <remarks>
+    /// A network whose metric access has not been granted yet answers 503
+    /// (<c>platform_metrics_unavailable</c>) rather than an empty set.
+    /// </remarks>
+    public async Task<AccountPlatformMetrics> PlatformMetricsAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new Dictionary<string, object?> { ["raw"] = "true" };
+        var body = await _http
+            .GetAsync($"{AccountPath(accountId)}/insights", query, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<AccountPlatformMetrics>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>
     /// Mint a one-time code, valid for 15 minutes. Sending <c>/connect &lt;code&gt;</c> to the bot in
     /// a Telegram chat connects that chat. <paramref name="workspaceId"/> may be omitted for a key
     /// bound to one workspace.
