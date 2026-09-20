@@ -7,6 +7,16 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 ## [Unreleased]
 
 ### Added
+- Per-network extras on `Accounts`, all `accounts` scope: Pinterest boards
+  (`ListPinterestBoardsAsync`, `CreatePinterestBoardAsync`), YouTube playlists and captions
+  (`ListYouTubePlaylistsAsync`, `CreateYouTubePlaylistAsync`, `SetDefaultYouTubePlaylistAsync`,
+  `ListYouTubeCaptionsAsync`, `UploadYouTubeCaptionsAsync`, `ReadYouTubeTranscriptAsync`),
+  Bluesky post languages (`GetBlueskyLanguagesAsync`, `SetBlueskyLanguagesAsync`), TikTok
+  creator info (`GetTikTokCreatorInfoAsync`), TikTok music and place search plus video
+  lookup (`SearchTikTokMusicAsync`, `SearchTikTokLocationsAsync`, `LookupTikTokVideoAsync`),
+  Instagram audio, publishing limit and stories
+  (`SearchInstagramAudioAsync`, `GetInstagramPublishingLimitAsync`, `ListInstagramStoriesAsync`,
+  `GetInstagramStoryInsightsAsync`) and LinkedIn mentions (`SearchLinkedInMentionsAsync`).
 
 - `InboxItem.ModerationStatus` carries the platform's own state for a comment
   (`published`, `held`, `spam`, `rejected`), and `InboxAccount.ReconnectRequired`

@@ -71,3 +71,54 @@ public sealed class DiscordRoleOptions
     /// <summary>Discord's permission bitfield as a decimal string.</summary>
     public string? Permissions { get; set; }
 }
+/// <summary>A new Pinterest board. <see cref="Privacy"/> is PUBLIC, PROTECTED or SECRET; unset means PUBLIC.</summary>
+public sealed class CreatePinterestBoardOptions
+{
+    public required string Name { get; set; }
+
+    public string? Description { get; set; }
+
+    public string? Privacy { get; set; }
+}
+
+/// <summary>A new playlist. <see cref="Privacy"/> is public, unlisted or private; unset means private.</summary>
+public sealed class CreateYouTubePlaylistOptions
+{
+    public required string Title { get; set; }
+
+    public string? Description { get; set; }
+
+    public string? Privacy { get; set; }
+}
+
+/// <summary>
+/// A caption track to upload. <see cref="Body"/> is the subtitle file itself; YouTube reads SRT and
+/// WebVTT and works out which from the bytes, so the format is not declared.
+/// </summary>
+public sealed class UploadYouTubeCaptionsOptions
+{
+    /// <summary>A BCP-47 tag.</summary>
+    public required string Language { get; set; }
+
+    public required string Body { get; set; }
+
+    public string? Name { get; set; }
+
+    public bool? IsDraft { get; set; }
+}
+
+/// <summary>Narrows a TikTok music or place search.</summary>
+public sealed class TikTokSearchOptions
+{
+    /// <summary>1 to 50; the API defaults to 20 when unset.</summary>
+    public int? Limit { get; set; }
+}
+
+/// <summary>Narrows the Instagram audio search. An unset <see cref="Query"/> asks for what is trending.</summary>
+public sealed class InstagramAudioSearchOptions
+{
+    public string? Query { get; set; }
+
+    /// <summary>music (the default) or original_sound.</summary>
+    public string? AudioType { get; set; }
+}
