@@ -571,3 +571,65 @@ public sealed class DiscordAck : FoPostModel
     [JsonPropertyName("assigned")]
     public bool? Assigned { get; set; }
 }
+
+/// <summary>
+/// One metric a network reports under its own name. <see cref="Key"/> is the platform's own
+/// name and is stable; <see cref="Label"/> is ours and may be reworded, so match on the key.
+/// </summary>
+public sealed class PlatformMetricRow : FoPostModel
+{
+    [JsonPropertyName("key")]
+    public string Key { get; set; } = string.Empty;
+
+    [JsonPropertyName("label")]
+    public string Label { get; set; } = string.Empty;
+
+    /// <summary>One of <c>count</c>, <c>duration_ms</c>, <c>currency_usd</c>, <c>ratio</c>, <c>series</c>.</summary>
+    [JsonPropertyName("kind")]
+    public string Kind { get; set; } = "count";
+
+    /// <summary>
+    /// A number for every kind but <c>series</c>, which is an array of points, so the raw
+    /// element is kept. <see cref="Number"/> decodes the common case.
+    /// </summary>
+    [JsonPropertyName("value")]
+    public JsonElement? Value { get; set; }
+
+    /// <summary>The value as a number, or null for a series or a non-numeric answer.</summary>
+    public double? Number() =>
+        Value is { ValueKind: JsonValueKind.Number } element && element.TryGetDouble(out var number)
+            ? number
+            : null;
+}
+
+/// <summary>
+/// One side of a per-network metric set: the account itself, or its newest measured post.
+/// <see cref="ExternalPostId"/> is null on the account side.
+/// </summary>
+public sealed class PlatformMetricsBlock : FoPostModel
+{
+    [JsonPropertyName("fetched_at")]
+    public string? FetchedAt { get; set; }
+
+    [JsonPropertyName("external_post_id")]
+    public string? ExternalPostId { get; set; }
+
+    [JsonPropertyName("metrics")]
+    public IReadOnlyList<PlatformMetricRow> Metrics { get; set; } = [];
+}
+
+/// <summary>
+/// What only this network reports, in its own vocabulary: ad-break earnings, story taps, a
+/// retention curve, the search terms behind a listing.
+/// </summary>
+public sealed class AccountPlatformMetrics : FoPostModel
+{
+    [JsonPropertyName("platform")]
+    public string? Platform { get; set; }
+
+    [JsonPropertyName("account")]
+    public PlatformMetricsBlock Account { get; set; } = new();
+
+    [JsonPropertyName("post")]
+    public PlatformMetricsBlock Post { get; set; } = new();
+}
