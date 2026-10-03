@@ -250,6 +250,85 @@ public sealed record GoogleConversionAction
     public long? ValueMinor { get; init; }
 }
 
+/// <summary>What Google projects applying a recommendation would change.</summary>
+/// <remarks>A null field is one Google does not estimate for that recommendation.</remarks>
+public sealed record GoogleRecommendationImpact
+{
+    [JsonPropertyName("baseClicks")]
+    public double? BaseClicks { get; init; }
+
+    [JsonPropertyName("potentialClicks")]
+    public double? PotentialClicks { get; init; }
+
+    /// <summary>The account's currency, in minor units.</summary>
+    [JsonPropertyName("baseCostMinor")]
+    public long? BaseCostMinor { get; init; }
+
+    [JsonPropertyName("potentialCostMinor")]
+    public long? PotentialCostMinor { get; init; }
+
+    [JsonPropertyName("baseConversions")]
+    public double? BaseConversions { get; init; }
+
+    [JsonPropertyName("potentialConversions")]
+    public double? PotentialConversions { get; init; }
+}
+
+/// <summary>One of Google's own recommendations for the account.</summary>
+/// <remarks>
+/// <c>Id</c> is the Google resource name rather than the <c>~</c> form other
+/// objects use, because a recommendation is not an object you address again: it
+/// is what apply and dismiss take.
+/// </remarks>
+public sealed record GoogleRecommendation
+{
+    [JsonPropertyName("id")]
+    public string Id { get; init; } = string.Empty;
+
+    [JsonPropertyName("type")]
+    public string Type { get; init; } = string.Empty;
+
+    [JsonPropertyName("campaignId")]
+    public string? CampaignId { get; init; }
+
+    [JsonPropertyName("adGroupId")]
+    public string? AdGroupId { get; init; }
+
+    [JsonPropertyName("dismissed")]
+    public bool Dismissed { get; init; }
+
+    [JsonPropertyName("impact")]
+    public GoogleRecommendationImpact? Impact { get; init; }
+}
+
+/// <summary>One campaign's optimization score.</summary>
+public sealed record GoogleOptimizationScoreCampaign
+{
+    [JsonPropertyName("id")]
+    public string Id { get; init; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; init; } = string.Empty;
+
+    [JsonPropertyName("score")]
+    public double? Score { get; init; }
+}
+
+/// <summary>Google's estimate of how well the account is set up, from 0 to 1.</summary>
+public sealed record GoogleOptimizationScore
+{
+    [JsonPropertyName("score")]
+    public double? Score { get; init; }
+
+    /// <summary>How much this account's score counts against others under the same manager.</summary>
+    [JsonPropertyName("weight")]
+    public double? Weight { get; init; }
+
+    [JsonPropertyName("campaigns")]
+    public IReadOnlyList<GoogleOptimizationScoreCampaign> Campaigns { get; init; } =
+        Array.Empty<GoogleOptimizationScoreCampaign>();
+}
+
 /// <summary>Rows exactly as Google returns them.</summary>
 public sealed record GoogleQueryResult
 {

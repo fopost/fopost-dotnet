@@ -119,6 +119,46 @@ public class GoogleAdsTests
     }
 
     [Fact]
+    public async Task Recommendations_join_the_types_filter()
+    {
+        var handler = new StubHandler().Json("""
+            {"data":[{"id":"customers/1234567890/recommendations/ABC~1","type":"KEYWORD",
+            "campaignId":"1234567890~campaign~55","dismissed":false,
+            "impact":{"baseClicks":10,"potentialClicks":25}}]}
+            """);
+        using var test = new TestClient(handler);
+
+        var rows = await test.Client.Ads.Google.RecommendationsAsync(
+            new GoogleAdsScope { ConnectionId = "conn_1", CustomerId = "1234567890" },
+            new[] { "KEYWORD", "TARGET_CPA_OPT_IN" });
+
+        Assert.Equal("KEYWORD", rows[0].Type);
+        Assert.Equal(25, rows[0].Impact!.PotentialClicks);
+        Assert.Contains("types=KEYWORD%2CTARGET_CPA_OPT_IN", handler.LastRequest.RequestUri!.Query);
+    }
+
+    [Fact]
+    public async Task Apply_recommendations_sends_the_ids()
+    {
+        var handler = new StubHandler().Json("""{"data":{"applied":1}}""");
+        using var test = new TestClient(handler);
+
+        var applied = await test.Client.Ads.Google.ApplyRecommendationsAsync(
+            new GoogleRecommendationsOptions
+            {
+                WorkspaceId = "ws_1",
+                ConnectionId = "conn_1",
+                CustomerId = "1234567890",
+                Ids = new List<string> { "customers/1234567890/recommendations/ABC~1" },
+            });
+
+        Assert.Equal(1, applied);
+        Assert.Equal(
+            "/v1/ads/google/recommendations/apply",
+            handler.LastRequest.RequestUri!.AbsolutePath);
+    }
+
+    [Fact]
     public async Task Authorize_google_has_its_own_route()
     {
         var handler = new StubHandler().Json("""{"data":{"url":"https://accounts.google.com/o/x"}}""");

@@ -313,6 +313,51 @@ public sealed class GoogleAdsResource
         CancellationToken cancellationToken = default) =>
         UploadedAsync("/v1/ads/google/conversions/adjustments", options, cancellationToken);
 
+    // ── Recommendations ──
+
+    /// <summary>Google's own read on what the account should change next.</summary>
+    /// <param name="scope">The connection and the Google Ads account.</param>
+    /// <param name="types">Narrows to those recommendation types; all of them when empty.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    public async Task<IReadOnlyList<GoogleRecommendation>> RecommendationsAsync(
+        GoogleAdsScope scope,
+        IEnumerable<string>? types = null,
+        CancellationToken cancellationToken = default)
+    {
+        var joined = types is null ? null : string.Join(",", types);
+        var body = await _http.GetAsync(
+                "/v1/ads/google/recommendations",
+                Query(scope, ("types", string.IsNullOrEmpty(joined) ? null : joined)),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<GoogleRecommendation>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>The account's score and weight, and the score of each live campaign.</summary>
+    public async Task<GoogleOptimizationScore> OptimizationScoreAsync(
+        GoogleAdsScope scope,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http.GetAsync("/v1/ads/google/optimization-score", Query(scope), cancellationToken)
+            .ConfigureAwait(false);
+        return Require<GoogleOptimizationScore>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>
+    /// Applies each one, which changes what the live account serves or bids, and
+    /// answers how many landed. Needs <c>publish</c> as well as <c>ads</c>.
+    /// </summary>
+    public Task<int> ApplyRecommendationsAsync(
+        GoogleRecommendationsOptions options,
+        CancellationToken cancellationToken = default) =>
+        CountedAsync("/v1/ads/google/recommendations/apply", "applied", options, cancellationToken);
+
+    /// <summary>Hides each one so Google stops surfacing it. Needs <c>publish</c>.</summary>
+    public Task<int> DismissRecommendationsAsync(
+        GoogleRecommendationsOptions options,
+        CancellationToken cancellationToken = default) =>
+        CountedAsync("/v1/ads/google/recommendations/dismiss", "dismissed", options, cancellationToken);
+
     // ── GAQL ──
 
     /// <summary>Run a read-only GAQL SELECT; rows come back as Google sends them.</summary>
@@ -335,12 +380,19 @@ public sealed class GoogleAdsResource
         return ReadId(response);
     }
 
-    private async Task<int> UploadedAsync(string path, object options, CancellationToken cancellationToken)
+    private Task<int> UploadedAsync(string path, object options, CancellationToken cancellationToken) =>
+        CountedAsync(path, "uploaded", options, cancellationToken);
+
+    private async Task<int> CountedAsync(
+        string path,
+        string key,
+        object options,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(options);
 
         var response = await _http.PostAsync(path, options, cancellationToken).ConfigureAwait(false);
-        return FoPostHttpClient.Unwrap(response)?["uploaded"]?.GetValue<int>() ?? 0;
+        return FoPostHttpClient.Unwrap(response)?[key]?.GetValue<int>() ?? 0;
     }
 
     private static string ReadId(System.Text.Json.Nodes.JsonNode? response) =>
