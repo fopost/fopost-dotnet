@@ -89,6 +89,16 @@ public sealed class CreateAdOptions : AdRequestOptions
     /// <summary>Query string appended to every link in the ad, e.g. <c>utm_source=meta&amp;utm_medium=paid</c>.</summary>
     [JsonPropertyName("urlTags")]
     public string? UrlTags { get; set; }
+
+    /// <summary>
+    /// A post already live on the network, from
+    /// <see cref="Resources.AdsResource.SparkPostsAsync"/>. Runs it as a Spark
+    /// ad, so <see cref="Text"/>, <see cref="Headline"/> and
+    /// <see cref="MediaUrl"/> are ignored. Needs the network's
+    /// <c>sparkAds</c> capability.
+    /// </summary>
+    [JsonPropertyName("sparkPostId")]
+    public string? SparkPostId { get; set; }
 }
 
 /// <summary>
@@ -228,6 +238,71 @@ public sealed class CreateAdCampaignOptions : AdConnectionRequestOptions
     /// <summary>Left unset, the campaign is created paused. Set to <c>false</c> to go live at once.</summary>
     [JsonPropertyName("paused")]
     public bool? Paused { get; set; }
+
+    /// <summary>
+    /// Hands targeting and creative rotation to the network. Needs its
+    /// <c>smartPlus</c> capability.
+    /// </summary>
+    [JsonPropertyName("smartPlus")]
+    public bool? SmartPlus { get; set; }
+}
+
+/// <summary>One offline conversion. Identifiers are hashed before anything leaves FoPost.</summary>
+public sealed class ConversionEvent
+{
+    [JsonPropertyName("eventName")]
+    public string EventName { get; set; } = string.Empty;
+
+    /// <summary>ISO 8601.</summary>
+    [JsonPropertyName("occurredAt")]
+    public string OccurredAt { get; set; } = string.Empty;
+
+    [JsonPropertyName("email")]
+    public string? Email { get; set; }
+
+    [JsonPropertyName("phone")]
+    public string? Phone { get; set; }
+
+    /// <summary>Account currency, minor units.</summary>
+    [JsonPropertyName("valueMinor")]
+    public long? ValueMinor { get; set; }
+
+    [JsonPropertyName("currency")]
+    public string? Currency { get; set; }
+
+    [JsonPropertyName("orderId")]
+    public string? OrderId { get; set; }
+}
+
+/// <summary>The body of <see cref="Resources.AdsResource.UploadConversionsAsync"/>.</summary>
+public sealed class UploadConversionsOptions : AdConnectionRequestOptions
+{
+    /// <summary>Ad account id.</summary>
+    [JsonPropertyName("adAccountId")]
+    public string AdAccountId { get; set; } = string.Empty;
+
+    /// <summary>A pixel the ad account owns, from <see cref="Resources.AdsResource.AudiencesAsync"/>.</summary>
+    [JsonPropertyName("pixelId")]
+    public string PixelId { get; set; } = string.Empty;
+
+    /// <summary>Up to 1000 per call.</summary>
+    [JsonPropertyName("events")]
+    public IList<ConversionEvent> Events { get; set; } = new List<ConversionEvent>();
+}
+
+/// <summary>Scopes a comment write; the comment id travels in the path.</summary>
+public sealed class AdCommentOptions : AdConnectionRequestOptions
+{
+    [JsonPropertyName("adId")]
+    public string AdId { get; set; } = string.Empty;
+
+    /// <summary>The reply, on <see cref="Resources.AdsResource.ReplyToCommentAsync"/> only.</summary>
+    [JsonPropertyName("text")]
+    public string? Text { get; set; }
+
+    /// <summary>The new state, on <see cref="Resources.AdsResource.SetCommentHiddenAsync"/> only.</summary>
+    [JsonPropertyName("hidden")]
+    public bool? Hidden { get; set; }
 }
 
 /// <summary>The body of <see cref="Resources.AdsResource.UpdateCampaignAsync"/>; unset fields are left alone.</summary>

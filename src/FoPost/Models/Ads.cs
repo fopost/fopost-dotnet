@@ -559,6 +559,106 @@ public sealed class TargetingOption : FoPostModel
     public string? Detail { get; set; }
 }
 
+/// <summary>A Business Center, or the network's equivalent grouping of ad accounts.</summary>
+public sealed class AdBusinessCenter : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("role")]
+    public string? Role { get; set; }
+}
+
+/// <summary>
+/// The account an ad runs as. Meta calls it a Page, TikTok an identity; an
+/// identity id is what every route calls a page id.
+/// </summary>
+public sealed class AdIdentity : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>The network's own identity kind, e.g. <c>CUSTOMIZED_USER</c>.</summary>
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("avatarUrl")]
+    public string? AvatarUrl { get; set; }
+}
+
+/// <summary>A post already live on the network, offered as the source of a Spark ad.</summary>
+public sealed class SparkPost : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("identityId")]
+    public string IdentityId { get; set; } = string.Empty;
+
+    [JsonPropertyName("caption")]
+    public string? Caption { get; set; }
+
+    [JsonPropertyName("thumbnailUrl")]
+    public string? ThumbnailUrl { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    public string? CreatedAt { get; set; }
+
+    [JsonPropertyName("views")]
+    public long? Views { get; set; }
+}
+
+/// <summary>A comment on an ad, read live from the network and never stored.</summary>
+public sealed class AdComment : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("adId")]
+    public string? AdId { get; set; }
+
+    [JsonPropertyName("text")]
+    public string Text { get; set; } = string.Empty;
+
+    [JsonPropertyName("authorName")]
+    public string? AuthorName { get; set; }
+
+    [JsonPropertyName("authorAvatarUrl")]
+    public string? AuthorAvatarUrl { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    public string? CreatedAt { get; set; }
+
+    [JsonPropertyName("likes")]
+    public long Likes { get; set; }
+
+    [JsonPropertyName("replyCount")]
+    public long ReplyCount { get; set; }
+
+    [JsonPropertyName("hidden")]
+    public bool Hidden { get; set; }
+
+    /// <summary>The comment this one answers, when it is not on the ad itself.</summary>
+    [JsonPropertyName("parentId")]
+    public string? ParentId { get; set; }
+}
+
+/// <summary>One page of an ad's comments; pass <c>NextCursor</c> back as <c>after</c>.</summary>
+public sealed class AdCommentsPage : FoPostModel
+{
+    [JsonPropertyName("comments")]
+    public IReadOnlyList<AdComment> Comments { get; set; } = Array.Empty<AdComment>();
+
+    [JsonPropertyName("nextCursor")]
+    public string? NextCursor { get; set; }
+}
+
 /// <summary>A lead form on a Page.</summary>
 public sealed class LeadForm : FoPostModel
 {
@@ -1184,56 +1284,3 @@ public sealed class ConversionMetrics : FoPostModel
     public long? CostPerConversionMinor { get; set; }
 }
 
-/// <summary>A public ad from the network's own library, never a connection's own data.</summary>
-public sealed class AdLibraryAd : FoPostModel
-{
-    [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
-
-    [JsonPropertyName("advertiserName")]
-    public string? AdvertiserName { get; set; }
-
-    [JsonPropertyName("advertiserUrl")]
-    public string? AdvertiserUrl { get; set; }
-
-    [JsonPropertyName("headline")]
-    public string? Headline { get; set; }
-
-    [JsonPropertyName("body")]
-    public string? Body { get; set; }
-
-    [JsonPropertyName("type")]
-    public string? Type { get; set; }
-
-    [JsonPropertyName("thumbnailUrl")]
-    public string? ThumbnailUrl { get; set; }
-
-    [JsonPropertyName("firstImpressionAt")]
-    public string? FirstImpressionAt { get; set; }
-
-    [JsonPropertyName("lastImpressionAt")]
-    public string? LastImpressionAt { get; set; }
-
-    [JsonPropertyName("countries")]
-    public IReadOnlyList<string> Countries { get; set; } = Array.Empty<string>();
-
-    [JsonPropertyName("detailsUrl")]
-    public string? DetailsUrl { get; set; }
-
-    /// <summary>The paying entity, where the network discloses one.</summary>
-    [JsonPropertyName("payer")]
-    public string? Payer { get; set; }
-
-    [JsonPropertyName("impressionsRange")]
-    public string? ImpressionsRange { get; set; }
-}
-
-/// <summary>One page of ad-library results; pass <c>NextCursor</c> back as the cursor.</summary>
-public sealed class AdLibraryPage : FoPostModel
-{
-    [JsonPropertyName("ads")]
-    public IReadOnlyList<AdLibraryAd> Ads { get; set; } = Array.Empty<AdLibraryAd>();
-
-    [JsonPropertyName("nextCursor")]
-    public string? NextCursor { get; set; }
-}
