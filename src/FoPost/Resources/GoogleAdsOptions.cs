@@ -342,3 +342,11 @@ public sealed class GoogleQueryOptions : GoogleAdsScope
     [JsonPropertyName("query")]
     public string Query { get; set; } = string.Empty;
 }
+
+/// <summary>Apply or dismiss recommendations on one account.</summary>
+public sealed class GoogleRecommendationsOptions : GoogleAdsScope
+{
+    /// <summary>Google resource names, each on <c>CustomerId</c>.</summary>
+    [JsonPropertyName("ids")]
+    public IList<string> Ids { get; set; } = new List<string>();
+}
