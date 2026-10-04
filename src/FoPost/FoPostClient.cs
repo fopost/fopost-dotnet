@@ -45,6 +45,7 @@ public sealed class FoPostClient : IDisposable
         Ads = new AdsResource(_http);
         Validate = new ValidateResource(_http);
         Media = new MediaResource(_http);
+        Analytics = new AnalyticsResource(_http);
         GoogleBusiness = new GoogleBusinessResource(_http);
     }
 
@@ -90,6 +91,8 @@ public sealed class FoPostClient : IDisposable
 
     public MediaResource Media { get; }
 
+    /// <summary>Deeper posting analytics: decay, cadence, per-post timelines and the changes feed.</summary>
+    public AnalyticsResource Analytics { get; }
     /// <summary>Manage a connected Google Business Profile location.</summary>
     public GoogleBusinessResource GoogleBusiness { get; }
 
