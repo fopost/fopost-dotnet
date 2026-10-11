@@ -53,11 +53,13 @@ src/FoPost/
   Models/
     FoPostModel.cs         base; unknown keys land in AdditionalData
     Optional.cs            struct sentinel for partial updates
-    Post.cs Account.cs Page.cs Media.cs Ai.cs Platforms.cs Inbox.cs Contacts.cs Broadcasts.cs Ads.cs Validate.cs
+    Post.cs Account.cs Page.cs Media.cs Ai.cs Platforms.cs Inbox.cs Contacts.cs Broadcasts.cs Ads.cs Validate.cs Blog.cs
   Resources/
     PostsResource.cs AccountsResource.cs WorkspacesResource.cs LabelsResource.cs AiResource.cs
-    InboxResource.cs ContactsResource.cs BroadcastsResource.cs SequencesResource.cs AdsResource.cs ValidateResource.cs
-    PostOptions.cs AiOptions.cs InboxOptions.cs ContactOptions.cs BroadcastOptions.cs AdsOptions.cs ValidateOptions.cs ResourceHelpers.cs
+    InboxResource.cs ContactsResource.cs BroadcastsResource.cs SequencesResource.cs AdsResource.cs ValidateResource.cs BlogResource.cs
+    PostOptions.cs AiOptions.cs InboxOptions.cs ContactOptions.cs BroadcastOptions.cs AdsOptions.cs ValidateOptions.cs BlogOptions.cs ResourceHelpers.cs
+  Webhooks/
+    FoPostWebhooks.cs      signature verifier (raw bytes, constant time, timestamped first) + envelope
 tests/FoPost.Tests/        xunit; TestServer.cs holds the stub handler and fixtures
 examples/CreatePost/       runnable create-and-publish sample, part of the solution
 ```
@@ -109,7 +111,10 @@ serialised straight from their options objects; the inbox `read`/`refresh` bodie
 snake_case and `PATCH /v1/inbox/{id}` is camelCase, so those are built by hand. `Media` (scope
 `posts`) is only the direct-upload flow: `PresignAsync` → `FoPostHttpClient.PutBytesAsync` (raw
 bytes to the presigned URL, no credential header, only the headers the API returned) →
-`CompleteAsync`, bundled as `UploadDirectAsync`. There is no `Communities`, `Webhooks`,
+`CompleteAsync`, bundled as `UploadDirectAsync`. `Blog` (scope `posts`; `ai` for plan, request and
+regenerate; `publish` for publish) wraps `/v1/blog/*`: `workspaceId` is camelCase on the query and in
+bodies, and every field is camelCase. `FoPostWebhooks.Verify` (namespace `FoPost`) verifies any
+delivery's signature headers; there is no `Webhooks` *resource*. There is no `Communities`,
 `Analytics`, or `Automations` resource here — reach those
 through the escape hatch `FoPostClient.RequestAsync(...)`, which returns the raw `JsonNode?`
 envelope and all.
