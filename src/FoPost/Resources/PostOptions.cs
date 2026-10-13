@@ -81,6 +81,9 @@ public sealed class CreatePostOptions
 
     /// <summary>Per-platform overrides, keyed by platform name.</summary>
     public IDictionary<string, object?>? Settings { get; set; }
+
+    /// <summary>Up to five files to attach to the first content block.</summary>
+    public IList<PostFile>? Files { get; set; }
 }
 
 /// <summary>
@@ -109,4 +112,7 @@ public sealed class UpdatePostOptions
     public Optional<string> ContentType { get; set; }
 
     public Optional<IDictionary<string, object?>> Settings { get; set; }
+
+    /// <summary>Up to five files to attach to the first content block.</summary>
+    public IList<PostFile>? Files { get; set; }
 }
