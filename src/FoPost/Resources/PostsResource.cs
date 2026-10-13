@@ -1,4 +1,7 @@
+using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
+using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using FoPost.Http;
 using static FoPost.Resources.ResourceHelpers;
@@ -8,9 +11,17 @@ namespace FoPost.Resources;
 /// <summary><c>client.Posts</c> — create, schedule, publish, and inspect posts.</summary>
 public sealed class PostsResource
 {
-    private readonly FoPostHttpClient _http;
+    // What a multipart request may carry per file when the limits call is unavailable.
+    private const long FallbackMultipartMaxFileBytes = 100L * 1024 * 1024;
 
-    internal PostsResource(FoPostHttpClient http) => _http = http;
+    private readonly FoPostHttpClient _http;
+    private readonly MediaResource _media;
+
+    internal PostsResource(FoPostHttpClient http, MediaResource media)
+    {
+        _http = http;
+        _media = media;
+    }
 
     /// <summary>One page of posts, newest first unless <c>Sort</c> says otherwise.</summary>
     public async Task<Page<Post>> ListAsync(
@@ -157,6 +168,19 @@ public sealed class PostsResource
             body["settings"] = options.Settings;
         }
 
+        if (options.Files is { Count: > 0 } files)
+        {
+            if (await FitsMultipartAsync(files, options.WorkspaceId, cancellationToken).ConfigureAwait(false))
+            {
+                return await SendMultipartAsync(HttpMethod.Post, "/v1/posts", body, files, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            var content = options.Content.Count > 0 ? options.Content : new List<PostContent> { new() };
+            await AttachDirectAsync(options.WorkspaceId, content, files, cancellationToken).ConfigureAwait(false);
+            body["content"] = content;
+        }
+
         var response = await _http.PostAsync("/v1/posts", body, cancellationToken).ConfigureAwait(false);
         return Require<Post>(FoPostHttpClient.Unwrap(response));
     }
@@ -226,10 +250,118 @@ public sealed class PostsResource
             body["settings"] = options.Settings.Value;
         }
 
-        var response = await _http
-            .PutAsync($"/v1/posts/{Uri.EscapeDataString(postId)}", body, cancellationToken)
-            .ConfigureAwait(false);
+        var path = $"/v1/posts/{Uri.EscapeDataString(postId)}";
+        if (options.Files is { Count: > 0 } files)
+        {
+            if (await FitsMultipartAsync(files, null, cancellationToken).ConfigureAwait(false))
+            {
+                return await SendMultipartAsync(HttpMethod.Put, path, body, files, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            // Direct upload needs the workspace, and an untouched update needs the existing blocks.
+            var existing = await GetAsync(postId, cancellationToken).ConfigureAwait(false);
+            var content = options.Content.IsSet && options.Content.Value is { } given
+                ? given
+                : existing.Content.Select(block => new PostContent(block.Text, block.Media)).ToList();
+            if (content.Count == 0)
+            {
+                content.Add(new PostContent());
+            }
+
+            await AttachDirectAsync(existing.WorkspaceId ?? string.Empty, content, files, cancellationToken)
+                .ConfigureAwait(false);
+            body["content"] = content;
+        }
+
+        var response = await _http.PutAsync(path, body, cancellationToken).ConfigureAwait(false);
         return Require<Post>(FoPostHttpClient.Unwrap(response));
+    }
+
+    private async Task<bool> FitsMultipartAsync(
+        IList<PostFile> files,
+        string? workspaceId,
+        CancellationToken cancellationToken)
+    {
+        var ceiling = FallbackMultipartMaxFileBytes;
+        try
+        {
+            var limits = await _media.LimitsAsync(workspaceId, cancellationToken).ConfigureAwait(false);
+            if (limits.MultipartMaxFileBytes > 0)
+            {
+                ceiling = limits.MultipartMaxFileBytes;
+            }
+        }
+        catch (FoPostException)
+        {
+            // The multipart ceiling is fixed; an unreachable limits call falls back to it.
+        }
+
+        return files.All(file => file.Length <= ceiling);
+    }
+
+    private async Task<Post> SendMultipartAsync(
+        HttpMethod method,
+        string path,
+        Dictionary<string, object?> body,
+        IList<PostFile> files,
+        CancellationToken cancellationToken)
+    {
+        var json = JsonSerializer.Serialize(body, FoPostJson.Options);
+        var response = await _http.RequestAsync(
+            method,
+            path,
+            () =>
+            {
+                var form = new MultipartFormDataContent { { new StringContent(json, Encoding.UTF8), "post" } };
+                foreach (var file in files)
+                {
+                    if (file.Content.CanSeek)
+                    {
+                        file.Content.Position = 0;
+                    }
+
+                    var part = new StreamContent(file.Content);
+                    part.Headers.ContentType = new MediaTypeHeaderValue(file.MimeType);
+                    part.Headers.ContentLength = file.Length;
+                    form.Add(part, "files", file.FileName);
+                }
+
+                return form;
+            },
+            null,
+            cancellationToken).ConfigureAwait(false);
+        return Require<Post>(FoPostHttpClient.Unwrap(response));
+    }
+
+    private async Task AttachDirectAsync(
+        string workspaceId,
+        IList<PostContent> content,
+        IList<PostFile> files,
+        CancellationToken cancellationToken)
+    {
+        var first = content[0];
+        first.Media ??= new List<MediaItem>();
+        foreach (var file in files)
+        {
+            var uploaded = await _media.UploadDirectAsync(
+                new PresignOptions
+                {
+                    WorkspaceId = workspaceId,
+                    Filename = file.FileName,
+                    MimeType = file.MimeType,
+                    Size = file.Length,
+                },
+                file.Content,
+                cancellationToken).ConfigureAwait(false);
+            first.Media.Add(new MediaItem
+            {
+                Type = file.MediaType,
+                Name = uploaded.Name ?? file.FileName,
+                Url = uploaded.Url,
+                Size = uploaded.Size ?? file.Length,
+            });
+        }
     }
 
     public async Task DeleteAsync(string postId, CancellationToken cancellationToken = default)
