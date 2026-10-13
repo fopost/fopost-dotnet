@@ -132,15 +132,34 @@ internal sealed class FoPostHttpClient : IDisposable
     };
 
     /// <summary>Send a request, retrying on 429, and return the decoded body.</summary>
-    public async Task<JsonNode?> RequestAsync(
+    public Task<JsonNode?> RequestAsync(
         HttpMethod method,
         string path,
         object? body = null,
         IReadOnlyDictionary<string, object?>? query = null,
         CancellationToken cancellationToken = default)
     {
-        var uri = BuildUri(path, query);
         var payload = body is null ? null : JsonSerializer.Serialize(body, FoPostJson.Options);
+        return RequestAsync(
+            method,
+            path,
+            payload is null ? null : () => new StringContent(payload, Encoding.UTF8, "application/json"),
+            query,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Send a request whose body is built per attempt, so a 429 retry never
+    /// reuses a consumed <see cref="HttpContent"/>.
+    /// </summary>
+    public async Task<JsonNode?> RequestAsync(
+        HttpMethod method,
+        string path,
+        Func<HttpContent>? content,
+        IReadOnlyDictionary<string, object?>? query = null,
+        CancellationToken cancellationToken = default)
+    {
+        var uri = BuildUri(path, query);
 
         var attempt = 0;
         while (true)
@@ -160,9 +179,9 @@ internal sealed class FoPostHttpClient : IDisposable
             {
                 request.Headers.TryAddWithoutValidation("X-API-Key", _apiKey);
             }
-            if (payload is not null)
+            if (content is not null)
             {
-                request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+                request.Content = content();
             }
 
             using var response = await _http
@@ -182,15 +201,35 @@ internal sealed class FoPostHttpClient : IDisposable
     }
 
     /// <summary>PUT raw bytes to a presigned URL: no credential, only the headers the API returned.</summary>
-    public async Task PutBytesAsync(
+    public Task PutBytesAsync(
         string url,
         IEnumerable<KeyValuePair<string, string>> headers,
         byte[] data,
+        CancellationToken cancellationToken = default) =>
+        PutContentAsync(url, headers, new ByteArrayContent(data), cancellationToken);
+
+    /// <summary>PUT a stream of known length to a presigned URL without buffering it.</summary>
+    public Task PutStreamAsync(
+        string url,
+        IEnumerable<KeyValuePair<string, string>> headers,
+        Stream data,
+        long length,
         CancellationToken cancellationToken = default)
+    {
+        var content = new StreamContent(data);
+        content.Headers.ContentLength = length;
+        return PutContentAsync(url, headers, content, cancellationToken);
+    }
+
+    private async Task PutContentAsync(
+        string url,
+        IEnumerable<KeyValuePair<string, string>> headers,
+        HttpContent content,
+        CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Put, new Uri(url))
         {
-            Content = new ByteArrayContent(data),
+            Content = content,
         };
         foreach (var (name, value) in headers)
         {
@@ -293,7 +332,7 @@ internal sealed class FoPostHttpClient : IDisposable
         string path,
         IReadOnlyDictionary<string, object?>? query = null,
         CancellationToken cancellationToken = default) =>
-        RequestAsync(HttpMethod.Get, path, null, query, cancellationToken);
+        RequestAsync(HttpMethod.Get, path, (object?)null, query, cancellationToken);
 
     public Task<JsonNode?> PostAsync(
         string path,
