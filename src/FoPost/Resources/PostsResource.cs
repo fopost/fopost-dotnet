@@ -313,7 +313,8 @@ public sealed class PostsResource
             path,
             () =>
             {
-                var form = new MultipartFormDataContent { { new StringContent(json, Encoding.UTF8), "post" } };
+                // Names are quoted explicitly: .NET sends them bare, which some multipart parsers reject.
+                var form = new MultipartFormDataContent { { new StringContent(json, Encoding.UTF8), "\"post\"" } };
                 foreach (var file in files)
                 {
                     if (file.Content.CanSeek)
@@ -321,10 +322,10 @@ public sealed class PostsResource
                         file.Content.Position = 0;
                     }
 
-                    var part = new StreamContent(file.Content);
+                    var part = new LeaveOpenStreamContent(file.Content);
                     part.Headers.ContentType = new MediaTypeHeaderValue(file.MimeType);
                     part.Headers.ContentLength = file.Length;
-                    form.Add(part, "files", file.FileName);
+                    form.Add(part, "\"files\"", $"\"{file.FileName}\"");
                 }
 
                 return form;
@@ -332,6 +333,16 @@ public sealed class PostsResource
             null,
             cancellationToken).ConfigureAwait(false);
         return Require<Post>(FoPostHttpClient.Unwrap(response));
+    }
+
+    // A 429 retry rebuilds the form, so the caller's stream must outlive one attempt.
+    private sealed class LeaveOpenStreamContent : StreamContent
+    {
+        public LeaveOpenStreamContent(Stream content) : base(content)
+        {
+        }
+
+        protected override void Dispose(bool disposing) => base.Dispose(false);
     }
 
     private async Task AttachDirectAsync(
