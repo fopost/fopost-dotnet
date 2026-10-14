@@ -53,11 +53,13 @@ src/FoPost/
   Models/
     FoPostModel.cs         base; unknown keys land in AdditionalData
     Optional.cs            struct sentinel for partial updates
-    Post.cs Account.cs Page.cs Media.cs Ai.cs Platforms.cs Inbox.cs Contacts.cs Broadcasts.cs Ads.cs Validate.cs
+    Post.cs Account.cs Page.cs Media.cs Ai.cs Platforms.cs Inbox.cs Contacts.cs Broadcasts.cs Ads.cs Validate.cs Blog.cs
   Resources/
     PostsResource.cs AccountsResource.cs WorkspacesResource.cs LabelsResource.cs AiResource.cs
-    InboxResource.cs ContactsResource.cs BroadcastsResource.cs SequencesResource.cs AdsResource.cs ValidateResource.cs
-    PostOptions.cs PostFile.cs MediaOptions.cs AiOptions.cs InboxOptions.cs ContactOptions.cs BroadcastOptions.cs AdsOptions.cs ValidateOptions.cs ResourceHelpers.cs
+    InboxResource.cs ContactsResource.cs BroadcastsResource.cs SequencesResource.cs AdsResource.cs ValidateResource.cs BlogResource.cs
+    PostOptions.cs PostFile.cs MediaOptions.cs AiOptions.cs InboxOptions.cs ContactOptions.cs BroadcastOptions.cs AdsOptions.cs ValidateOptions.cs BlogOptions.cs ResourceHelpers.cs
+  Webhooks/
+    FoPostWebhooks.cs      signature verifier (raw bytes, constant time, timestamped first) + envelope
 tests/FoPost.Tests/        xunit; TestServer.cs holds the stub handler and fixtures
 examples/CreatePost/       runnable create-and-publish sample, part of the solution
 ```
@@ -113,7 +115,10 @@ snake_case and `PATCH /v1/inbox/{id}` is camelCase, so those are built by hand. 
 route by size: every file within `UploadLimits.MultipartMaxFileBytes` (100 MB fallback when the
 limits call fails) goes as one multipart request (`post` JSON field + `files` parts, built per
 attempt so a 429 retry works); otherwise each file is uploaded directly and attached to the first
-content block before the JSON request. There is no `Communities`, `Webhooks`,
+content block before the JSON request. `Blog` (scope `posts`; `ai` for plan, request and
+regenerate; `publish` for publish) wraps `/v1/blog/*`: `workspaceId` is camelCase on the query and in
+bodies, and every field is camelCase. `FoPostWebhooks.Verify` (namespace `FoPost`) verifies any
+delivery's signature headers; there is no `Webhooks` *resource*. There is no `Communities`,
 `Analytics`, or `Automations` resource here — reach those
 through the escape hatch `FoPostClient.RequestAsync(...)`, which returns the raw `JsonNode?`
 envelope and all.

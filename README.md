@@ -298,6 +298,43 @@ await client.Sequences.EnrollAsync(sequence.Id, new EnrollOptions { ContactIds =
 await client.Sequences.UnenrollAsync(sequence.Id, new[] { contactId });
 ```
 
+## Blog
+
+Articles for a website, as distinct from posts to a social network. `client.Blog` holds the
+settings (where articles publish, how often they are planned), the keyword plan and the articles.
+Reads, settings and keyword edits need the `posts` scope; `PlanKeywordsAsync`,
+`RequestArticleAsync` and `RegenerateArticleAsync` spend credits and need `ai`;
+`PublishArticleAsync` needs `publish`. Every call takes the workspace id first.
+
+```csharp
+var article = await client.Blog.RequestArticleAsync(workspaceId, new RequestBlogArticleOptions
+{
+    Keyword = "social media scheduling",
+    Instructions = "Lead with the time saved.",
+});
+// article.Status is "queued"; poll until it is "draft", then review or publish.
+var draft = await client.Blog.GetArticleAsync(workspaceId, article.Id);
+await client.Blog.PublishArticleAsync(workspaceId, draft.Id);
+```
+
+A `website` target receives each published article as a signed webhook at `websiteUrl`, keyed by
+the secret `UpdateSettingsAsync` returns once (or `RotateWebsiteSecretAsync` reissues).
+`FoPostWebhooks.Verify` checks the raw request bytes against the headers, prefers the timestamped
+signature and refuses one older than five minutes, then hands back the envelope:
+
+```csharp
+// rawBody is the request body exactly as received, never re-serialised JSON.
+var envelope = FoPostWebhooks.Verify(rawBody, headers, secret);
+if (envelope.Event == "article.published")
+{
+    var published = envelope.DataAs<BlogArticlePublishedPayload>();
+    Console.WriteLine($"{published.Title} -> {published.PublishedUrl}");
+}
+```
+
+A failed check throws `FoPostWebhookVerificationException`. Image URLs in the payload are
+fetchable for six hours, so download and store your own copy.
+
 ## Error handling
 
 Every non-2xx response raises a `FoPostException` carrying the API's status, error code, and body.
@@ -347,6 +384,7 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `EditCommentAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `LikeAsync`, `UnlikeAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`, `DeleteAsync`, `StartConversationAsync`, `SetTypingAsync`, `HandoverAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
 | `Contacts`   | `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `ConversationsAsync`, `ImportAsync`, `ListFieldsAsync`, `CreateFieldAsync`, `UpdateFieldAsync`, `DeleteFieldAsync`, `ConversationAnalyticsAsync` |
 | `Knowledge`  | `ListAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `SyncAsync`, `SearchAsync`                                              |
+| `Blog`       | `GetSettingsAsync`, `UpdateSettingsAsync`, `RotateWebsiteSecretAsync`, `TestWebsiteAsync`, `ListKeywordsAsync`, `PlanKeywordsAsync`, `AddKeywordAsync`, `UpdateKeywordAsync`, `DeleteKeywordAsync`, `ListArticlesAsync`, `RequestArticleAsync`, `GetArticleAsync`, `UpdateArticleAsync`, `RegenerateArticleAsync`, `PublishArticleAsync`, `RejectArticleAsync`, `DeleteArticleAsync` |
 | `Validate`   | `PostAsync`, `LengthAsync`, `MediaAsync`                                                                                           |
 | `Analytics`  | `DecayAsync`, `FrequencyAsync`, `TimelineAsync`, `ChangesAsync`, `CollectPostAsync`, `NativePostsAsync`                             |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync` |

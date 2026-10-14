@@ -7,6 +7,18 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 ## [Unreleased]
 
 ### Added
+- `client.Blog`: articles for a website. Settings (`GetSettingsAsync`, `UpdateSettingsAsync`,
+  `RotateWebsiteSecretAsync`, `TestWebsiteAsync`), the keyword plan (`ListKeywordsAsync`,
+  `PlanKeywordsAsync`, `AddKeywordAsync`, `UpdateKeywordAsync`, `DeleteKeywordAsync`) and the
+  articles (`ListArticlesAsync`, `RequestArticleAsync`, `GetArticleAsync`, `UpdateArticleAsync`,
+  `RegenerateArticleAsync`, `PublishArticleAsync`, `RejectArticleAsync`, `DeleteArticleAsync`),
+  with the `BlogSettings`, `BlogKeyword`, `BlogArticle`, `BlogArticleFull`, `BlogArticleImage`
+  models and the `BlogArticleStatuses`, `BlogKeywordStatuses` and `BlogTargetKinds` constants.
+  Reads need `posts`, planning and writing need `ai`, publishing needs `publish`.
+- `FoPostWebhooks.Verify`: checks a webhook delivery's raw bytes against the FoPost signature
+  headers in constant time, preferring the timestamped signature with a 300 second tolerance,
+  and returns the `FoPostWebhookEnvelope` (`Event`, `Data`, `Timestamp`, `DeliveryId`).
+  `BlogArticlePublishedPayload` types the `article.published` event.
 - `Media.LimitsAsync` reads `GET /v1/media/limits` into `UploadLimits`: the per-file ceiling by
   any route, the multipart ceiling, the next connected-account tier and the allowed types.
 - `PresignOptions` carries the optional `FolderId`, `Origin`, `BrandRole`, `BrandVoiceId` and

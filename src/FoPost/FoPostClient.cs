@@ -47,6 +47,7 @@ public sealed class FoPostClient : IDisposable
         Posts = new PostsResource(_http, Media);
         Analytics = new AnalyticsResource(_http);
         GoogleBusiness = new GoogleBusinessResource(_http);
+        Blog = new BlogResource(_http);
     }
 
     public FoPostClient(string apiKey)
@@ -95,6 +96,9 @@ public sealed class FoPostClient : IDisposable
     public AnalyticsResource Analytics { get; }
     /// <summary>Manage a connected Google Business Profile location.</summary>
     public GoogleBusinessResource GoogleBusiness { get; }
+
+    /// <summary>Articles for a website: settings, the keyword plan and the articles themselves.</summary>
+    public BlogResource Blog { get; }
 
     public string BaseUrl => _http.BaseUrl;
 
