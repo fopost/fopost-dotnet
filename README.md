@@ -389,10 +389,10 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | `Analytics`  | `DecayAsync`, `FrequencyAsync`, `TimelineAsync`, `ChangesAsync`, `CollectPostAsync`, `NativePostsAsync`                             |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync` |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `ProvidersAsync`, `AuthorizeAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `AddAudienceCompaniesAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync`, `GoalsAsync`, `CatalogsAsync`, `CreateCatalogAsync`, `GetCatalogAsync`, `UpdateCatalogAsync`, `DeleteCatalogAsync`, `CatalogProductsAsync`, `WriteCatalogProductsAsync`, `ProductFeedsAsync`, `CreateProductFeedAsync`, `DeleteProductFeedAsync`, `FeedUploadsAsync`, `StartFeedUploadAsync`, `ProductSetsAsync`, `CreateProductSetAsync`, `UpdateProductSetAsync`, `DeleteProductSetAsync`, `ReachFrequencyAsync`, `CreateReachFrequencyAsync`, `GetReachFrequencyAsync`, `ReserveReachFrequencyAsync`, `CancelReachFrequencyAsync`, `LibraryAsync`, `PartnershipCreatorsAsync`, `RequestPartnershipAsync`, `RevokePartnershipAsync`, `AccountActivityAsync`, `LabelsAsync`, `CreateLabelAsync`, `UpdateLabelAsync`, `DeleteLabelAsync`, `ApplyLabelAsync`, `StudiesAsync`, `CreateStudyAsync`, `GetStudyAsync`, `DeleteStudyAsync`, `IosCampaignLimitsAsync`, `HighDemandPeriodsAsync`, `CreateHighDemandPeriodAsync`, `DeleteHighDemandPeriodAsync`, `ValueRuleSetsAsync`, `CreateValueRuleSetAsync`, `DeleteValueRuleSetAsync`, `BidPricingAsync`, `SupplyForecastAsync`, `ConversionRulesAsync`, `CreateConversionRuleAsync`, `ConversionRuleAsync`, `UpdateConversionRuleAsync`, `DeleteConversionRuleAsync`, `AttachConversionRuleAsync`, `DetachConversionRuleAsync`, `ConversionMetricsAsync`, `SendConversionEventsAsync` |
-| `Media`      | `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                                                              |
+| `Media`      | `LimitsAsync`, `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                                               |
 | `Activity`   | `ListAsync`                                                                                                                       |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync` |
-| `Media`      | `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                                              |
+| `Media`      | `LimitsAsync`, `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                               |
 | `GoogleBusiness` | `GetLocationAsync`, `UpdateLocationAsync`, `GetAttributesAsync`, `UpdateAttributesAsync`, `GetMenusAsync`, `ReplaceMenusAsync`, `GetServicesAsync`, `ReplaceServicesAsync`, `ListMediaAsync`, `AddMediaAsync`, `DeleteMediaAsync`, `ListPlaceActionsAsync`, `CreatePlaceActionAsync`, `UpdatePlaceActionAsync`, `DeletePlaceActionAsync`, `GetVerificationOptionsAsync`, `StartVerificationAsync`, `CompleteVerificationAsync`, `GetPerformanceAsync`, `GetSearchKeywordsAsync`, `AssignAsync` |
 
 `Validate` checks a draft, its length, or a media URL against platform rules without creating
@@ -421,11 +421,54 @@ resumed. Campaigns, ad sets, network ads, creatives and audiences take the ad pl
 a `connectionId`, and are read live rather than stored.
 
 `Media` uploads a file straight to storage with the `posts` scope: `UploadDirectAsync` presigns,
-PUTs the bytes, and completes in one call, or drive the three steps yourself.
+streams the file, and completes in one call, or drive the three steps yourself. Pass a `Stream`
+of known length so a large video is never buffered in memory; `PresignOptions` adds the optional
+`FolderId`, `Origin`, `BrandRole`, `BrandVoiceId` and `PersonConsent`.
 
 ```csharp
-var bytes = await File.ReadAllBytesAsync("launch.png");
-var media = await client.Media.UploadDirectAsync("9b2f6c1e-…", "launch.png", "image/png", bytes);
+await using var file = File.OpenRead("launch.mp4");
+var media = await client.Media.UploadDirectAsync("9b2f6c1e-…", "launch.mp4", "video/mp4", file);
+```
+
+### Files on posts
+
+`CreatePostOptions.Files` and `UpdatePostOptions.Files` take up to five `PostFile`s, stored in
+the workspace library and attached to the first content block. The SDK picks the route: files at
+or under the multipart ceiling travel in one `multipart/form-data` request to the post endpoint;
+anything larger is uploaded directly first and attached as media. Either way the result is the
+same post.
+
+```csharp
+using var video = PostFile.FromPath("launch.mp4", "video/mp4");
+var post = await client.Posts.CreateAsync(new CreatePostOptions
+{
+    WorkspaceId = "9b2f6c1e-…",
+    Content = new List<PostContent> { new("Shipped!") },
+    Accounts = accountIds,
+    Files = new List<PostFile> { video },
+});
+```
+
+### Upload limits
+
+`Media.LimitsAsync` answers what the account may upload: `MaxFileBytes` is the largest file by any
+route (it grows with connected accounts, or with the Large Uploads add-on), `MultipartMaxFileBytes`
+is what a multipart request carries per file, and `NextTier` is the ceiling more accounts would
+unlock. A file over the limit answers `413` with the code `file_too_large`; the `FoPostException`
+carries the status and the body, so `max_file_bytes` is one read away.
+
+```csharp
+var limits = await client.Media.LimitsAsync("9b2f6c1e-…");
+Console.WriteLine($"Up to {limits.MaxFileBytes} bytes per file");
+
+try
+{
+    await client.Posts.CreateAsync(options);
+}
+catch (FoPostException error) when (error.Status == 413)
+{
+    var max = (long)error.Body!["max_file_bytes"]!;
+}
 ```
 
 The API has more endpoints than the SDK wraps — analytics, webhooks, automations, and

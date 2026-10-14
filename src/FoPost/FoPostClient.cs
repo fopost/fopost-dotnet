@@ -30,7 +30,6 @@ public sealed class FoPostClient : IDisposable
     {
         _http = new FoPostHttpClient(options ?? new FoPostClientOptions());
 
-        Posts = new PostsResource(_http);
         Accounts = new AccountsResource(_http);
         AccountGroups = new AccountGroupsResource(_http);
         Workspaces = new WorkspacesResource(_http);
@@ -45,6 +44,7 @@ public sealed class FoPostClient : IDisposable
         Ads = new AdsResource(_http);
         Validate = new ValidateResource(_http);
         Media = new MediaResource(_http);
+        Posts = new PostsResource(_http, Media);
         Analytics = new AnalyticsResource(_http);
         GoogleBusiness = new GoogleBusinessResource(_http);
         Blog = new BlogResource(_http);

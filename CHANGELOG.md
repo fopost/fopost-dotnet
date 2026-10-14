@@ -19,6 +19,18 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
   headers in constant time, preferring the timestamped signature with a 300 second tolerance,
   and returns the `FoPostWebhookEnvelope` (`Event`, `Data`, `Timestamp`, `DeliveryId`).
   `BlogArticlePublishedPayload` types the `article.published` event.
+- `Media.LimitsAsync` reads `GET /v1/media/limits` into `UploadLimits`: the per-file ceiling by
+  any route, the multipart ceiling, the next connected-account tier and the allowed types.
+- `PresignOptions` carries the optional `FolderId`, `Origin`, `BrandRole`, `BrandVoiceId` and
+  `PersonConsent` on presign; `PresignedUpload.MaxFileBytes` reads the ceiling the API returns.
+  `UploadDirectAsync` takes a `Stream` of known length and streams it to storage instead of
+  buffering; sizes are `long` and go up to 5 GB.
+- `CreatePostOptions.Files` and `UpdatePostOptions.Files` attach up to five `PostFile`s to the
+  first content block. Files at or under the multipart ceiling are sent as one
+  `multipart/form-data` request to the post endpoint; larger files are uploaded directly and
+  attached as media before the JSON request.
+- An oversize file is a `413` with code `file_too_large`; the `FoPostException` exposes the
+  status and the body (`max_file_bytes`, `file_bytes`, `upgrade_url`).
 - Per-network extras on `Accounts`, all `accounts` scope: Pinterest boards
   (`ListPinterestBoardsAsync`, `CreatePinterestBoardAsync`), YouTube playlists and captions
   (`ListYouTubePlaylistsAsync`, `CreateYouTubePlaylistAsync`, `SetDefaultYouTubePlaylistAsync`,

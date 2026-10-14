@@ -57,7 +57,7 @@ src/FoPost/
   Resources/
     PostsResource.cs AccountsResource.cs WorkspacesResource.cs LabelsResource.cs AiResource.cs
     InboxResource.cs ContactsResource.cs BroadcastsResource.cs SequencesResource.cs AdsResource.cs ValidateResource.cs BlogResource.cs
-    PostOptions.cs AiOptions.cs InboxOptions.cs ContactOptions.cs BroadcastOptions.cs AdsOptions.cs ValidateOptions.cs BlogOptions.cs ResourceHelpers.cs
+    PostOptions.cs PostFile.cs MediaOptions.cs AiOptions.cs InboxOptions.cs ContactOptions.cs BroadcastOptions.cs AdsOptions.cs ValidateOptions.cs BlogOptions.cs ResourceHelpers.cs
   Webhooks/
     FoPostWebhooks.cs      signature verifier (raw bytes, constant time, timestamped first) + envelope
 tests/FoPost.Tests/        xunit; TestServer.cs holds the stub handler and fixtures
@@ -109,9 +109,13 @@ boost, create, set status, delete, bulk status and the campaign/ad set/network a
 `InboxPage<T>`/`InboxPageMeta` rather than `Page<T>`. Ads request bodies are camelCase and are
 serialised straight from their options objects; the inbox `read`/`refresh` bodies are
 snake_case and `PATCH /v1/inbox/{id}` is camelCase, so those are built by hand. `Media` (scope
-`posts`) is only the direct-upload flow: `PresignAsync` → `FoPostHttpClient.PutBytesAsync` (raw
-bytes to the presigned URL, no credential header, only the headers the API returned) →
-`CompleteAsync`, bundled as `UploadDirectAsync`. `Blog` (scope `posts`; `ai` for plan, request and
+`posts`) is `LimitsAsync` plus the direct-upload flow: `PresignAsync` → `FoPostHttpClient.PutStreamAsync`
+(the stream to the presigned URL, no credential header, only the headers the API returned) →
+`CompleteAsync`, bundled as `UploadDirectAsync`. `Posts.CreateAsync`/`UpdateAsync` with `Files`
+route by size: every file within `UploadLimits.MultipartMaxFileBytes` (100 MB fallback when the
+limits call fails) goes as one multipart request (`post` JSON field + `files` parts, built per
+attempt so a 429 retry works); otherwise each file is uploaded directly and attached to the first
+content block before the JSON request. `Blog` (scope `posts`; `ai` for plan, request and
 regenerate; `publish` for publish) wraps `/v1/blog/*`: `workspaceId` is camelCase on the query and in
 bodies, and every field is camelCase. `FoPostWebhooks.Verify` (namespace `FoPost`) verifies any
 delivery's signature headers; there is no `Webhooks` *resource*. There is no `Communities`,

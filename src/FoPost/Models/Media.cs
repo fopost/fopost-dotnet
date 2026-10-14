@@ -63,6 +63,56 @@ public sealed class PresignedUpload : FoPostModel
 
     [JsonPropertyName("expiresAt")]
     public DateTimeOffset? ExpiresAt { get; set; }
+
+    /// <summary>The largest file this account may upload, in bytes.</summary>
+    [JsonPropertyName("maxFileBytes")]
+    public long? MaxFileBytes { get; set; }
+}
+
+/// <summary>What the account may upload, from <c>GET /v1/media/limits</c>.</summary>
+public sealed class UploadLimits : FoPostModel
+{
+    /// <summary>The largest file allowed by any route, in bytes.</summary>
+    [JsonPropertyName("maxFileBytes")]
+    public long MaxFileBytes { get; set; }
+
+    /// <summary>What set the ceiling: <c>accounts</c>, <c>add_on</c>, or <c>bypass</c>.</summary>
+    [JsonPropertyName("source")]
+    public string Source { get; set; } = string.Empty;
+
+    [JsonPropertyName("connectedAccounts")]
+    public int ConnectedAccounts { get; set; }
+
+    [JsonPropertyName("largeUploadsEnabled")]
+    public bool LargeUploadsEnabled { get; set; }
+
+    /// <summary>The next ceiling more connected accounts would unlock; null at the top.</summary>
+    [JsonPropertyName("nextTier")]
+    public UploadLimitTier? NextTier { get; set; }
+
+    /// <summary>The most a multipart request can carry per file; larger files use direct upload.</summary>
+    [JsonPropertyName("multipartMaxFileBytes")]
+    public long MultipartMaxFileBytes { get; set; }
+
+    [JsonPropertyName("maxFilesPerUpload")]
+    public int MaxFilesPerUpload { get; set; }
+
+    [JsonPropertyName("directUploadAvailable")]
+    public bool DirectUploadAvailable { get; set; }
+
+    [JsonPropertyName("allowedTypes")]
+    public IList<string> AllowedTypes { get; set; } = new List<string>();
+}
+
+/// <summary>One step of the connected-account ladder in <see cref="UploadLimits.NextTier"/>.</summary>
+public sealed class UploadLimitTier : FoPostModel
+{
+    /// <summary>The ceiling applies up to this many connected accounts; null means unbounded.</summary>
+    [JsonPropertyName("upToAccounts")]
+    public int? UpToAccounts { get; set; }
+
+    [JsonPropertyName("maxFileBytes")]
+    public long MaxFileBytes { get; set; }
 }
 
 /// <summary>A file in the workspace media library.</summary>
