@@ -16,11 +16,13 @@ public class BlogTests
       "siteUrl": "https://yourbrand.com",
       "topic": "social media scheduling",
       "audience": "marketing teams",
+      "goal": "signups",
+      "focusTopics": "scheduling, analytics",
+      "avoidTopics": "politics",
       "language": "en",
       "locationCode": 2840,
       "cadencePerWeek": 2,
       "reviewHoldDays": 3,
-      "autoPublish": false,
       "imageTier": "standard",
       "inBodyImages": 1,
       "minWords": 900,
@@ -31,6 +33,7 @@ public class BlogTests
       "targetPlatform": null,
       "websiteUrl": "https://yourbrand.com/api/fopost",
       "hasWebsiteSecret": true,
+      "planRun": { "status": "done", "error": null, "added": 12, "finishedAt": "2026-10-01T00:05:00.000Z" },
       "keywordDataAvailable": true,
       "updatedAt": "2026-10-01T00:00:00.000Z"
     }
@@ -47,6 +50,7 @@ public class BlogTests
       "source": "provider",
       "status": "planned",
       "plannedFor": "2026-10-20",
+      "fitReason": "Buyers search it before choosing a scheduler",
       "createdAt": "2026-10-01T00:00:00.000Z"
     }
     """;
@@ -91,6 +95,10 @@ public class BlogTests
         Assert.Equal(BlogTargetKinds.Website, settings.TargetKind);
         Assert.True(settings.HasWebsiteSecret);
         Assert.Equal(2, settings.CadencePerWeek);
+        Assert.Equal(BlogGoals.Signups, settings.Goal);
+        Assert.Equal("politics", settings.AvoidTopics);
+        Assert.Equal(BlogPlanRunStatuses.Done, settings.PlanRun!.Status);
+        Assert.Equal(12, settings.PlanRun.Added);
     }
 
     [Fact]
@@ -104,6 +112,9 @@ public class BlogTests
             WebsiteUrl = "https://yourbrand.com/api/fopost",
             TargetKind = BlogTargetKinds.Website,
             BrandVoiceId = Optional<string?>.Of(null),
+            Goal = BlogGoals.Leads,
+            FocusTopics = "scheduling",
+            AvoidTopics = Optional<string?>.Of(null),
         });
 
         Assert.Equal(HttpMethod.Patch, handler.LastRequest.Method);
@@ -112,6 +123,9 @@ public class BlogTests
         Assert.Equal("ws_1", body.GetProperty("workspaceId").GetString());
         Assert.Equal("website", body.GetProperty("targetKind").GetString());
         Assert.Equal(JsonValueKind.Null, body.GetProperty("brandVoiceId").ValueKind);
+        Assert.Equal("leads", body.GetProperty("goal").GetString());
+        Assert.Equal("scheduling", body.GetProperty("focusTopics").GetString());
+        Assert.Equal(JsonValueKind.Null, body.GetProperty("avoidTopics").ValueKind);
         Assert.False(body.TryGetProperty("cadencePerWeek", out _));
         Assert.Equal("whsec_new", result.WebsiteSecret);
         Assert.Equal("en", result.Settings.Language);
@@ -185,6 +199,42 @@ public class BlogTests
         var keyword = Assert.Single(keywords);
         Assert.Equal(5400, keyword.SearchVolume);
         Assert.Equal("2026-10-20", keyword.PlannedFor);
+        Assert.Equal("Buyers search it before choosing a scheduler", keyword.FitReason);
+    }
+
+    [Fact]
+    public async Task SuggestSeeds_posts_seeds_and_prompt_and_reads_the_terms()
+    {
+        var handler = new StubHandler().Json("""{ "data": { "seeds": ["social media calendar", "post scheduler"] } }""");
+        using var test = new TestClient(handler);
+
+        var result = await test.Client.Blog.SuggestSeedsAsync("ws_1", new SuggestBlogSeedsOptions
+        {
+            Seeds = new[] { "scheduling" },
+            Prompt = "Lean into small agencies",
+        });
+
+        Assert.Equal(HttpMethod.Post, handler.LastRequest.Method);
+        Assert.Equal("/v1/blog/keywords/suggest", handler.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Equal(
+            """{"workspaceId":"ws_1","seeds":["scheduling"],"prompt":"Lean into small agencies"}""",
+            handler.LastBody);
+        Assert.Equal(new[] { "social media calendar", "post scheduler" }, result.Seeds);
+    }
+
+    [Fact]
+    public async Task SuggestSeeds_sends_only_the_workspace_and_surfaces_an_empty_balance()
+    {
+        var handler = new StubHandler().Json(
+            """{"error":"insufficient_credits","message":"Out of credits","upgrade_url":"/settings/billing"}""",
+            HttpStatusCode.PaymentRequired);
+        using var test = new TestClient(handler);
+
+        var error = await Assert.ThrowsAsync<FoPostPaymentRequiredException>(
+            () => test.Client.Blog.SuggestSeedsAsync("ws_1"));
+
+        Assert.Equal("""{"workspaceId":"ws_1"}""", handler.LastBody);
+        Assert.Equal("insufficient_credits", error.Code);
     }
 
     [Fact]
@@ -371,6 +421,37 @@ public class BlogTests
         Assert.Equal("/v1/blog/articles/art_1/regenerate", handler.Requests[0].RequestUri!.AbsolutePath);
         Assert.Equal("/v1/blog/articles/art_1/publish", handler.Requests[1].RequestUri!.AbsolutePath);
         Assert.Equal("/v1/blog/articles/art_1/reject", handler.Requests[2].RequestUri!.AbsolutePath);
+    }
+
+    [Fact]
+    public async Task SubmitArticle_posts_to_the_submit_path_and_reads_in_review()
+    {
+        var inReview = Article.Replace("\"status\": \"draft\"", "\"status\": \"in_review\"", StringComparison.Ordinal);
+        var handler = new StubHandler().Json($$"""{ "data": {{inReview}} }""");
+        using var test = new TestClient(handler);
+
+        var article = await test.Client.Blog.SubmitArticleAsync("ws_1", "art_1");
+
+        Assert.Equal(HttpMethod.Post, handler.LastRequest.Method);
+        Assert.Equal("/v1/blog/articles/art_1/submit", handler.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Equal("?workspaceId=ws_1", handler.LastRequest.RequestUri!.Query);
+        Assert.Null(handler.LastBody);
+        Assert.Equal(BlogArticleStatuses.InReview, article.Status);
+    }
+
+    [Fact]
+    public async Task SubmitArticle_from_a_state_that_cannot_be_submitted_is_a_409()
+    {
+        var handler = new StubHandler().Json(
+            """{"error":"invalid_state","message":"Only a draft, failed or rejected article can be submitted"}""",
+            HttpStatusCode.Conflict);
+        using var test = new TestClient(handler);
+
+        var error = await Assert.ThrowsAsync<FoPostException>(
+            () => test.Client.Blog.SubmitArticleAsync("ws_1", "art_1"));
+
+        Assert.Equal(409, error.Status);
+        Assert.Equal("invalid_state", error.Code);
     }
 
     [Fact]
