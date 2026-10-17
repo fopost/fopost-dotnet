@@ -191,6 +191,12 @@ public sealed class InboxItem : FoPostModel
     [JsonPropertyName("liked")]
     public bool Liked { get; set; }
 
+    /// <summary>
+    /// How the account voted where the network ranks by votes: <c>up</c>, <c>down</c> or null.
+    /// </summary>
+    [JsonPropertyName("vote")]
+    public string? Vote { get; set; }
+
     [JsonPropertyName("pinned")]
     public bool Pinned { get; set; }
 
@@ -210,6 +216,10 @@ public sealed class InboxItem : FoPostModel
 
     [JsonPropertyName("canLike")]
     public bool CanLike { get; set; }
+
+    /// <summary>The network ranks by votes, so a down vote exists.</summary>
+    [JsonPropertyName("can_vote")]
+    public bool CanVote { get; set; }
 
     /// <summary>Our own comment only.</summary>
     [JsonPropertyName("canPin")]
