@@ -150,6 +150,191 @@ var ad = await client.Ads.BoostAsync(new BoostPostOptions
 await client.Ads.SetStatusAsync(ad.Id, ad.WorkspaceId!, AdStatuses.Active);
 ```
 
+## Analytics
+
+```csharp
+// How long a post keeps earning, from the repeated readings of each post
+var decay = await client.Analytics.DecayAsync(new AnalyticsScopeOptions { Days = 30 });
+Console.WriteLine(decay.HalfLifeBucket); // e.g. "1h_3h"
+
+// Whether posting more earned more
+var cadence = await client.Analytics.FrequencyAsync(new AnalyticsScopeOptions { Days = 90 });
+Console.WriteLine(cadence.Best?.Label); // e.g. "3-5 a week"
+
+// Every reading held for one post, with what moved between them
+var timeline = await client.Analytics.TimelineAsync(post.Id);
+
+// Mirror the metrics into your own store, without refetching everything
+DateTimeOffset? cursor = null;
+while (true)
+{
+    var page = await client.Analytics.ChangesAsync(new MetricChangesOptions { Since = cursor });
+    Save(page.Changes);
+    if (!page.HasMore || page.Cursor is null)
+    {
+        break;
+    }
+
+    cursor = page.Cursor;
+}
+
+// Refresh one post now instead of waiting for the next collection run
+await client.Analytics.CollectPostAsync(post.Id);
+
+// Posts on the account that never went out through FoPost
+var native = await client.Analytics.NativePostsAsync(accounts[0].Id);
+```
+
+A post is addressed by its FoPost id or by its permalink, so a post made by
+hand on the network works the same way:
+
+```csharp
+await client.Analytics.TimelineAsync("https://x.com/acme/status/1");
+## Contacts
+
+The people behind the inbox: one person however many handles they write from. An inbound item files its author, a reply files whoever you answered, and both fold into whatever is already on file.
+
+```csharp
+var page = await client.Contacts.ListAsync(new ListContactsOptions
+{
+    WorkspaceId = workspaceId,
+    Search = "ada",
+});
+foreach (var contact in page)
+{
+    Console.WriteLine($"{contact.DisplayName} — {contact.Channels.Count} handles");
+}
+
+// Folds into whoever already holds the first channel, so this cannot duplicate someone.
+var contact = await client.Contacts.CreateAsync(new CreateContactOptions
+{
+    WorkspaceId = workspaceId,
+    Channels = new[] { ContactChannel.Of("x", "ada_writes") },
+    DisplayName = "Ada Okafor",
+    Fields = new Dictionary<string, string> { ["plan_tier"] = "Pro" },
+});
+
+// A field set to null is cleared; everything unset is left alone.
+await client.Contacts.UpdateAsync(contact.Id, new UpdateContactOptions
+{
+    Fields = new Dictionary<string, string?> { ["region"] = null },
+});
+await client.Contacts.DeleteAsync(contact.Id);   // the messages stay in the inbox
+
+// The threads this person appears in, newest first.
+foreach (var thread in await client.Contacts.ConversationsAsync(contact.Id))
+{
+    Console.WriteLine($"{thread.Platform} {thread.Messages} messages");
+}
+
+// platform and handle are required columns; any other column is a custom field key.
+var result = await client.Contacts.ImportAsync(workspaceId, "platform,handle\nx,ada_writes");
+Console.WriteLine($"{result.Created} created, {result.Merged} merged");
+
+// The columns your workspace keeps.
+var field = await client.Contacts.CreateFieldAsync(workspaceId, new CreateContactFieldOptions
+{
+    Key = "plan_tier",
+    Name = "Plan Tier",
+    Type = ContactFieldTypes.Select,
+    Options = new[] { "Free", "Pro" },
+});
+await client.Contacts.DeleteFieldAsync(field.Id);   // removes every answer to it
+
+// Volume and median reply time per thread. Needs the `analytics` scope.
+var report = await client.Contacts.ConversationAnalyticsAsync(new ConversationAnalyticsOptions
+{
+    Days = 30,
+    Sort = ConversationSorts.Slowest,
+});
+```
+
+## Broadcasts and sequences
+
+A broadcast is one message into every conversation you already have with a segment of your contacts; a sequence is a series of them on a delay. Neither opens a cold DM.
+
+Nothing is sent into a closed messaging window: Messenger and Instagram take a business-initiated message only within 24 hours of the contact's last one, so recipients outside it come back skipped with `window_closed` rather than attempted. Telegram, Slack, Bluesky and Reddit have no window. The number sent is therefore often lower than the audience, and that is correct rather than a failure.
+
+Reading needs the `inbox` scope; `SendAsync`, `CancelAsync`, `EnrollAsync` and `UnenrollAsync` also need `publish`.
+
+```csharp
+var broadcast = await client.Broadcasts.CreateAsync(new CreateBroadcastOptions
+{
+    WorkspaceId = workspaceId,
+    AccountId = accountId,
+    Name = "September check-in",
+    Text = "New colours just landed. Want a look?",
+    Audience = AudienceFilter.OnPlatforms("instagram"),
+});
+
+// Recipients is how many contacts matched, not how many will be messaged.
+var sent = await client.Broadcasts.SendAsync(broadcast.Id);
+
+// Who was skipped, and why.
+var skipped = await client.Broadcasts.RecipientsAsync(
+    broadcast.Id,
+    new ListRecipientsOptions { Status = RecipientStatuses.Skipped });
+foreach (var recipient in skipped)
+{
+    Console.WriteLine($"{recipient.DisplayName}: {recipient.SkipReason}");
+}
+
+var sequence = await client.Sequences.CreateAsync(new CreateSequenceOptions
+{
+    WorkspaceId = workspaceId,
+    AccountId = accountId,
+    Name = "Welcome",
+    Steps = new[]
+    {
+        SequenceStep.Of(0, "Thanks for the follow — anything I can help with?"),
+        SequenceStep.Of(48, "Here is what people usually ask us first."),
+    },
+});
+
+// By id, or by the same audience filter a broadcast takes.
+await client.Sequences.EnrollAsync(sequence.Id, new EnrollOptions { ContactIds = new[] { contactId } });
+
+// Nothing further fires for them.
+await client.Sequences.UnenrollAsync(sequence.Id, new[] { contactId });
+```
+
+## Blog
+
+Articles for a website, as distinct from posts to a social network. `client.Blog` holds the
+settings (where articles publish, how often they are planned), the keyword plan and the articles.
+Reads, settings and keyword edits need the `posts` scope; `PlanKeywordsAsync`,
+`RequestArticleAsync` and `RegenerateArticleAsync` spend credits and need `ai`;
+`PublishArticleAsync` needs `publish`. Every call takes the workspace id first.
+
+```csharp
+var article = await client.Blog.RequestArticleAsync(workspaceId, new RequestBlogArticleOptions
+{
+    Keyword = "social media scheduling",
+    Instructions = "Lead with the time saved.",
+});
+// article.Status is "queued"; poll until it is "draft", then review or publish.
+var draft = await client.Blog.GetArticleAsync(workspaceId, article.Id);
+await client.Blog.PublishArticleAsync(workspaceId, draft.Id);
+```
+
+A `website` target receives each published article as a signed webhook at `websiteUrl`, keyed by
+the secret `UpdateSettingsAsync` returns once (or `RotateWebsiteSecretAsync` reissues).
+`FoPostWebhooks.Verify` checks the raw request bytes against the headers, prefers the timestamped
+signature and refuses one older than five minutes, then hands back the envelope:
+
+```csharp
+// rawBody is the request body exactly as received, never re-serialised JSON.
+var envelope = FoPostWebhooks.Verify(rawBody, headers, secret);
+if (envelope.Event == "article.published")
+{
+    var published = envelope.DataAs<BlogArticlePublishedPayload>();
+    Console.WriteLine($"{published.Title} -> {published.PublishedUrl}");
+}
+```
+
+A failed check throws `FoPostWebhookVerificationException`. Image URLs in the payload are
+fetchable for six hours, so download and store your own copy.
+
 ## Error handling
 
 Every non-2xx response raises a `FoPostException` carrying the API's status, error code, and body.
@@ -191,15 +376,25 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | Namespace    | Methods                                                                                                                            |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `Posts`      | `ListAsync`, `ListAllAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `PublishAsync`, `CancelAsync`, `RetryAsync`, `PreflightAsync`, `DuplicateAsync`, `DeliveriesAsync` |
-| `Accounts`   | `ListAsync`, `GetAsync`, `RenameAsync`, `MoveAsync`, `HealthAsync`, `CreateTelegramConnectCodeAsync`, `GetTelegramConnectStatusAsync`, `GetTelegramBotCommandsAsync`, `SetTelegramBotCommandsAsync`, `DeleteTelegramBotCommandsAsync`, `ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync`, `UpdateSlackIdentityAsync`, `ListRedditSubredditsAsync`, `ListRedditSubredditRulesAsync`, `ListRedditFlairsAsync`, `SetRedditDefaultSubredditAsync` |
+| `Accounts`   | `ListAsync`, `GetAsync`, `RenameAsync`, `MoveAsync`, `HealthAsync`, `CreateTelegramConnectCodeAsync`, `GetTelegramConnectStatusAsync`, `GetTelegramBotCommandsAsync`, `SetTelegramBotCommandsAsync`, `DeleteTelegramBotCommandsAsync`, `ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync`, `UpdateSlackIdentityAsync`, `ListRedditSubredditsAsync`, `ListRedditSubredditRulesAsync`, `ListRedditFlairsAsync`, `SetRedditDefaultSubredditAsync`, `GetIceBreakersAsync`, `SetIceBreakersAsync`, `DeleteIceBreakersAsync`, `GetPersistentMenuAsync`, `SetPersistentMenuAsync`, `DeletePersistentMenuAsync`, `GetGreetingAsync`, `SetGreetingAsync`, `DeleteGreetingAsync`, `GetWebhookSubscriptionAsync`, `ResubscribeWebhookAsync`, `ListDiscordChannelsAsync`, `SwitchDiscordChannelAsync`, `GetDiscordIdentityAsync`, `UpdateDiscordIdentityAsync`, `ListDiscordPinsAsync`, `DeleteDiscordMessageAsync`, `PinDiscordMessageAsync`, `UnpinDiscordMessageAsync`, `CrosspostDiscordMessageAsync`, `CreateDiscordThreadAsync`, `SendDiscordDmAsync`, `ListDiscordEventsAsync`, `GetDiscordEventAsync`, `CreateDiscordEventAsync`, `UpdateDiscordEventAsync`, `DeleteDiscordEventAsync`, `ListDiscordMembersAsync`, `GetDiscordMemberAsync`, `ListDiscordRolesAsync`, `CreateDiscordRoleAsync`, `UpdateDiscordRoleAsync`, `DeleteDiscordRoleAsync`, `AddDiscordMemberRoleAsync`, `RemoveDiscordMemberRoleAsync`, `PlatformMetricsAsync` |
 | `AccountGroups` | `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `SetMembersAsync`                                         |
 | `Workspaces` | `ListAsync`, `GetAsync`                                                                                                            |
 | `Labels`     | `ListAsync`                                                                                                                        |
 | `Ai`         | `CreditsAsync`, `GenerateCaptionAsync`, `RewriteAsync`, `RepurposeUrlAsync`                                                        |
-| `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `EditCommentAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `LikeAsync`, `UnlikeAsync`, `VoteAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`, `DeleteAsync`, `StartConversationAsync`, `SetTypingAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
+| `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `EditCommentAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `LikeAsync`, `UnlikeAsync`, `VoteAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`, `DeleteAsync`, `StartConversationAsync`, `SetTypingAsync`, `HandoverAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
+| `Contacts`   | `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `ConversationsAsync`, `ImportAsync`, `ListFieldsAsync`, `CreateFieldAsync`, `UpdateFieldAsync`, `DeleteFieldAsync`, `ConversationAnalyticsAsync` |
+| `Knowledge`  | `ListAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `SyncAsync`, `SearchAsync`                                              |
+| `Blog`       | `GetSettingsAsync`, `UpdateSettingsAsync`, `RotateWebsiteSecretAsync`, `TestWebsiteAsync`, `ListKeywordsAsync`, `PlanKeywordsAsync`, `AddKeywordAsync`, `UpdateKeywordAsync`, `DeleteKeywordAsync`, `ListArticlesAsync`, `RequestArticleAsync`, `GetArticleAsync`, `UpdateArticleAsync`, `RegenerateArticleAsync`, `PublishArticleAsync`, `RejectArticleAsync`, `DeleteArticleAsync` |
+| `Whatsapp`   | `GetProfileAsync`, `UpdateProfileAsync`, `RequestDisplayNameAsync`, `SetUsernameAsync`, `ListTemplatesAsync`, `ListTemplateLibraryAsync`, `GetTemplateAsync`, `CreateTemplateAsync`, `ImportTemplateAsync`, `UpdateTemplateAsync`, `DeleteTemplateAsync`, `ListGroupsAsync`, `CreateGroupAsync`, `GetGroupAsync`, `UpdateGroupAsync`, `DeleteGroupAsync`, `GetGroupInviteLinkAsync`, `ResetGroupInviteLinkAsync`, `RemoveGroupParticipantsAsync`, `ListBlockedAsync`, `BlockUsersAsync`, `UnblockUsersAsync`, `GetCommerceSettingsAsync`, `UpdateCommerceSettingsAsync`, `LinkCatalogAsync`, `ListFlowsAsync`, `GetFlowAsync`, `CreateFlowAsync`, `UpdateFlowAsync`, `DeleteFlowAsync`, `UploadFlowJsonAsync`, `PublishFlowAsync`, `DeprecateFlowAsync`, `ListFlowResponsesAsync`, `GetEncryptionKeyStatusAsync`, `SetEncryptionKeyAsync`, `GetAccountEventsAsync`, `ListSandboxSessionsAsync`, `CreateSandboxSessionAsync` |
 | `Validate`   | `PostAsync`, `LengthAsync`, `MediaAsync`, `SubredditAsync`                                                                                           |
+| `Analytics`  | `DecayAsync`, `FrequencyAsync`, `TimelineAsync`, `ChangesAsync`, `CollectPostAsync`, `NativePostsAsync`                             |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync` |
-| `Media`      | `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                                                              |
+| `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `ProvidersAsync`, `AuthorizeAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `AddAudienceCompaniesAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync`, `GoalsAsync`, `CatalogsAsync`, `CreateCatalogAsync`, `GetCatalogAsync`, `UpdateCatalogAsync`, `DeleteCatalogAsync`, `CatalogProductsAsync`, `WriteCatalogProductsAsync`, `ProductFeedsAsync`, `CreateProductFeedAsync`, `DeleteProductFeedAsync`, `FeedUploadsAsync`, `StartFeedUploadAsync`, `ProductSetsAsync`, `CreateProductSetAsync`, `UpdateProductSetAsync`, `DeleteProductSetAsync`, `ReachFrequencyAsync`, `CreateReachFrequencyAsync`, `GetReachFrequencyAsync`, `ReserveReachFrequencyAsync`, `CancelReachFrequencyAsync`, `LibraryAsync`, `PartnershipCreatorsAsync`, `RequestPartnershipAsync`, `RevokePartnershipAsync`, `AccountActivityAsync`, `LabelsAsync`, `CreateLabelAsync`, `UpdateLabelAsync`, `DeleteLabelAsync`, `ApplyLabelAsync`, `StudiesAsync`, `CreateStudyAsync`, `GetStudyAsync`, `DeleteStudyAsync`, `IosCampaignLimitsAsync`, `HighDemandPeriodsAsync`, `CreateHighDemandPeriodAsync`, `DeleteHighDemandPeriodAsync`, `ValueRuleSetsAsync`, `CreateValueRuleSetAsync`, `DeleteValueRuleSetAsync`, `BidPricingAsync`, `SupplyForecastAsync`, `ConversionRulesAsync`, `CreateConversionRuleAsync`, `ConversionRuleAsync`, `UpdateConversionRuleAsync`, `DeleteConversionRuleAsync`, `AttachConversionRuleAsync`, `DetachConversionRuleAsync`, `ConversionMetricsAsync`, `SendConversionEventsAsync` |
+| `Media`      | `LimitsAsync`, `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                                               |
+| `Activity`   | `ListAsync`                                                                                                                       |
+| `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync` |
+| `Media`      | `LimitsAsync`, `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                               |
+| `GoogleBusiness` | `GetLocationAsync`, `UpdateLocationAsync`, `GetAttributesAsync`, `UpdateAttributesAsync`, `GetMenusAsync`, `ReplaceMenusAsync`, `GetServicesAsync`, `ReplaceServicesAsync`, `ListMediaAsync`, `AddMediaAsync`, `DeleteMediaAsync`, `ListPlaceActionsAsync`, `CreatePlaceActionAsync`, `UpdatePlaceActionAsync`, `DeletePlaceActionAsync`, `GetVerificationOptionsAsync`, `StartVerificationAsync`, `CompleteVerificationAsync`, `GetPerformanceAsync`, `GetSearchKeywordsAsync`, `AssignAsync` |
 
 `Validate` checks a draft, its length, or a media URL against platform rules without creating
 anything; it needs the `posts` scope.
@@ -216,9 +411,9 @@ foreach (var platform in check.Platforms.Where(p => !p.Ready))
 }
 ```
 
-`Inbox` needs an API key with the `inbox` scope; the calls that act on the platform as the account
+`Contacts` needs the `inbox` scope too, except `ConversationAnalyticsAsync`, which needs `analytics`. `Inbox` needs an API key with the `inbox` scope; the calls that act on the platform as the account
 (`EditCommentAsync`, `LikeAsync`, `UnlikeAsync`, `VoteAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`,
-`StartConversationAsync`, `SetTypingAsync`, a reply with media or quick replies, and deleting our
+`StartConversationAsync`, `SetTypingAsync`, `HandoverAsync`, a reply with media or quick replies, and deleting our
 own reply) need `publish` as well. `Ads` needs the `ads` scope, and the calls
 that spend money (`BoostAsync`, `CreateAsync`, `SetStatusAsync`, `DeleteAsync`, `BulkSetStatusAsync`,
 and every create, update, delete and duplicate on campaigns, ad sets and network ads) need `publish`
@@ -227,11 +422,54 @@ resumed. Campaigns, ad sets, network ads, creatives and audiences take the ad pl
 a `connectionId`, and are read live rather than stored.
 
 `Media` uploads a file straight to storage with the `posts` scope: `UploadDirectAsync` presigns,
-PUTs the bytes, and completes in one call, or drive the three steps yourself.
+streams the file, and completes in one call, or drive the three steps yourself. Pass a `Stream`
+of known length so a large video is never buffered in memory; `PresignOptions` adds the optional
+`FolderId`, `Origin`, `BrandRole`, `BrandVoiceId` and `PersonConsent`.
 
 ```csharp
-var bytes = await File.ReadAllBytesAsync("launch.png");
-var media = await client.Media.UploadDirectAsync("9b2f6c1e-…", "launch.png", "image/png", bytes);
+await using var file = File.OpenRead("launch.mp4");
+var media = await client.Media.UploadDirectAsync("9b2f6c1e-…", "launch.mp4", "video/mp4", file);
+```
+
+### Files on posts
+
+`CreatePostOptions.Files` and `UpdatePostOptions.Files` take up to five `PostFile`s, stored in
+the workspace library and attached to the first content block. The SDK picks the route: files at
+or under the multipart ceiling travel in one `multipart/form-data` request to the post endpoint;
+anything larger is uploaded directly first and attached as media. Either way the result is the
+same post.
+
+```csharp
+using var video = PostFile.FromPath("launch.mp4", "video/mp4");
+var post = await client.Posts.CreateAsync(new CreatePostOptions
+{
+    WorkspaceId = "9b2f6c1e-…",
+    Content = new List<PostContent> { new("Shipped!") },
+    Accounts = accountIds,
+    Files = new List<PostFile> { video },
+});
+```
+
+### Upload limits
+
+`Media.LimitsAsync` answers what the account may upload: `MaxFileBytes` is the largest file by any
+route (it grows with connected accounts, or with the Large Uploads add-on), `MultipartMaxFileBytes`
+is what a multipart request carries per file, and `NextTier` is the ceiling more accounts would
+unlock. A file over the limit answers `413` with the code `file_too_large`; the `FoPostException`
+carries the status and the body, so `max_file_bytes` is one read away.
+
+```csharp
+var limits = await client.Media.LimitsAsync("9b2f6c1e-…");
+Console.WriteLine($"Up to {limits.MaxFileBytes} bytes per file");
+
+try
+{
+    await client.Posts.CreateAsync(options);
+}
+catch (FoPostException error) when (error.Status == 413)
+{
+    var max = (long)error.Body!["max_file_bytes"]!;
+}
 ```
 
 The API has more endpoints than the SDK wraps — analytics, webhooks, automations, and
@@ -248,6 +486,22 @@ var overview = await client.RequestAsync(
 The full surface is documented in the
 [API collection](https://github.com/fopost/fopost-api-collections).
 
+## Chatbots and the inbox
+
+The [chat adapter](https://fopost.com/docs/sdks/chat-adapter) turns the FoPost inbox into one send/receive channel for a chatbot
+framework. It ships in the TypeScript and Python SDKs. There is no dedicated adapter here and no
+API change behind it, so the same loop is three pieces with this client:
+
+1. **Verify** the `inbox.message_received` webhook. The payload is ids only, on purpose, so
+   nothing a customer wrote sits in your logs. The [signing scheme](https://fopost.com/docs/webhooks/verification)
+   is HMAC-SHA256 over `{timestamp}.{body}`, refused past a five minute tolerance.
+2. **Read** the item back with `client.Inbox.ListAsync(new ListInboxOptions { … })`, filtered to the payload's
+   `accountId` and matched on its `itemId`.
+3. **Answer** with `client.Inbox.ReplyAsync(item.Id, text)`, or open a thread with
+   `client.Inbox.StartConversationAsync(…)`.
+
+Reading needs the `inbox` scope; answering needs `publish` as well.
+
 ## Contributing
 
 Issues and pull requests are welcome at
@@ -262,3 +516,29 @@ dotnet pack src/FoPost/FoPost.csproj -c Release
 ## License
 
 MIT
+
+### Google Ads
+
+Campaigns, ad groups, ads, audiences, and insights are on `client.Ads` and dispatch by
+connection. What only Google has is under `client.Ads.Google`:
+
+```csharp
+var scope = new GoogleAdsScope { ConnectionId = "c4d5e6f7-…", CustomerId = "1234567890" };
+var keywords = await client.Ads.Google.KeywordsAsync(scope);
+
+await client.Ads.Google.CreateKeywordAsync(new CreateGoogleKeywordOptions
+{
+    WorkspaceId = "7d2b8c11-…",
+    ConnectionId = "c4d5e6f7-…",
+    CustomerId = "1234567890",
+    AdGroupId = "1234567890~adGroup~77",
+    Text = "running shoes",
+    MatchType = GoogleMatchTypes.Exact,
+});
+```
+
+Also `KeywordIdeasAsync`, `KeywordMetricsAsync`, `SearchTermsAsync`, `BidStrategiesAsync`,
+`AdScheduleAsync` and `SetAdScheduleAsync`, the negative keyword lists, `AssetsAsync` and
+`AssetGroupsAsync`, `LocalServicesLeadsAsync`, the conversion methods, and `QueryAsync` for
+a raw read-only GAQL SELECT. Changes need the `publish` scope as well as `ads`;
+`CustomerId` has to name an account the connection's grant reaches.

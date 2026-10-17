@@ -44,7 +44,7 @@ public sealed class ListInboxThreadsOptions
 {
     public string? WorkspaceId { get; set; }
 
-    /// <summary><c>comments</c> (default) for threads under our posts, <c>mentions</c> for posts we were tagged in.</summary>
+    /// <summary><c>comments</c> (default) for threads under our posts, <c>mentions</c> for posts we were tagged in, <c>reviews</c> for reviews left on the business.</summary>
     public string? Kind { get; set; }
 
     public string? Platform { get; set; }
