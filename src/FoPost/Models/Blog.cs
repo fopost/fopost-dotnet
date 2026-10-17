@@ -9,6 +9,10 @@ public static class BlogArticleStatuses
     public const string Queued = "queued";
     public const string Writing = "writing";
     public const string Draft = "draft";
+
+    /// <summary>Submitted for approval; publishing and scheduling are open from here.</summary>
+    public const string InReview = "in_review";
+
     public const string Scheduled = "scheduled";
     public const string Publishing = "publishing";
     public const string Published = "published";
@@ -25,6 +29,25 @@ public static class BlogKeywordStatuses
     public const string Dismissed = "dismissed";
 }
 
+/// <summary>What the blog is for; steers suggested terms and keyword ranking.</summary>
+public static class BlogGoals
+{
+    public const string Traffic = "traffic";
+    public const string Leads = "leads";
+    public const string Sales = "sales";
+    public const string Signups = "signups";
+    public const string Authority = "authority";
+}
+
+/// <summary>Where a keyword research run is.</summary>
+public static class BlogPlanRunStatuses
+{
+    public const string Queued = "queued";
+    public const string Running = "running";
+    public const string Done = "done";
+    public const string Failed = "failed";
+}
+
 /// <summary>Where published articles go.</summary>
 public static class BlogTargetKinds
 {
@@ -38,7 +61,7 @@ public static class BlogTargetKinds
     public const string Website = "website";
 }
 
-/// <summary>Where articles publish, how often they are planned and how long a draft waits for review.</summary>
+/// <summary>Where articles publish, what the blog is for and how often it is planned.</summary>
 public sealed class BlogSettings : FoPostModel
 {
     [JsonPropertyName("siteUrl")]
@@ -50,6 +73,18 @@ public sealed class BlogSettings : FoPostModel
     [JsonPropertyName("audience")]
     public string? Audience { get; set; }
 
+    /// <summary>One of <see cref="BlogGoals"/>, or null when unset.</summary>
+    [JsonPropertyName("goal")]
+    public string? Goal { get; set; }
+
+    /// <summary>What the blog wants to write about.</summary>
+    [JsonPropertyName("focusTopics")]
+    public string? FocusTopics { get; set; }
+
+    /// <summary>What the blog never writes about.</summary>
+    [JsonPropertyName("avoidTopics")]
+    public string? AvoidTopics { get; set; }
+
     [JsonPropertyName("language")]
     public string Language { get; set; } = string.Empty;
 
@@ -60,12 +95,9 @@ public sealed class BlogSettings : FoPostModel
     [JsonPropertyName("cadencePerWeek")]
     public int CadencePerWeek { get; set; }
 
-    /// <summary>Days a draft waits for review before it may auto-publish.</summary>
+    /// <summary>Days before its planned date that a picked keyword starts being written.</summary>
     [JsonPropertyName("reviewHoldDays")]
     public int ReviewHoldDays { get; set; }
-
-    [JsonPropertyName("autoPublish")]
-    public bool AutoPublish { get; set; }
 
     /// <summary><c>draft</c>, <c>standard</c> or <c>best</c>.</summary>
     [JsonPropertyName("imageTier")]
@@ -99,12 +131,34 @@ public sealed class BlogSettings : FoPostModel
     [JsonPropertyName("hasWebsiteSecret")]
     public bool HasWebsiteSecret { get; set; }
 
+    /// <summary>The last keyword research run; null before the first.</summary>
+    [JsonPropertyName("planRun")]
+    public BlogPlanRun? PlanRun { get; set; }
+
     /// <summary>Whether search volume and difficulty can be fetched on this deployment.</summary>
     [JsonPropertyName("keywordDataAvailable")]
     public bool KeywordDataAvailable { get; set; }
 
     [JsonPropertyName("updatedAt")]
     public DateTimeOffset? UpdatedAt { get; set; }
+}
+
+/// <summary>The last keyword research run.</summary>
+public sealed class BlogPlanRun : FoPostModel
+{
+    /// <summary>One of <see cref="BlogPlanRunStatuses"/>.</summary>
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = string.Empty;
+
+    [JsonPropertyName("error")]
+    public string? Error { get; set; }
+
+    /// <summary>New keywords the run found.</summary>
+    [JsonPropertyName("added")]
+    public int? Added { get; set; }
+
+    [JsonPropertyName("finishedAt")]
+    public DateTimeOffset? FinishedAt { get; set; }
 }
 
 /// <summary>
@@ -152,6 +206,13 @@ public sealed class BlogPlanResult : FoPostModel
     public string Status { get; set; } = string.Empty;
 }
 
+/// <summary>Search terms suggested from the blog goal and topics.</summary>
+public sealed class BlogSeedSuggestions : FoPostModel
+{
+    [JsonPropertyName("seeds")]
+    public List<string> Seeds { get; set; } = new();
+}
+
 /// <summary>One keyword in the plan.</summary>
 public sealed class BlogKeyword : FoPostModel
 {
@@ -185,6 +246,10 @@ public sealed class BlogKeyword : FoPostModel
     /// <summary>The day the article for it is planned, <c>yyyy-MM-dd</c>.</summary>
     [JsonPropertyName("plannedFor")]
     public string? PlannedFor { get; set; }
+
+    /// <summary>Why the keyword serves the blog goal.</summary>
+    [JsonPropertyName("fitReason")]
+    public string? FitReason { get; set; }
 
     [JsonPropertyName("createdAt")]
     public DateTimeOffset? CreatedAt { get; set; }
@@ -248,7 +313,7 @@ public class BlogArticle : FoPostModel
     [JsonPropertyName("origin")]
     public string Origin { get; set; } = string.Empty;
 
-    /// <summary>When the review hold ends and the draft may auto-publish.</summary>
+    /// <summary>When the review hold set at writing ends.</summary>
     [JsonPropertyName("reviewUntil")]
     public DateTimeOffset? ReviewUntil { get; set; }
 
