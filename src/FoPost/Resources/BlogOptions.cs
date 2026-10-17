@@ -1,76 +1,131 @@
 namespace FoPost;
 
-/// <summary>Filters for listing a blog's articles. Unset fields are not sent.</summary>
-public sealed class ListArticlesOptions
+/// <summary>
+/// The body of <see cref="Resources.BlogResource.UpdateSettingsAsync"/>. Only the fields
+/// you set are sent. Setting <see cref="WebsiteUrl"/> for the first time issues a signing
+/// secret, returned once on <see cref="BlogSettingsUpdate.WebsiteSecret"/>.
+/// </summary>
+public sealed class UpdateBlogSettingsOptions
 {
-    /// <summary>How many to return, 1 to 50. The API defaults to 20.</summary>
-    public int? Limit { get; set; }
+    public Optional<string?> SiteUrl { get; set; }
 
-    /// <summary><c>published</c>, <c>draft</c>, <c>pending</c> or <c>scheduled</c>.</summary>
-    public string? Status { get; set; }
+    public Optional<string?> Topic { get; set; }
 
-    /// <summary>Matches the article title.</summary>
-    public string? Q { get; set; }
+    public Optional<string?> Audience { get; set; }
+
+    public Optional<string> Language { get; set; }
+
+    public Optional<int> LocationCode { get; set; }
+
+    /// <summary>0 to 7; 0 turns planning off.</summary>
+    public Optional<int> CadencePerWeek { get; set; }
+
+    /// <summary>0 to 14.</summary>
+    public Optional<int> ReviewHoldDays { get; set; }
+
+    public Optional<bool> AutoPublish { get; set; }
+
+    /// <summary><c>draft</c>, <c>standard</c> or <c>best</c>.</summary>
+    public Optional<string> ImageTier { get; set; }
+
+    /// <summary>0 to 3.</summary>
+    public Optional<int> InBodyImages { get; set; }
+
+    public Optional<int> MinWords { get; set; }
+
+    public Optional<int> MaxWords { get; set; }
+
+    public Optional<string?> BrandVoiceId { get; set; }
+
+    /// <summary>One of <see cref="BlogTargetKinds"/>.</summary>
+    public Optional<string?> TargetKind { get; set; }
+
+    public Optional<string?> TargetAccountId { get; set; }
+
+    /// <summary>Where published articles are POSTed as a signed webhook.</summary>
+    public Optional<string?> WebsiteUrl { get; set; }
 }
 
-/// <summary>Filters for listing a store's products. Unset fields are not sent.</summary>
-public sealed class ListProductsOptions
+/// <summary>Filters for <see cref="Resources.BlogResource.ListKeywordsAsync"/>.</summary>
+public sealed class ListBlogKeywordsOptions
 {
-    /// <summary>How many to return, 1 to 50. The API defaults to 20.</summary>
+    /// <summary>Any of <see cref="BlogKeywordStatuses"/>; several are sent comma-separated.</summary>
+    public IReadOnlyList<string>? Status { get; set; }
+
+    /// <summary>Caps at 500.</summary>
     public int? Limit { get; set; }
+}
 
-    /// <summary><c>active</c>, <c>draft</c> or <c>archived</c>.</summary>
-    public string? Status { get; set; }
+/// <summary>The body of <see cref="Resources.BlogResource.PlanKeywordsAsync"/>.</summary>
+public sealed class PlanBlogKeywordsOptions
+{
+    /// <summary>Terms to grow the plan from; omitted, the topic and site are used.</summary>
+    public IReadOnlyList<string>? Seeds { get; set; }
+}
 
-    /// <summary>Matches the product title.</summary>
-    public string? Q { get; set; }
+/// <summary>The body of <see cref="Resources.BlogResource.AddKeywordAsync"/>.</summary>
+public sealed class CreateBlogKeywordOptions
+{
+    public required string Keyword { get; set; }
+
+    /// <summary>The day to write it; set, the keyword starts <c>planned</c>.</summary>
+    public DateOnly? PlannedFor { get; set; }
+}
+
+/// <summary>The body of <see cref="Resources.BlogResource.UpdateKeywordAsync"/>. Only set fields are sent.</summary>
+public sealed class UpdateBlogKeywordOptions
+{
+    /// <summary>One of <see cref="BlogKeywordStatuses"/>.</summary>
+    public Optional<string> Status { get; set; }
+
+    public Optional<DateOnly?> PlannedFor { get; set; }
+}
+
+/// <summary>Filters for <see cref="Resources.BlogResource.ListArticlesAsync"/>.</summary>
+public sealed class ListBlogArticlesOptions
+{
+    /// <summary>Any of <see cref="BlogArticleStatuses"/>; several are sent comma-separated.</summary>
+    public IReadOnlyList<string>? Status { get; set; }
+
+    /// <summary>Caps at 200.</summary>
+    public int? Limit { get; set; }
 }
 
 /// <summary>
-/// The body of <c>CreateArticleAsync</c> and <c>UpdateArticleAsync</c>.
+/// The body of <see cref="Resources.BlogResource.RequestArticleAsync"/>. One of
+/// <see cref="Title"/>, <see cref="Keyword"/> or <see cref="KeywordId"/> is required.
 /// </summary>
-/// <remarks>
-/// Only the fields that are set travel. On a create, set at least <c>Title</c> and
-/// <c>Body</c>; on an update, set at least one, and whatever is left null keeps
-/// whatever the site already had.
-/// </remarks>
-public sealed class ArticleOptions
+public sealed class RequestBlogArticleOptions
 {
     public string? Title { get; set; }
 
-    /// <summary>FoPost body markup; the site's own format is rendered from it.</summary>
-    public string? Body { get; set; }
+    public string? Keyword { get; set; }
 
-    public string? Excerpt { get; set; }
+    /// <summary>A keyword from the plan; its term becomes the target.</summary>
+    public string? KeywordId { get; set; }
 
-    /// <summary><c>published</c>, <c>draft</c>, <c>pending</c> or <c>scheduled</c>.</summary>
-    public string? Status { get; set; }
-
-    public IList<string>? Tags { get; set; }
-
-    public string? AuthorName { get; set; }
-
-    /// <summary>Public http(s) URL of the featured image.</summary>
-    public string? ImageUrl { get; set; }
+    /// <summary>Up to 4000 characters of direction for the writer.</summary>
+    public string? Instructions { get; set; }
 }
 
-/// <summary>
-/// The body of <c>UpdateProductAsync</c>. Only the fields that are set travel, so an
-/// omitted one keeps whatever the store already had. Set at least one.
-/// </summary>
-public sealed class ProductOptions
+/// <summary>The body of <see cref="Resources.BlogResource.UpdateArticleAsync"/>. Only set fields are sent.</summary>
+public sealed class UpdateBlogArticleOptions
 {
-    public string? Title { get; set; }
+    public Optional<string> Title { get; set; }
 
-    /// <summary>Body markup, rendered to HTML on the store.</summary>
-    public string? Description { get; set; }
+    /// <summary>Lowercase letters, digits and hyphens.</summary>
+    public Optional<string> Slug { get; set; }
 
-    /// <summary><c>active</c>, <c>draft</c> or <c>archived</c>.</summary>
-    public string? Status { get; set; }
+    public Optional<string?> Excerpt { get; set; }
 
-    public IList<string>? Tags { get; set; }
+    public Optional<string?> MetaTitle { get; set; }
 
-    public string? ProductType { get; set; }
+    public Optional<string?> MetaDescription { get; set; }
 
-    public string? Vendor { get; set; }
+    public Optional<string> BodyMarkdown { get; set; }
+
+    public Optional<IReadOnlyList<string>> Tags { get; set; }
+
+    /// <summary>Puts the draft on the calendar; null returns it to review.</summary>
+    public Optional<DateTimeOffset?> PublishAt { get; set; }
 }
