@@ -7,6 +7,79 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 ## [Unreleased]
 
 ### Added
+- `client.Blog`: articles for a website. Settings (`GetSettingsAsync`, `UpdateSettingsAsync`,
+  `RotateWebsiteSecretAsync`, `TestWebsiteAsync`), the keyword plan (`ListKeywordsAsync`,
+  `PlanKeywordsAsync`, `AddKeywordAsync`, `UpdateKeywordAsync`, `DeleteKeywordAsync`) and the
+  articles (`ListArticlesAsync`, `RequestArticleAsync`, `GetArticleAsync`, `UpdateArticleAsync`,
+  `RegenerateArticleAsync`, `PublishArticleAsync`, `RejectArticleAsync`, `DeleteArticleAsync`),
+  with the `BlogSettings`, `BlogKeyword`, `BlogArticle`, `BlogArticleFull`, `BlogArticleImage`
+  models and the `BlogArticleStatuses`, `BlogKeywordStatuses` and `BlogTargetKinds` constants.
+  Reads need `posts`, planning and writing need `ai`, publishing needs `publish`.
+- `FoPostWebhooks.Verify`: checks a webhook delivery's raw bytes against the FoPost signature
+  headers in constant time, preferring the timestamped signature with a 300 second tolerance,
+  and returns the `FoPostWebhookEnvelope` (`Event`, `Data`, `Timestamp`, `DeliveryId`).
+  `BlogArticlePublishedPayload` types the `article.published` event.
+- `Media.LimitsAsync` reads `GET /v1/media/limits` into `UploadLimits`: the per-file ceiling by
+  any route, the multipart ceiling, the next connected-account tier and the allowed types.
+- `PresignOptions` carries the optional `FolderId`, `Origin`, `BrandRole`, `BrandVoiceId` and
+  `PersonConsent` on presign; `PresignedUpload.MaxFileBytes` reads the ceiling the API returns.
+  `UploadDirectAsync` takes a `Stream` of known length and streams it to storage instead of
+  buffering; sizes are `long` and go up to 5 GB.
+- `CreatePostOptions.Files` and `UpdatePostOptions.Files` attach up to five `PostFile`s to the
+  first content block. Files at or under the multipart ceiling are sent as one
+  `multipart/form-data` request to the post endpoint; larger files are uploaded directly and
+  attached as media before the JSON request.
+- An oversize file is a `413` with code `file_too_large`; the `FoPostException` exposes the
+  status and the body (`max_file_bytes`, `file_bytes`, `upgrade_url`).
+- Per-network extras on `Accounts`, all `accounts` scope: Pinterest boards
+  (`ListPinterestBoardsAsync`, `CreatePinterestBoardAsync`), YouTube playlists and captions
+  (`ListYouTubePlaylistsAsync`, `CreateYouTubePlaylistAsync`, `SetDefaultYouTubePlaylistAsync`,
+  `ListYouTubeCaptionsAsync`, `UploadYouTubeCaptionsAsync`, `ReadYouTubeTranscriptAsync`),
+  Bluesky post languages (`GetBlueskyLanguagesAsync`, `SetBlueskyLanguagesAsync`), TikTok
+  creator info (`GetTikTokCreatorInfoAsync`), TikTok music and place search plus video
+  lookup (`SearchTikTokMusicAsync`, `SearchTikTokLocationsAsync`, `LookupTikTokVideoAsync`),
+  Instagram audio, publishing limit and stories
+  (`SearchInstagramAudioAsync`, `GetInstagramPublishingLimitAsync`, `ListInstagramStoriesAsync`,
+  `GetInstagramStoryInsightsAsync`) and LinkedIn mentions (`SearchLinkedInMentionsAsync`).
+
+- `InboxItem.ModerationStatus` carries the platform's own state for a comment
+  (`published`, `held`, `spam`, `rejected`), and `InboxAccount.ReconnectRequired`
+  flags an account connected before the inbox asked for a permission it needs.
+- `client.Broadcasts`: one message into every conversation the workspace already has with a
+  segment of its contacts. `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`,
+  `DeleteAsync`, `SendAsync`, `CancelAsync` and `RecipientsAsync`. Reading needs the `inbox`
+  scope; `SendAsync` and `CancelAsync` also need `publish`.
+- `client.Sequences`: a series of messages on a delay. `ListAsync`, `GetAsync`, `CreateAsync`,
+  `UpdateAsync`, `DeleteAsync`, `EnrollAsync`, `UnenrollAsync` and `EnrollmentsAsync`.
+  `EnrollAsync` and `UnenrollAsync` need `publish`.
+- Both honour each network's messaging window server-side. Messenger and Instagram take a
+  business-initiated message only within 24 hours of the contact's last one, so recipients
+  outside it come back skipped with `SkipReasons.WindowClosed` and nothing is attempted — the
+  number sent is often lower than the audience.
+
+- `client.Contacts`: the people behind the inbox. `ListAsync`, `GetAsync`, `CreateAsync`,
+  `UpdateAsync`, `DeleteAsync`, `ConversationsAsync` (the threads one person appears in),
+  `ImportAsync` (CSV), and `ListFieldsAsync`/`CreateFieldAsync`/`UpdateFieldAsync`/
+  `DeleteFieldAsync` for the custom columns a workspace keeps. All need the `inbox` scope.
+- `client.Contacts.ConversationAnalyticsAsync` reads `/v1/analytics/inbox/conversations`:
+  volume and median reply time per thread. Needs the `analytics` scope.
+- Meta messaging settings on `client.Accounts`: `GetIceBreakersAsync`, `SetIceBreakersAsync` and
+  `DeleteIceBreakersAsync` (Facebook Pages and Instagram), plus `GetPersistentMenuAsync`,
+  `SetPersistentMenuAsync`, `DeletePersistentMenuAsync`, `GetGreetingAsync`, `SetGreetingAsync`
+  and `DeleteGreetingAsync` (Facebook Pages). A network without a field answers 400.
+- `client.Accounts.GetWebhookSubscriptionAsync` reports whether the network is still delivering
+  events for an account, and `ResubscribeWebhookAsync` puts a lapsed subscription back.
+- `client.Inbox.HandoverAsync` passes a Messenger thread to another Meta app, or takes it back
+  when no `appId` is given (`inbox` scope, plus `publish`).
+- `client.Knowledge`: the workspace knowledge base — `ListAsync`, `CreateAsync`
+  (`CreateKnowledgeSourceOptions`), `UpdateAsync` (`UpdateKnowledgeSourceOptions`),
+  `DeleteAsync`, `SyncAsync` and `SearchAsync` (`SearchKnowledgeOptions`), with the
+  `KnowledgeSource` and `KnowledgeMatch` models. A source is an FAQ, a note, a URL
+  on your own site or a plain-text/CSV media item; `SearchAsync` returns the passages
+  closest to a question, and is what grounds a drafted inbox reply in your own
+  answers. Needs the `inbox` scope.
+
+- `Platforms.Snapchat`, included in `Platforms.All`.
 
 - `Whatsapp` for a WhatsApp Business connection: the business profile
   (`GetProfileAsync`, `UpdateProfileAsync`, `RequestDisplayNameAsync`,

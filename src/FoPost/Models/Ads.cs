@@ -36,6 +36,20 @@ public static class TargetingSearchTypes
     public const string Interest = "interest";
     public const string Behavior = "behavior";
     public const string Income = "income";
+
+    // B2B facets: a network that sells to companies rather than households.
+    public const string Company = "company";
+    public const string CompanySize = "company_size";
+    public const string CompanyCategory = "company_category";
+    public const string Industry = "industry";
+    public const string JobTitle = "job_title";
+    public const string JobFunction = "job_function";
+    public const string Seniority = "seniority";
+    public const string YearsOfExperience = "years_of_experience";
+    public const string Skill = "skill";
+    public const string Degree = "degree";
+    public const string FieldOfStudy = "field_of_study";
+    public const string MemberGroup = "member_group";
 }
 
 /// <summary>The kinds of audience <see cref="Resources.AdsResource.CreateAudienceAsync"/> builds.</summary>
@@ -155,6 +169,13 @@ public sealed class AdTargeting : FoPostModel
 
     [JsonPropertyName("income")]
     public IList<AdTargetingItem>? Income { get; set; }
+
+    /// <summary>
+    /// Facets the network defines for itself, keyed by the <see cref="TargetingSearchTypes"/>
+    /// they were found with. <c>ProvidersAsync</c> reports which a network accepts.
+    /// </summary>
+    [JsonPropertyName("facets")]
+    public IDictionary<string, IList<AdTargetingItem>>? Facets { get; set; }
 }
 
 /// <summary>How much an ad may spend, in the ad account's currency.</summary>
@@ -536,6 +557,106 @@ public sealed class TargetingOption : FoPostModel
 
     [JsonPropertyName("detail")]
     public string? Detail { get; set; }
+}
+
+/// <summary>A Business Center, or the network's equivalent grouping of ad accounts.</summary>
+public sealed class AdBusinessCenter : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("role")]
+    public string? Role { get; set; }
+}
+
+/// <summary>
+/// The account an ad runs as. Meta calls it a Page, TikTok an identity; an
+/// identity id is what every route calls a page id.
+/// </summary>
+public sealed class AdIdentity : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>The network's own identity kind, e.g. <c>CUSTOMIZED_USER</c>.</summary>
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("avatarUrl")]
+    public string? AvatarUrl { get; set; }
+}
+
+/// <summary>A post already live on the network, offered as the source of a Spark ad.</summary>
+public sealed class SparkPost : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("identityId")]
+    public string IdentityId { get; set; } = string.Empty;
+
+    [JsonPropertyName("caption")]
+    public string? Caption { get; set; }
+
+    [JsonPropertyName("thumbnailUrl")]
+    public string? ThumbnailUrl { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    public string? CreatedAt { get; set; }
+
+    [JsonPropertyName("views")]
+    public long? Views { get; set; }
+}
+
+/// <summary>A comment on an ad, read live from the network and never stored.</summary>
+public sealed class AdComment : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("adId")]
+    public string? AdId { get; set; }
+
+    [JsonPropertyName("text")]
+    public string Text { get; set; } = string.Empty;
+
+    [JsonPropertyName("authorName")]
+    public string? AuthorName { get; set; }
+
+    [JsonPropertyName("authorAvatarUrl")]
+    public string? AuthorAvatarUrl { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    public string? CreatedAt { get; set; }
+
+    [JsonPropertyName("likes")]
+    public long Likes { get; set; }
+
+    [JsonPropertyName("replyCount")]
+    public long ReplyCount { get; set; }
+
+    [JsonPropertyName("hidden")]
+    public bool Hidden { get; set; }
+
+    /// <summary>The comment this one answers, when it is not on the ad itself.</summary>
+    [JsonPropertyName("parentId")]
+    public string? ParentId { get; set; }
+}
+
+/// <summary>One page of an ad's comments; pass <c>NextCursor</c> back as <c>after</c>.</summary>
+public sealed class AdCommentsPage : FoPostModel
+{
+    [JsonPropertyName("comments")]
+    public IReadOnlyList<AdComment> Comments { get; set; } = Array.Empty<AdComment>();
+
+    [JsonPropertyName("nextCursor")]
+    public string? NextCursor { get; set; }
 }
 
 /// <summary>A lead form on a Page.</summary>
@@ -1016,3 +1137,150 @@ public sealed class SubscribedLeadPage : FoPostModel
     [JsonPropertyName("backfilled")]
     public int Backfilled { get; set; }
 }
+
+/// <summary>A token a network expands in a link's tracking parameters at delivery time.</summary>
+public sealed class AdTrackingMacro : FoPostModel
+{
+    [JsonPropertyName("token")]
+    public string Token { get; set; } = string.Empty;
+
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = string.Empty;
+}
+
+/// <summary>An ad network from the API's registry. <c>Configured</c> false cannot be connected yet.</summary>
+public sealed class AdProvider : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Logo slug.</summary>
+    [JsonPropertyName("logo")]
+    public string? Logo { get; set; }
+
+    [JsonPropertyName("configured")]
+    public bool Configured { get; set; }
+
+    [JsonPropertyName("connectMethods")]
+    public IReadOnlyList<string> ConnectMethods { get; set; } = Array.Empty<string>();
+
+    /// <summary>What the network supports: campaigns, audiences, conversions, forecasts, and so on.</summary>
+    [JsonPropertyName("capabilities")]
+    public IReadOnlyDictionary<string, bool> Capabilities { get; set; } =
+        new Dictionary<string, bool>();
+
+    /// <summary>What <c>SearchTargetingAsync</c> accepts here, in picker order.</summary>
+    [JsonPropertyName("targetingFacets")]
+    public IReadOnlyList<string> TargetingFacets { get; set; } = Array.Empty<string>();
+
+    [JsonPropertyName("trackingMacros")]
+    public IReadOnlyList<AdTrackingMacro> TrackingMacros { get; set; } = Array.Empty<AdTrackingMacro>();
+}
+
+/// <summary>What the auction costs, in minor units of the ad account currency.</summary>
+public sealed class BidPricing : FoPostModel
+{
+    [JsonPropertyName("currency")]
+    public string? Currency { get; set; }
+
+    [JsonPropertyName("suggestedBidMinor")]
+    public long? SuggestedBidMinor { get; set; }
+
+    [JsonPropertyName("minBidMinor")]
+    public long? MinBidMinor { get; set; }
+
+    [JsonPropertyName("maxBidMinor")]
+    public long? MaxBidMinor { get; set; }
+
+    [JsonPropertyName("dailyBudgetFloorMinor")]
+    public long? DailyBudgetFloorMinor { get; set; }
+}
+
+/// <summary>
+/// What an audience would deliver at a budget, over the network's own window. <c>Ready</c> is
+/// false while the network has no answer for that audience.
+/// </summary>
+public sealed class SupplyForecast : FoPostModel
+{
+    [JsonPropertyName("currency")]
+    public string? Currency { get; set; }
+
+    [JsonPropertyName("impressions")]
+    public long? Impressions { get; set; }
+
+    [JsonPropertyName("clicks")]
+    public long? Clicks { get; set; }
+
+    [JsonPropertyName("spendMinor")]
+    public long? SpendMinor { get; set; }
+
+    /// <summary>Days the numbers cover.</summary>
+    [JsonPropertyName("windowDays")]
+    public long? WindowDays { get; set; }
+
+    [JsonPropertyName("ready")]
+    public bool Ready { get; set; }
+}
+
+/// <summary>How the network attributes a sale or a sign-up back to an ad set.</summary>
+public sealed class ConversionRule : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>purchase, lead, sign_up, add_to_cart, download, install, key_page_view or other.</summary>
+    [JsonPropertyName("type")]
+    public string? Type { get; set; }
+
+    /// <summary>last_touch or each_campaign.</summary>
+    [JsonPropertyName("attribution")]
+    public string? Attribution { get; set; }
+
+    [JsonPropertyName("postClickWindowDays")]
+    public int PostClickWindowDays { get; set; }
+
+    [JsonPropertyName("viewThroughWindowDays")]
+    public int ViewThroughWindowDays { get; set; }
+
+    [JsonPropertyName("valueMinor")]
+    public long? ValueMinor { get; set; }
+
+    [JsonPropertyName("currency")]
+    public string? Currency { get; set; }
+
+    [JsonPropertyName("enabled")]
+    public bool Enabled { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    public string? CreatedAt { get; set; }
+
+    /// <summary>Ad sets this rule is attached to.</summary>
+    [JsonPropertyName("campaignIds")]
+    public IReadOnlyList<string> CampaignIds { get; set; } = Array.Empty<string>();
+}
+
+/// <summary>What a conversion rule recorded over a date range.</summary>
+public sealed class ConversionMetrics : FoPostModel
+{
+    [JsonPropertyName("conversions")]
+    public int Conversions { get; set; }
+
+    [JsonPropertyName("postClickConversions")]
+    public int PostClickConversions { get; set; }
+
+    [JsonPropertyName("viewThroughConversions")]
+    public int ViewThroughConversions { get; set; }
+
+    [JsonPropertyName("valueMinor")]
+    public long ValueMinor { get; set; }
+
+    [JsonPropertyName("costPerConversionMinor")]
+    public long? CostPerConversionMinor { get; set; }
+}
+

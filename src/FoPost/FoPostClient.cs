@@ -30,16 +30,24 @@ public sealed class FoPostClient : IDisposable
     {
         _http = new FoPostHttpClient(options ?? new FoPostClientOptions());
 
-        Posts = new PostsResource(_http);
         Accounts = new AccountsResource(_http);
         AccountGroups = new AccountGroupsResource(_http);
         Workspaces = new WorkspacesResource(_http);
         Labels = new LabelsResource(_http);
+        Activity = new ActivityResource(_http);
         Ai = new AiResource(_http);
         Inbox = new InboxResource(_http);
+        Contacts = new ContactsResource(_http);
+        Broadcasts = new BroadcastsResource(_http);
+        Sequences = new SequencesResource(_http);
+        Knowledge = new KnowledgeResource(_http);
         Ads = new AdsResource(_http);
         Validate = new ValidateResource(_http);
         Media = new MediaResource(_http);
+        Posts = new PostsResource(_http, Media);
+        Analytics = new AnalyticsResource(_http);
+        GoogleBusiness = new GoogleBusinessResource(_http);
+        Blog = new BlogResource(_http);
         Whatsapp = new WhatsappResource(_http);
     }
 
@@ -58,9 +66,26 @@ public sealed class FoPostClient : IDisposable
 
     public LabelsResource Labels { get; }
 
+    /// <summary>What happened in a workspace, including the security audit log.</summary>
+    public ActivityResource Activity { get; }
+
     public AiResource Ai { get; }
 
     public InboxResource Inbox { get; }
+
+    /// <summary>The people behind the inbox, and the fields kept about them.</summary>
+    public ContactsResource Contacts { get; }
+
+    /// <summary>
+    /// One message into every conversation the workspace already has with a segment of its
+    /// contacts.
+    /// </summary>
+    public BroadcastsResource Broadcasts { get; }
+
+    /// <summary>A series of messages on a delay, walked per enrolled contact.</summary>
+    public SequencesResource Sequences { get; }
+    /// <summary>The workspace knowledge base, which grounds drafted replies.</summary>
+    public KnowledgeResource Knowledge { get; }
 
     public AdsResource Ads { get; }
 
@@ -68,6 +93,13 @@ public sealed class FoPostClient : IDisposable
 
     public MediaResource Media { get; }
 
+    /// <summary>Deeper posting analytics: decay, cadence, per-post timelines and the changes feed.</summary>
+    public AnalyticsResource Analytics { get; }
+    /// <summary>Manage a connected Google Business Profile location.</summary>
+    public GoogleBusinessResource GoogleBusiness { get; }
+
+    /// <summary>Articles for a website: settings, the keyword plan and the articles themselves.</summary>
+    public BlogResource Blog { get; }
     /// <summary>WhatsApp Business: templates, flows, groups, blocking and commerce.</summary>
     public WhatsappResource Whatsapp { get; }
 
