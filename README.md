@@ -150,6 +150,26 @@ var ad = await client.Ads.BoostAsync(new BoostPostOptions
 await client.Ads.SetStatusAsync(ad.Id, ad.WorkspaceId!, AdStatuses.Active);
 ```
 
+On X an item can also be reposted and bookmarked where `CanRepost` or `CanBookmark` is true, an
+account can follow a user by numeric id, and a post can be looked up or searched with the
+account's token:
+
+```csharp
+await client.Inbox.RepostAsync(item.Id);
+await client.Accounts.FollowXUserAsync(xAccount.Id, "2244994945");
+
+var page = await client.Accounts.SearchXPostsAsync(new XSearchOptions
+{
+    AccountId = xAccount.Id,
+    Query = "from:yourbrand",
+});
+var post = await client.Accounts.GetXPostAsync(page[0].Id, xAccount.Id);
+```
+
+Every one of these is an X API call metered to the workspace; a 402 `platform_balance_spent`
+means X's own pay-per-use balance is spent. An X account connected before the bookmark and
+follow permissions were asked for answers 409 `reconnect_required` until it is reconnected.
+
 ### Pixels and conversions
 
 `PixelsAsync`, `CreatePixelAsync`, `PixelAsync`, `UpdatePixelAsync`, `SharePixelAsync`,
@@ -416,12 +436,12 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | Namespace    | Methods                                                                                                                            |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `Posts`      | `ListAsync`, `ListAllAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `PublishAsync`, `CancelAsync`, `RetryAsync`, `UnpublishAsync`, `PreflightAsync`, `DuplicateAsync`, `DeliveriesAsync` |
-| `Accounts`   | `ListAsync`, `GetAsync`, `RenameAsync`, `MoveAsync`, `HealthAsync`, `CreateTelegramConnectCodeAsync`, `GetTelegramConnectStatusAsync`, `GetTelegramBotCommandsAsync`, `SetTelegramBotCommandsAsync`, `DeleteTelegramBotCommandsAsync`, `ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync`, `UpdateSlackIdentityAsync`, `GetIceBreakersAsync`, `SetIceBreakersAsync`, `DeleteIceBreakersAsync`, `GetPersistentMenuAsync`, `SetPersistentMenuAsync`, `DeletePersistentMenuAsync`, `GetGreetingAsync`, `SetGreetingAsync`, `DeleteGreetingAsync`, `GetWebhookSubscriptionAsync`, `ResubscribeWebhookAsync`, `ListDiscordChannelsAsync`, `SwitchDiscordChannelAsync`, `GetDiscordIdentityAsync`, `UpdateDiscordIdentityAsync`, `ListDiscordPinsAsync`, `DeleteDiscordMessageAsync`, `PinDiscordMessageAsync`, `UnpinDiscordMessageAsync`, `CrosspostDiscordMessageAsync`, `CreateDiscordThreadAsync`, `SendDiscordDmAsync`, `ListDiscordEventsAsync`, `GetDiscordEventAsync`, `CreateDiscordEventAsync`, `UpdateDiscordEventAsync`, `DeleteDiscordEventAsync`, `ListDiscordMembersAsync`, `GetDiscordMemberAsync`, `ListDiscordRolesAsync`, `CreateDiscordRoleAsync`, `UpdateDiscordRoleAsync`, `DeleteDiscordRoleAsync`, `AddDiscordMemberRoleAsync`, `RemoveDiscordMemberRoleAsync`, `PlatformMetricsAsync`, `ListRedditSubredditsAsync`, `ListRedditSubredditRulesAsync`, `ListRedditFlairsAsync`, `SetRedditDefaultSubredditAsync`, `ListCommunitiesAsync`, `SyncCommunitiesAsync`, `SearchCommunitiesAsync`, `AddCommunityAsync`, `RemoveCommunityAsync` |
+| `Accounts`   | `ListAsync`, `GetAsync`, `RenameAsync`, `MoveAsync`, `HealthAsync`, `CreateTelegramConnectCodeAsync`, `GetTelegramConnectStatusAsync`, `GetTelegramBotCommandsAsync`, `SetTelegramBotCommandsAsync`, `DeleteTelegramBotCommandsAsync`, `ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync`, `UpdateSlackIdentityAsync`, `GetIceBreakersAsync`, `SetIceBreakersAsync`, `DeleteIceBreakersAsync`, `GetPersistentMenuAsync`, `SetPersistentMenuAsync`, `DeletePersistentMenuAsync`, `GetGreetingAsync`, `SetGreetingAsync`, `DeleteGreetingAsync`, `GetWebhookSubscriptionAsync`, `ResubscribeWebhookAsync`, `ListDiscordChannelsAsync`, `SwitchDiscordChannelAsync`, `GetDiscordIdentityAsync`, `UpdateDiscordIdentityAsync`, `ListDiscordPinsAsync`, `DeleteDiscordMessageAsync`, `PinDiscordMessageAsync`, `UnpinDiscordMessageAsync`, `CrosspostDiscordMessageAsync`, `CreateDiscordThreadAsync`, `SendDiscordDmAsync`, `ListDiscordEventsAsync`, `GetDiscordEventAsync`, `CreateDiscordEventAsync`, `UpdateDiscordEventAsync`, `DeleteDiscordEventAsync`, `ListDiscordMembersAsync`, `GetDiscordMemberAsync`, `ListDiscordRolesAsync`, `CreateDiscordRoleAsync`, `UpdateDiscordRoleAsync`, `DeleteDiscordRoleAsync`, `AddDiscordMemberRoleAsync`, `RemoveDiscordMemberRoleAsync`, `PlatformMetricsAsync`, `ListRedditSubredditsAsync`, `ListRedditSubredditRulesAsync`, `ListRedditFlairsAsync`, `SetRedditDefaultSubredditAsync`, `ListCommunitiesAsync`, `SyncCommunitiesAsync`, `SearchCommunitiesAsync`, `AddCommunityAsync`, `RemoveCommunityAsync`, `FollowXUserAsync`, `UnfollowXUserAsync`, `GetXPostAsync`, `SearchXPostsAsync` |
 | `AccountGroups` | `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `SetMembersAsync`                                         |
 | `Workspaces` | `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync` |
 | `Labels`     | `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync` |
 | `Ai`         | `CreditsAsync`, `GenerateCaptionAsync`, `RewriteAsync`, `RepurposeUrlAsync`                                                        |
-| `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `EditCommentAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `LikeAsync`, `UnlikeAsync`, `VoteAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`, `DeleteAsync`, `StartConversationAsync`, `SetTypingAsync`, `HandoverAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
+| `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `EditCommentAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `LikeAsync`, `UnlikeAsync`, `RepostAsync`, `UnrepostAsync`, `BookmarkAsync`, `UnbookmarkAsync`, `VoteAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`, `DeleteAsync`, `StartConversationAsync`, `SetTypingAsync`, `HandoverAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
 | `Contacts`   | `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `ConversationsAsync`, `ImportAsync`, `ListFieldsAsync`, `CreateFieldAsync`, `UpdateFieldAsync`, `DeleteFieldAsync`, `ConversationAnalyticsAsync` |
 | `Knowledge`  | `ListAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `SyncAsync`, `SearchAsync`                                              |
 | `Blog`       | `GetSettingsAsync`, `UpdateSettingsAsync`, `RotateWebsiteSecretAsync`, `TestWebsiteAsync`, `ListKeywordsAsync`, `SuggestSeedsAsync`, `PlanKeywordsAsync`, `AddKeywordAsync`, `UpdateKeywordAsync`, `DeleteKeywordAsync`, `ListArticlesAsync`, `RequestArticleAsync`, `GetArticleAsync`, `UpdateArticleAsync`, `RegenerateArticleAsync`, `SubmitArticleAsync`, `PublishArticleAsync`, `RejectArticleAsync`, `DeleteArticleAsync` |
@@ -458,7 +478,7 @@ foreach (var platform in check.Platforms.Where(p => !p.Ready))
 ```
 
 `Contacts` needs the `inbox` scope too, except `ConversationAnalyticsAsync`, which needs `analytics`. `Inbox` needs an API key with the `inbox` scope; the calls that act on the platform as the account
-(`EditCommentAsync`, `LikeAsync`, `UnlikeAsync`, `VoteAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`,
+(`EditCommentAsync`, `LikeAsync`, `UnlikeAsync`, `RepostAsync`, `UnrepostAsync`, `BookmarkAsync`, `UnbookmarkAsync`, `VoteAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`,
 `StartConversationAsync`, `SetTypingAsync`, `HandoverAsync`, a reply with media or quick replies, and deleting our
 own reply) need `publish` as well. `Ads` needs the `ads` scope, and the calls
 that spend money (`BoostAsync`, `CreateAsync`, `SetStatusAsync`, `DeleteAsync`, `BulkSetStatusAsync`,

@@ -191,6 +191,14 @@ public sealed class InboxItem : FoPostModel
     [JsonPropertyName("liked")]
     public bool Liked { get; set; }
 
+    /// <summary>Reposted to the account's own timeline (X).</summary>
+    [JsonPropertyName("reposted")]
+    public bool Reposted { get; set; }
+
+    /// <summary>Bookmarked on the account (X).</summary>
+    [JsonPropertyName("bookmarked")]
+    public bool Bookmarked { get; set; }
+
     /// <summary>
     /// How the account voted where the network ranks by votes: <c>up</c>, <c>down</c> or null.
     /// </summary>
@@ -216,6 +224,14 @@ public sealed class InboxItem : FoPostModel
 
     [JsonPropertyName("canLike")]
     public bool CanLike { get; set; }
+
+    /// <summary>The network has a repost (X).</summary>
+    [JsonPropertyName("can_repost")]
+    public bool CanRepost { get; set; }
+
+    /// <summary>The network has bookmarks (X).</summary>
+    [JsonPropertyName("can_bookmark")]
+    public bool CanBookmark { get; set; }
 
     /// <summary>The network ranks by votes, so a down vote exists.</summary>
     [JsonPropertyName("can_vote")]
