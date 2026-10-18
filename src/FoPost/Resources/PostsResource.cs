@@ -401,6 +401,16 @@ public sealed class PostsResource
     public Task<JsonNode?> RetryAsync(string postId, CancellationToken cancellationToken = default) =>
         Act(postId, "retry", cancellationToken);
 
+    /// <summary>
+    /// Take a published post down from every network it is live on. Needs the <c>publish</c> scope.
+    /// </summary>
+    /// <remarks>Wraps the API's <c>unpublishPost</c> operation.</remarks>
+    public async Task<UnpublishResult> UnpublishAsync(string postId, CancellationToken cancellationToken = default)
+    {
+        var body = await Act(postId, "unpublish", cancellationToken).ConfigureAwait(false);
+        return Require<UnpublishResult>(body);
+    }
+
     /// <summary>Per-account blockers and advisory content signals, without publishing.</summary>
     public Task<JsonNode?> PreflightAsync(string postId, CancellationToken cancellationToken = default) =>
         Act(postId, "preflight", cancellationToken);
