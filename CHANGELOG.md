@@ -4,6 +4,25 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- `client.Inbox.RepostAsync`, `UnrepostAsync`, `BookmarkAsync` and `UnbookmarkAsync` act on an X
+  item where `CanRepost` or `CanBookmark` is true (`inbox` and `publish`), answering the item with
+  its new `Reposted` and `Bookmarked` state. A 402 `platform_balance_spent` means X's own
+  pay-per-use balance is spent.
+- `client.Accounts.FollowXUserAsync` and `UnfollowXUserAsync` follow or unfollow a numeric X user
+  id from a connected X account into `XFollowResult` (`inbox` and `publish`).
+- `client.Accounts.GetXPostAsync` reads one X post by id and `SearchXPostsAsync`
+  (`XSearchOptions`) runs an X recent search, both with the named account's token (`inbox`).
+  Results are `XPost`; a search page carries `NextToken` for the next one.
+- The inbox item's `Reposted`, `Bookmarked`, `CanRepost` and `CanBookmark`.
+
+### Changed
+- An X account connected before this release answers 409 `reconnect_required` to repost,
+  bookmark and follow until it is reconnected, because the grant now asks for the bookmark and
+  follow permissions. Every one of these calls is an X API call metered to the workspace.
+
 ## [0.3.0] - 2026-10-18
 
 ### Removed
