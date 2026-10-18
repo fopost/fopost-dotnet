@@ -4,7 +4,7 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.3.0] - 2026-10-18
 
 ### Removed
 - **Breaking:** `BlogSettings.AutoPublish` and `UpdateBlogSettingsOptions.AutoPublish` are removed;
@@ -140,10 +140,6 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 - `client.Accounts.GetTelegramBotCommandsAsync`, `SetTelegramBotCommandsAsync` and
   `DeleteTelegramBotCommandsAsync` manage the bot's command menu in a connected chat. All five
   need the `accounts` scope.
-
-## [0.3.0] - 2026-09-19
-
-### Added
 
 - `client.Ads`: the campaign tree (`AccountTreeAsync`; get, create, update, delete and duplicate for
   campaigns, ad sets and network ads; `BulkSetStatusAsync`), creatives (`CreativesAsync`,
