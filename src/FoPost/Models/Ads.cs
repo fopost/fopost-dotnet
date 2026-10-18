@@ -1284,3 +1284,261 @@ public sealed class ConversionMetrics : FoPostModel
     public long? CostPerConversionMinor { get; set; }
 }
 
+
+/// <summary>Where a conversion happened, on <see cref="ConversionEvent.ActionSource"/>.</summary>
+public static class ConversionActionSources
+{
+    public const string Website = "website";
+    public const string App = "app";
+    public const string Email = "email";
+    public const string PhoneCall = "phone_call";
+    public const string Chat = "chat";
+    public const string PhysicalStore = "physical_store";
+    public const string SystemGenerated = "system_generated";
+    public const string BusinessMessaging = "business_messaging";
+    public const string Other = "other";
+}
+
+/// <summary>What one conversions upload stored and sent.</summary>
+public sealed class ConversionUploadResult : FoPostModel
+{
+    /// <summary>The stored batch.</summary>
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>How many events the network received.</summary>
+    [JsonPropertyName("accepted")]
+    public long Accepted { get; set; }
+
+    [JsonPropertyName("eventCount")]
+    public int EventCount { get; set; }
+
+    /// <summary>True when the <c>Idempotency-Key</c> had been used before and nothing was sent.</summary>
+    [JsonPropertyName("replayed")]
+    public bool Replayed { get; set; }
+}
+
+/// <summary>A stored conversion as the API kept it: identifiers are hashes, never the raw value.</summary>
+public sealed class HashedConversionEvent : FoPostModel
+{
+    [JsonPropertyName("eventName")]
+    public string EventName { get; set; } = string.Empty;
+
+    [JsonPropertyName("occurredAt")]
+    public string OccurredAt { get; set; } = string.Empty;
+
+    [JsonPropertyName("eventId")]
+    public string? EventId { get; set; }
+
+    [JsonPropertyName("actionSource")]
+    public string ActionSource { get; set; } = string.Empty;
+
+    [JsonPropertyName("emailHash")]
+    public string? EmailHash { get; set; }
+
+    [JsonPropertyName("phoneHash")]
+    public string? PhoneHash { get; set; }
+
+    [JsonPropertyName("externalIdHash")]
+    public string? ExternalIdHash { get; set; }
+
+    [JsonPropertyName("valueMinor")]
+    public long? ValueMinor { get; set; }
+
+    [JsonPropertyName("currency")]
+    public string? Currency { get; set; }
+
+    [JsonPropertyName("orderId")]
+    public string? OrderId { get; set; }
+}
+
+/// <summary>One batch of conversions sent to a pixel.</summary>
+public sealed class ConversionBatch : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("workspaceId")]
+    public string WorkspaceId { get; set; } = string.Empty;
+
+    [JsonPropertyName("connectionId")]
+    public string ConnectionId { get; set; } = string.Empty;
+
+    [JsonPropertyName("adAccountId")]
+    public string AdAccountId { get; set; } = string.Empty;
+
+    [JsonPropertyName("pixelId")]
+    public string PixelId { get; set; } = string.Empty;
+
+    [JsonPropertyName("idempotencyKey")]
+    public string? IdempotencyKey { get; set; }
+
+    [JsonPropertyName("eventCount")]
+    public int EventCount { get; set; }
+
+    [JsonPropertyName("accepted")]
+    public long Accepted { get; set; }
+
+    [JsonPropertyName("events")]
+    public IReadOnlyList<HashedConversionEvent> Events { get; set; } = Array.Empty<HashedConversionEvent>();
+
+    [JsonPropertyName("createdAt")]
+    public string CreatedAt { get; set; } = string.Empty;
+}
+
+/// <summary>What a pixel may be used for, on <see cref="AdPixelDetail.DataUseSetting"/>.</summary>
+public static class PixelDataUseSettings
+{
+    public const string AdvertisingAndAnalytics = "advertising_and_analytics";
+    public const string AnalyticsOnly = "analytics_only";
+}
+
+/// <summary>A pixel with its install script and settings.</summary>
+public sealed class AdPixelDetail : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>The script to place on the site.</summary>
+    [JsonPropertyName("code")]
+    public string? Code { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    public string? CreatedAt { get; set; }
+
+    [JsonPropertyName("lastFiredAt")]
+    public string? LastFiredAt { get; set; }
+
+    [JsonPropertyName("isUnavailable")]
+    public bool IsUnavailable { get; set; }
+
+    /// <summary>One of <see cref="PixelDataUseSettings"/>.</summary>
+    [JsonPropertyName("dataUseSetting")]
+    public string? DataUseSetting { get; set; }
+}
+
+/// <summary>How often one event fired on a pixel.</summary>
+public sealed class PixelEventCount : FoPostModel
+{
+    [JsonPropertyName("eventName")]
+    public string EventName { get; set; } = string.Empty;
+
+    [JsonPropertyName("count")]
+    public long Count { get; set; }
+}
+
+/// <summary>Pixel fires over the last 28 days.</summary>
+public sealed class AdPixelStats : FoPostModel
+{
+    [JsonPropertyName("since")]
+    public string Since { get; set; } = string.Empty;
+
+    [JsonPropertyName("until")]
+    public string Until { get; set; } = string.Empty;
+
+    [JsonPropertyName("events")]
+    public IReadOnlyList<PixelEventCount> Events { get; set; } = Array.Empty<PixelEventCount>();
+}
+
+/// <summary>How often one identifier was present on an event.</summary>
+public sealed class MatchKeyCoverage : FoPostModel
+{
+    [JsonPropertyName("identifier")]
+    public string Identifier { get; set; } = string.Empty;
+
+    [JsonPropertyName("coveragePercent")]
+    public double CoveragePercent { get; set; }
+}
+
+/// <summary>The network's event match quality for one event name.</summary>
+public sealed class EventMatchQuality : FoPostModel
+{
+    [JsonPropertyName("eventName")]
+    public string EventName { get; set; } = string.Empty;
+
+    /// <summary>The network's match score out of 10.</summary>
+    [JsonPropertyName("score")]
+    public double? Score { get; set; }
+
+    [JsonPropertyName("matchKeys")]
+    public IReadOnlyList<MatchKeyCoverage> MatchKeys { get; set; } = Array.Empty<MatchKeyCoverage>();
+}
+
+/// <summary>The standard event a custom conversion counts as.</summary>
+public static class CustomConversionEventTypes
+{
+    public const string AddPaymentInfo = "ADD_PAYMENT_INFO";
+    public const string AddToCart = "ADD_TO_CART";
+    public const string AddToWishlist = "ADD_TO_WISHLIST";
+    public const string CompleteRegistration = "COMPLETE_REGISTRATION";
+    public const string ContentView = "CONTENT_VIEW";
+    public const string InitiatedCheckout = "INITIATED_CHECKOUT";
+    public const string Lead = "LEAD";
+    public const string Purchase = "PURCHASE";
+    public const string Search = "SEARCH";
+    public const string Contact = "CONTACT";
+    public const string CustomizeProduct = "CUSTOMIZE_PRODUCT";
+    public const string Donate = "DONATE";
+    public const string FindLocation = "FIND_LOCATION";
+    public const string Schedule = "SCHEDULE";
+    public const string StartTrial = "START_TRIAL";
+    public const string SubmitApplication = "SUBMIT_APPLICATION";
+    public const string Subscribe = "SUBSCRIBE";
+    public const string Other = "OTHER";
+}
+
+/// <summary>Which pixel event a custom conversion reads. Pick one of the URL matches.</summary>
+public sealed class CustomConversionRule
+{
+    /// <summary><c>PageView</c> when omitted.</summary>
+    [JsonPropertyName("eventName")]
+    public string? EventName { get; set; }
+
+    [JsonPropertyName("urlContains")]
+    public string? UrlContains { get; set; }
+
+    [JsonPropertyName("urlEquals")]
+    public string? UrlEquals { get; set; }
+}
+
+/// <summary>A custom conversion defined on a pixel.</summary>
+public sealed class CustomConversion : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("pixelId")]
+    public string? PixelId { get; set; }
+
+    /// <summary>One of <see cref="CustomConversionEventTypes"/>.</summary>
+    [JsonPropertyName("eventType")]
+    public string EventType { get; set; } = string.Empty;
+
+    [JsonPropertyName("rule")]
+    public CustomConversionRule? Rule { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    /// <summary>Account currency, minor units.</summary>
+    [JsonPropertyName("defaultValueMinor")]
+    public long? DefaultValueMinor { get; set; }
+
+    [JsonPropertyName("isArchived")]
+    public bool IsArchived { get; set; }
+
+    [JsonPropertyName("isUnavailable")]
+    public bool IsUnavailable { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    public string? CreatedAt { get; set; }
+
+    [JsonPropertyName("lastFiredAt")]
+    public string? LastFiredAt { get; set; }
+}

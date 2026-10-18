@@ -257,11 +257,43 @@ public sealed class ConversionEvent
     [JsonPropertyName("occurredAt")]
     public string OccurredAt { get; set; } = string.Empty;
 
+    /// <summary>Your own id for the event, so the network deduplicates a browser and server pair.</summary>
+    [JsonPropertyName("eventId")]
+    public string? EventId { get; set; }
+
+    /// <summary>One of <see cref="ConversionActionSources"/>; <c>website</c> when omitted.</summary>
+    [JsonPropertyName("actionSource")]
+    public string? ActionSource { get; set; }
+
+    /// <summary>The page the event fired on.</summary>
+    [JsonPropertyName("sourceUrl")]
+    public string? SourceUrl { get; set; }
+
     [JsonPropertyName("email")]
     public string? Email { get; set; }
 
     [JsonPropertyName("phone")]
     public string? Phone { get; set; }
+
+    /// <summary>Your own user id. Hashed before it leaves FoPost; never stored.</summary>
+    [JsonPropertyName("externalId")]
+    public string? ExternalId { get; set; }
+
+    /// <summary>Sent as-is for matching; never stored.</summary>
+    [JsonPropertyName("clientIpAddress")]
+    public string? ClientIpAddress { get; set; }
+
+    /// <summary>Sent as-is; never stored.</summary>
+    [JsonPropertyName("clientUserAgent")]
+    public string? ClientUserAgent { get; set; }
+
+    /// <summary>The network's click id (<c>fbc</c>).</summary>
+    [JsonPropertyName("clickId")]
+    public string? ClickId { get; set; }
+
+    /// <summary>The network's browser id (<c>fbp</c>).</summary>
+    [JsonPropertyName("browserId")]
+    public string? BrowserId { get; set; }
 
     /// <summary>Account currency, minor units.</summary>
     [JsonPropertyName("valueMinor")]
@@ -272,22 +304,96 @@ public sealed class ConversionEvent
 
     [JsonPropertyName("orderId")]
     public string? OrderId { get; set; }
+
+    /// <summary>Up to 100.</summary>
+    [JsonPropertyName("contentIds")]
+    public IList<string>? ContentIds { get; set; }
 }
 
-/// <summary>The body of <see cref="Resources.AdsResource.UploadConversionsAsync"/>.</summary>
-public sealed class UploadConversionsOptions : AdConnectionRequestOptions
+/// <summary>What every request on an ad account carries.</summary>
+public abstract class AdAccountRequestOptions : AdConnectionRequestOptions
 {
-    /// <summary>Ad account id.</summary>
+    /// <summary>Ad account id as the network addresses it.</summary>
     [JsonPropertyName("adAccountId")]
     public string AdAccountId { get; set; } = string.Empty;
+}
 
-    /// <summary>A pixel the ad account owns, from <see cref="Resources.AdsResource.AudiencesAsync"/>.</summary>
+/// <summary>
+/// The body of <see cref="Resources.AdsResource.UploadConversionsAsync"/> and
+/// <see cref="Resources.AdsResource.SendPixelConversionsAsync"/>.
+/// </summary>
+public sealed class UploadConversionsOptions : AdAccountRequestOptions
+{
+    /// <summary>A pixel the ad account owns, from <see cref="Resources.AdsResource.PixelsAsync"/>.</summary>
     [JsonPropertyName("pixelId")]
     public string PixelId { get; set; } = string.Empty;
 
     /// <summary>Up to 1000 per call.</summary>
     [JsonPropertyName("events")]
     public IList<ConversionEvent> Events { get; set; } = new List<ConversionEvent>();
+}
+
+/// <summary>The body of <see cref="Resources.AdsResource.CreatePixelAsync"/>.</summary>
+public sealed class CreatePixelOptions : AdAccountRequestOptions
+{
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+}
+
+/// <summary>Changes to a pixel. Only the properties you set move.</summary>
+public sealed class UpdatePixelOptions : AdAccountRequestOptions
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    /// <summary>One of <see cref="PixelDataUseSettings"/>.</summary>
+    [JsonPropertyName("dataUseSetting")]
+    public string? DataUseSetting { get; set; }
+}
+
+/// <summary>The body of <see cref="Resources.AdsResource.SharePixelAsync"/>.</summary>
+public sealed class SharePixelOptions : AdAccountRequestOptions
+{
+    /// <summary>Another ad account under the same business portfolio.</summary>
+    [JsonPropertyName("targetAdAccountId")]
+    public string TargetAdAccountId { get; set; } = string.Empty;
+}
+
+/// <summary>The body of <see cref="Resources.AdsResource.CreateCustomConversionAsync"/>.</summary>
+public sealed class CreateCustomConversionOptions : AdAccountRequestOptions
+{
+    [JsonPropertyName("pixelId")]
+    public string PixelId { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>One of <see cref="CustomConversionEventTypes"/>.</summary>
+    [JsonPropertyName("eventType")]
+    public string EventType { get; set; } = string.Empty;
+
+    [JsonPropertyName("rule")]
+    public CustomConversionRule Rule { get; set; } = new();
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    /// <summary>Default value of one conversion, account currency, minor units.</summary>
+    [JsonPropertyName("defaultValueMinor")]
+    public long? DefaultValueMinor { get; set; }
+}
+
+/// <summary>Changes to a custom conversion. Only the properties you set move.</summary>
+public sealed class UpdateCustomConversionOptions : AdAccountRequestOptions
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("defaultValueMinor")]
+    public long? DefaultValueMinor { get; set; }
 }
 
 /// <summary>Scopes a comment write; the comment id travels in the path.</summary>
