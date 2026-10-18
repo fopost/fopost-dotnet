@@ -65,9 +65,11 @@ public static class PostStatuses
     public const string Published = "published";
     public const string Failed = "failed";
     public const string Cancelled = "cancelled";
+    public const string PartiallyFailed = "partially_failed";
+    public const string Unpublished = "unpublished";
 
     public static IReadOnlyList<string> All { get; } = new[]
     {
-        Draft, PendingApproval, Scheduled, Publishing, Published, Failed, Cancelled,
+        Draft, PendingApproval, Scheduled, Publishing, Published, PartiallyFailed, Failed, Cancelled, Unpublished,
     };
 }

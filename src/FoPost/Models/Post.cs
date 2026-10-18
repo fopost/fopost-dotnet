@@ -172,3 +172,27 @@ public sealed class Delivery : FoPostModel
     [JsonPropertyName("external_url")]
     public string? ExternalUrl { get; set; }
 }
+
+/// <summary>What <see cref="Resources.PostsResource.UnpublishAsync"/> removed.</summary>
+public sealed class UnpublishResult : FoPostModel
+{
+    /// <summary>One of <see cref="PostStatuses"/>, <c>unpublished</c> once every delivery is down.</summary>
+    [JsonPropertyName("post_status")]
+    public string PostStatus { get; set; } = string.Empty;
+
+    [JsonPropertyName("deliveries")]
+    public IList<UnpublishDelivery> Deliveries { get; set; } = new List<UnpublishDelivery>();
+}
+
+/// <summary>One network's answer to an unpublish.</summary>
+public sealed class UnpublishDelivery : FoPostModel
+{
+    [JsonPropertyName("account_id")]
+    public string AccountId { get; set; } = string.Empty;
+
+    [JsonPropertyName("platform")]
+    public string Platform { get; set; } = string.Empty;
+
+    [JsonPropertyName("removed")]
+    public bool Removed { get; set; }
+}
