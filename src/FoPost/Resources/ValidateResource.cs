@@ -81,4 +81,23 @@ public sealed class ValidateResource
             .ConfigureAwait(false);
         return Require<MediaValidation>(FoPostHttpClient.Unwrap(response));
     }
+
+    /// <summary>
+    /// Whether a subreddit exists and takes a post from a connected Reddit account. The check runs
+    /// with that account's own token, so <paramref name="accountId"/> is required.
+    /// </summary>
+    public async Task<SubredditCheck> SubredditAsync(
+        string accountId,
+        string name,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(accountId);
+        ArgumentException.ThrowIfNullOrEmpty(name);
+
+        var query = new Dictionary<string, object?> { ["account_id"] = accountId, ["name"] = name };
+
+        var response = await _http.GetAsync("/v1/validate/subreddit", query, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<SubredditCheck>(FoPostHttpClient.Unwrap(response));
+    }
 }

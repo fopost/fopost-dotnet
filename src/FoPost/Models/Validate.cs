@@ -107,3 +107,30 @@ public sealed class MediaValidation : FoPostModel
     [JsonPropertyName("type")]
     public string? Type { get; set; }
 }
+
+/// <summary>
+/// Whether a subreddit exists and takes a post from a named Reddit account. <see cref="Ok"/> is
+/// true when both hold; a private, banned or missing subreddit answers 200 with
+/// <see cref="Exists"/> false rather than an error.
+/// </summary>
+public sealed class SubredditCheck : FoPostModel
+{
+    [JsonPropertyName("subreddit")]
+    public string Subreddit { get; set; } = string.Empty;
+
+    [JsonPropertyName("exists")]
+    public bool Exists { get; set; }
+
+    [JsonPropertyName("can_post")]
+    public bool CanPost { get; set; }
+
+    [JsonPropertyName("over_18")]
+    public bool Over18 { get; set; }
+
+    [JsonPropertyName("flair_enabled")]
+    public bool FlairEnabled { get; set; }
+
+    /// <summary>True when the subreddit exists and takes a post from this account.</summary>
+    [JsonPropertyName("ok")]
+    public bool Ok { get; set; }
+}
