@@ -1134,4 +1134,75 @@ public sealed class AccountsResource
         return ToList<LinkedInMention>(FoPostHttpClient.Unwrap(response));
     }
 
+
+    // ── X communities ────────────────────────────────────────────────────
+
+    /// <summary>The X communities stored for the account, from the last sync or added by hand.</summary>
+    public async Task<IReadOnlyList<XCommunity>> ListCommunitiesAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/communities", null, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<XCommunity>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Re-read the account's communities from X and store them.</summary>
+    public async Task<XCommunitySync> SyncCommunitiesAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .PostAsync($"{AccountPath(accountId)}/communities/sync", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<XCommunitySync>(response);
+    }
+
+    /// <summary>Search X for communities by name. Nothing is stored.</summary>
+    public async Task<IReadOnlyList<XCommunitySearchResult>> SearchCommunitiesAsync(
+        string accountId,
+        string q,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(q);
+
+        var query = new Dictionary<string, object?> { ["q"] = q };
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/communities/search", query, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<XCommunitySearchResult>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Store a community by its X id, for one the sync cannot see.</summary>
+    public async Task<XCommunity> AddCommunityAsync(
+        string accountId,
+        string communityId,
+        string? name = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(communityId);
+
+        var body = new Dictionary<string, object?> { ["communityId"] = communityId };
+        if (name is not null)
+        {
+            body["name"] = name;
+        }
+        var response = await _http
+            .PostAsync($"{AccountPath(accountId)}/communities/manual", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<XCommunity>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Forget a stored community. <paramref name="id"/> is the stored <see cref="XCommunity.Id"/>, not the X id.</summary>
+    public async Task RemoveCommunityAsync(
+        string accountId,
+        long id,
+        CancellationToken cancellationToken = default)
+    {
+        await _http
+            .DeleteAsync($"{AccountPath(accountId)}/communities/{id}", null, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
 }
