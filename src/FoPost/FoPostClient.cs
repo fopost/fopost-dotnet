@@ -31,10 +31,13 @@ public sealed class FoPostClient : IDisposable
         _http = new FoPostHttpClient(options ?? new FoPostClientOptions());
 
         Accounts = new AccountsResource(_http);
+        ConnectSessions = new ConnectSessionsResource(_http);
         AccountGroups = new AccountGroupsResource(_http);
         Workspaces = new WorkspacesResource(_http);
         Labels = new LabelsResource(_http);
         Activity = new ActivityResource(_http);
+        Logs = new LogsResource(_http);
+        Webhooks = new WebhooksResource(_http);
         Ai = new AiResource(_http);
         Inbox = new InboxResource(_http);
         Contacts = new ContactsResource(_http);
@@ -45,11 +48,13 @@ public sealed class FoPostClient : IDisposable
         Validate = new ValidateResource(_http);
         Media = new MediaResource(_http);
         Posts = new PostsResource(_http, Media);
+        Queue = new QueueResource(_http);
         Analytics = new AnalyticsResource(_http);
         GoogleBusiness = new GoogleBusinessResource(_http);
         Blog = new BlogResource(_http);
         Whatsapp = new WhatsappResource(_http);
         Blogs = new BlogsResource(_http);
+        Automations = new AutomationsResource(_http);
     }
 
     public FoPostClient(string apiKey)
@@ -59,7 +64,13 @@ public sealed class FoPostClient : IDisposable
 
     public PostsResource Posts { get; }
 
+    /// <summary>The posting queue: weekly slots and the times they produce.</summary>
+    public QueueResource Queue { get; }
+
     public AccountsResource Accounts { get; }
+
+    /// <summary>Hosted connect links for your own users.</summary>
+    public ConnectSessionsResource ConnectSessions { get; }
 
     public AccountGroupsResource AccountGroups { get; }
 
@@ -69,6 +80,12 @@ public sealed class FoPostClient : IDisposable
 
     /// <summary>What happened in a workspace, including the security audit log.</summary>
     public ActivityResource Activity { get; }
+
+    /// <summary>The API requests made against a workspace.</summary>
+    public LogsResource Logs { get; }
+
+    /// <summary>Webhook endpoints and their deliveries.</summary>
+    public WebhooksResource Webhooks { get; }
 
     public AiResource Ai { get; }
 
@@ -105,6 +122,9 @@ public sealed class FoPostClient : IDisposable
     public WhatsappResource Whatsapp { get; }
     /// <summary>Articles and products on a connected site, by the platform's own ids.</summary>
     public BlogsResource Blogs { get; }
+
+    /// <summary>Triggers, the graphs they run, their versions and their runs.</summary>
+    public AutomationsResource Automations { get; }
 
     public string BaseUrl => _http.BaseUrl;
 

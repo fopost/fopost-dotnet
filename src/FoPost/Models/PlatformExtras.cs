@@ -314,6 +314,65 @@ public sealed class LinkedInMention : FoPostModel
     public string Annotation { get; set; } = string.Empty;
 }
 
+/// <summary>An X community stored for an account.</summary>
+public sealed class XCommunity : FoPostModel
+{
+    /// <summary>The stored row's id, used to remove it.</summary>
+    [JsonPropertyName("id")]
+    public long Id { get; set; }
+
+    [JsonPropertyName("account_id")]
+    public string? AccountId { get; set; }
+
+    /// <summary>The community's id on X.</summary>
+    [JsonPropertyName("community_id")]
+    public string CommunityId { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("member_count")]
+    public int? MemberCount { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("image_url")]
+    public string? ImageUrl { get; set; }
+
+    [JsonPropertyName("last_synced_at")]
+    public DateTimeOffset? LastSyncedAt { get; set; }
+
+    [JsonPropertyName("created_at")]
+    public DateTimeOffset? CreatedAt { get; set; }
+}
+
+/// <summary>What a sync from X stored, and anything X had to say about it.</summary>
+public sealed class XCommunitySync : FoPostModel
+{
+    [JsonPropertyName("data")]
+    public IList<XCommunity> Communities { get; set; } = new List<XCommunity>();
+
+    [JsonPropertyName("note")]
+    public string? Note { get; set; }
+}
+
+/// <summary>A community found by searching X. Not stored until added.</summary>
+public sealed class XCommunitySearchResult : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("member_count")]
+    public int? MemberCount { get; set; }
+}
+
 /// <summary>A post read from X with a connected account's token, by id or from a search.</summary>
 public sealed class XPost : FoPostModel
 {

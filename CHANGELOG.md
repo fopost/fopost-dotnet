@@ -6,7 +6,28 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- **Breaking:** `Ads.UploadConversionsAsync` returns `ConversionUploadResult` (`Id`, `Accepted`,
+  `EventCount`, `Replayed`) instead of the accepted count, and takes an optional `idempotencyKey`
+  sent as the `Idempotency-Key` header.
+- `ConversionEvent` gained `EventId`, `ActionSource` (`ConversionActionSources`), `SourceUrl`,
+  `ExternalId`, `ClientIpAddress`, `ClientUserAgent`, `ClickId`, `BrowserId` and `ContentIds`.
+- An X account connected before this release answers 409 `reconnect_required` to repost,
+  bookmark and follow until it is reconnected, because the grant now asks for the bookmark and
+  follow permissions. Every one of these calls is an X API call metered to the workspace.
+
 ### Added
+- `Ads.SendPixelConversionsAsync` (`POST /v1/ads/conversions/events`): the Conversions API send
+  with a required `Idempotency-Key`; a replay answers the stored batch with `Replayed` true.
+- `Ads.ConversionBatchesAsync` (`GET /v1/ads/conversions/events`) lists stored batches as
+  `ConversionBatch` with `HashedConversionEvent` rows.
+- Pixels: `PixelsAsync`, `CreatePixelAsync`, `PixelAsync`, `UpdatePixelAsync`, `SharePixelAsync`,
+  `PixelStatsAsync` and `EventMatchQualityAsync`, with `AdPixelDetail`, `PixelDataUseSettings`,
+  `AdPixelStats` and `EventMatchQuality`.
+- Custom conversions: `CustomConversionsAsync`, `CreateCustomConversionAsync`,
+  `CustomConversionAsync`, `UpdateCustomConversionAsync` and `DeleteCustomConversionAsync`, with
+  `CustomConversion`, `CustomConversionRule` and `CustomConversionEventTypes`.
+- `FoPostHttpClient.RequestAsync` accepts per-request headers.
 - `client.Inbox.RepostAsync`, `UnrepostAsync`, `BookmarkAsync` and `UnbookmarkAsync` act on an X
   item where `CanRepost` or `CanBookmark` is true (`inbox` and `publish`), answering the item with
   its new `Reposted` and `Bookmarked` state. A 402 `platform_balance_spent` means X's own
@@ -18,10 +39,41 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
   Results are `XPost`; a search page carries `NextToken` for the next one.
 - The inbox item's `Reposted`, `Bookmarked`, `CanRepost` and `CanBookmark`.
 
+## [0.4.0] - 2026-10-18
+
+### Added
+- `client.Queue` (scope `posts`): the posting queue. `ListSlotsAsync`, `CreateSlotAsync`,
+  `UpdateSlotAsync`, `DeleteSlotAsync`, `NextAsync` and `PreviewAsync`, with the `QueueSlot`,
+  `QueueMove`, `QueueSlotDeletion` and `QueueNext` models. `CreatePostOptions.Schedule` and
+  `UpdatePostOptions.Schedule` take `PostSchedules.Queue` to drop a post into the next free slot.
+- `Posts.UnpublishAsync` (`POST /v1/posts/{id}/unpublish`, scope `publish`) takes a published post
+  down everywhere and answers an `UnpublishResult`. `PostStatuses` gains `PartiallyFailed` and
+  `Unpublished`.
+- `client.ConnectSessions` (scope `accounts`): hosted connect links. `CreateAsync` and `GetAsync`,
+  with `ConnectSession`, `ConnectSessionBranding` and `ConnectSessionStatuses`.
+- `client.Webhooks` (scope `webhooks`): `ListAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`,
+  `TestAsync`, `DeliveriesAsync`, `GetDeliveryAsync` and `RedeliverAsync`, with the `Webhook`,
+  `WebhookDelivery` models and the `WebhookEvents` constants.
+- `client.Automations` (scope `automations`): `ListAsync`, `CreateAsync`, `StatsAsync`, `GetAsync`,
+  `UpdateAsync`, `DeleteAsync`, `ToggleAsync`, `ListVersionsAsync`, `GetVersionAsync`,
+  `RestoreVersionAsync`, `ListRunsAsync` and `GetRunAsync`, with the `Automation`, `AutomationGraph`,
+  `AutomationVersion`, `AutomationRestore`, `AutomationRun`, `AutomationStats` models and the
+  `AutomationTriggerTypes` and `AutomationNodeKinds` constants.
+- `client.Logs` (scope `workspaces`): `ListAsync` reads request logs into a `RequestLogPage` with a
+  `before` cursor and the window's `RequestLogSummary`.
+- `Analytics` (scope `analytics`) gains the dashboard reports: `OverviewAsync`, `TimeSeriesAsync`,
+  `TopPostsAsync`, `LabelsAsync`, `PostsTableAsync`, `PostingStreakAsync`, `DemographicsAsync`,
+  `InboxAsync` and `CollectAsync`.
+- `Workspaces.CreateAsync`, `UpdateAsync` and `DeleteAsync`; `Workspace` reads `RequireApproval`,
+  `AiAltTextEnabled`, `BrandColor`, `ConnectRedirectDomains` and `BypassAbilities`.
+- `Labels.GetAsync`, `CreateAsync`, `UpdateAsync` and `DeleteAsync`.
+- `Accounts.ListCommunitiesAsync`, `SyncCommunitiesAsync`, `SearchCommunitiesAsync`,
+  `AddCommunityAsync` and `RemoveCommunityAsync` for X communities.
+- `OffsetPage<T>` and `OffsetPageMeta` for lists footed with `{ page, per_page, total, total_pages }`.
+
 ### Changed
-- An X account connected before this release answers 409 `reconnect_required` to repost,
-  bookmark and follow until it is reconnected, because the grant now asks for the bookmark and
-  follow permissions. Every one of these calls is an X API call metered to the workspace.
+- The Discord, Google Business and WhatsApp methods name the API operation they wrap in their
+  doc comments, so the collections checker can see them.
 
 ## [0.3.0] - 2026-10-18
 

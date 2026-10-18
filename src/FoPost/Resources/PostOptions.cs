@@ -68,6 +68,9 @@ public sealed class CreatePostOptions
 
     public DateTimeOffset? ScheduleAt { get; set; }
 
+    /// <summary><see cref="PostSchedules.Queue"/> drops the post into the next free posting slot.</summary>
+    public string? Schedule { get; set; }
+
     public IList<string>? Labels { get; set; }
 
     public string? Title { get; set; }
@@ -100,6 +103,9 @@ public sealed class UpdatePostOptions
     public Optional<string> Status { get; set; }
 
     public Optional<DateTimeOffset?> ScheduleAt { get; set; }
+
+    /// <summary><see cref="PostSchedules.Queue"/> moves the post to the next free posting slot.</summary>
+    public Optional<string> Schedule { get; set; }
 
     public Optional<IList<string>> Labels { get; set; }
 

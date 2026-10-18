@@ -111,6 +111,22 @@ public sealed class Workspace : FoPostModel
     [JsonPropertyName("role")]
     public string? Role { get; set; }
 
+    [JsonPropertyName("require_approval")]
+    public bool? RequireApproval { get; set; }
+
+    [JsonPropertyName("ai_alt_text_enabled")]
+    public bool? AiAltTextEnabled { get; set; }
+
+    [JsonPropertyName("brand_color")]
+    public string? BrandColor { get; set; }
+
+    [JsonPropertyName("connect_redirect_domains")]
+    public IList<string>? ConnectRedirectDomains { get; set; }
+
+    /// <summary>Billing checks the caller skips here: <c>accounts</c>, <c>api</c> or <c>ai</c>.</summary>
+    [JsonPropertyName("bypass_abilities")]
+    public IList<string>? BypassAbilities { get; set; }
+
     [JsonPropertyName("created_at")]
     public DateTimeOffset? CreatedAt { get; set; }
 

@@ -137,7 +137,8 @@ internal sealed class FoPostHttpClient : IDisposable
         string path,
         object? body = null,
         IReadOnlyDictionary<string, object?>? query = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IEnumerable<KeyValuePair<string, string>>? headers = null)
     {
         var payload = body is null ? null : JsonSerializer.Serialize(body, FoPostJson.Options);
         return RequestAsync(
@@ -145,7 +146,8 @@ internal sealed class FoPostHttpClient : IDisposable
             path,
             payload is null ? null : () => new StringContent(payload, Encoding.UTF8, "application/json"),
             query,
-            cancellationToken);
+            cancellationToken,
+            headers);
     }
 
     /// <summary>
@@ -157,7 +159,8 @@ internal sealed class FoPostHttpClient : IDisposable
         string path,
         Func<HttpContent>? content,
         IReadOnlyDictionary<string, object?>? query = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IEnumerable<KeyValuePair<string, string>>? headers = null)
     {
         var uri = BuildUri(path, query);
 
@@ -178,6 +181,13 @@ internal sealed class FoPostHttpClient : IDisposable
             else if (!string.IsNullOrEmpty(_apiKey))
             {
                 request.Headers.TryAddWithoutValidation("X-API-Key", _apiKey);
+            }
+            if (headers is not null)
+            {
+                foreach (var (name, value) in headers)
+                {
+                    request.Headers.TryAddWithoutValidation(name, value);
+                }
             }
             if (content is not null)
             {

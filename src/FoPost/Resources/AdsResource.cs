@@ -331,17 +331,244 @@ public sealed class AdsResource
 
     /// <summary>
     /// Offline conversions against a pixel the ad account owns. Identifiers are
-    /// hashed before anything leaves FoPost; returns how many the network took.
+    /// hashed before anything leaves FoPost. Pass an <paramref name="idempotencyKey"/>
+    /// to make a retry safe; <see cref="SendPixelConversionsAsync"/> requires one.
     /// </summary>
-    public async Task<long> UploadConversionsAsync(
+    public async Task<ConversionUploadResult> UploadConversionsAsync(
         UploadConversionsOptions options,
+        string? idempotencyKey = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        var response = await _http.PostAsync("/v1/ads/conversions", options, cancellationToken)
+        var response = await _http
+            .RequestAsync(
+                HttpMethod.Post,
+                "/v1/ads/conversions",
+                options,
+                null,
+                cancellationToken,
+                IdempotencyHeader(idempotencyKey))
             .ConfigureAwait(false);
-        return FoPostHttpClient.Unwrap(response)?["accepted"]?.GetValue<long>() ?? 0;
+        return Require<ConversionUploadResult>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
+    /// Conversions API send with a required <c>Idempotency-Key</c>: the same key
+    /// answers the stored batch with <c>Replayed</c> true and sends nothing twice.
+    /// </summary>
+    public async Task<ConversionUploadResult> SendPixelConversionsAsync(
+        UploadConversionsOptions options,
+        string idempotencyKey,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentException.ThrowIfNullOrEmpty(idempotencyKey);
+
+        var response = await _http
+            .RequestAsync(
+                HttpMethod.Post,
+                "/v1/ads/conversions/events",
+                options,
+                null,
+                cancellationToken,
+                IdempotencyHeader(idempotencyKey))
+            .ConfigureAwait(false);
+        return Require<ConversionUploadResult>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Stored conversion batches, newest first, with hashed identifiers only.</summary>
+    public async Task<IReadOnlyList<ConversionBatch>> ConversionBatchesAsync(
+        string? connectionId = null,
+        int? limit = null,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new Dictionary<string, object?>
+        {
+            ["workspace_id"] = workspaceId,
+            ["connection_id"] = connectionId,
+            ["limit"] = limit,
+        };
+        var body = await _http.GetAsync("/v1/ads/conversions/events", query, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<ConversionBatch>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>The pixels an ad account owns.</summary>
+    public async Task<IReadOnlyList<AdPixel>> PixelsAsync(
+        string connectionId,
+        string adAccountId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync("/v1/ads/pixels", AccountQuery(workspaceId, connectionId, adAccountId), cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<AdPixel>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>Creates a pixel; the answer carries the install script in <c>Code</c>.</summary>
+    public async Task<AdPixelDetail> CreatePixelAsync(
+        CreatePixelOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await _http.PostAsync("/v1/ads/pixels", options, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<AdPixelDetail>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>One pixel with its install script and settings.</summary>
+    public async Task<AdPixelDetail> PixelAsync(
+        string pixelId,
+        string connectionId,
+        string adAccountId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync(PixelPath(pixelId, ""), AccountQuery(workspaceId, connectionId, adAccountId), cancellationToken)
+            .ConfigureAwait(false);
+        return Require<AdPixelDetail>(FoPostHttpClient.Unwrap(body));
+    }
+
+    public async Task<AdPixelDetail> UpdatePixelAsync(
+        string pixelId,
+        UpdatePixelOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await _http
+            .RequestAsync(HttpMethod.Patch, PixelPath(pixelId, ""), options, null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<AdPixelDetail>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Shares the pixel with another ad account under the same business portfolio.</summary>
+    public async Task SharePixelAsync(
+        string pixelId,
+        SharePixelOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        await _http.PostAsync(PixelPath(pixelId, "/share"), options, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Pixel fires per event over the last 28 days.</summary>
+    public async Task<AdPixelStats> PixelStatsAsync(
+        string pixelId,
+        string connectionId,
+        string adAccountId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync(
+                PixelPath(pixelId, "/stats"),
+                AccountQuery(workspaceId, connectionId, adAccountId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Require<AdPixelStats>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>The network's event match quality per event name.</summary>
+    public async Task<IReadOnlyList<EventMatchQuality>> EventMatchQualityAsync(
+        string pixelId,
+        string connectionId,
+        string adAccountId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync(
+                PixelPath(pixelId, "/match-quality"),
+                AccountQuery(workspaceId, connectionId, adAccountId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<EventMatchQuality>(FoPostHttpClient.Unwrap(body));
+    }
+
+    /// <summary>The custom conversions defined on the ad account's pixels.</summary>
+    public async Task<IReadOnlyList<CustomConversion>> CustomConversionsAsync(
+        string connectionId,
+        string adAccountId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync(
+                "/v1/ads/custom-conversions",
+                AccountQuery(workspaceId, connectionId, adAccountId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<CustomConversion>(FoPostHttpClient.Unwrap(body));
+    }
+
+    public async Task<CustomConversion> CreateCustomConversionAsync(
+        CreateCustomConversionOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await _http.PostAsync("/v1/ads/custom-conversions", options, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<CustomConversion>(FoPostHttpClient.Unwrap(response));
+    }
+
+    public async Task<CustomConversion> CustomConversionAsync(
+        string customConversionId,
+        string connectionId,
+        string adAccountId,
+        string? workspaceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = await _http
+            .GetAsync(
+                CustomConversionPath(customConversionId),
+                AccountQuery(workspaceId, connectionId, adAccountId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Require<CustomConversion>(FoPostHttpClient.Unwrap(body));
+    }
+
+    public async Task<CustomConversion> UpdateCustomConversionAsync(
+        string customConversionId,
+        UpdateCustomConversionOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await _http
+            .RequestAsync(
+                HttpMethod.Patch,
+                CustomConversionPath(customConversionId),
+                options,
+                null,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Require<CustomConversion>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Deletes the custom conversion on the network.</summary>
+    public async Task DeleteCustomConversionAsync(
+        string customConversionId,
+        string workspaceId,
+        string connectionId,
+        string adAccountId,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, string>
+        {
+            ["workspaceId"] = workspaceId,
+            ["connectionId"] = connectionId,
+            ["adAccountId"] = adAccountId,
+        };
+        await _http.DeleteAsync(CustomConversionPath(customConversionId), body, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>One page of an ad's comments; pass <c>nextCursor</c> back as <c>after</c>.</summary>
@@ -1718,4 +1945,13 @@ public sealed class AdsResource
 
     private static Dictionary<string, object?> MetaQuery(string? workspaceId, string connectionId) =>
         new() { ["workspace_id"] = workspaceId, ["connection_id"] = connectionId };
+
+    private static string PixelPath(string pixelId, string suffix) =>
+        $"/v1/ads/pixels/{Uri.EscapeDataString(pixelId)}{suffix}";
+
+    private static string CustomConversionPath(string id) =>
+        $"/v1/ads/custom-conversions/{Uri.EscapeDataString(id)}";
+
+    private static IEnumerable<KeyValuePair<string, string>>? IdempotencyHeader(string? key) =>
+        string.IsNullOrEmpty(key) ? null : new[] { KeyValuePair.Create("Idempotency-Key", key) };
 }
