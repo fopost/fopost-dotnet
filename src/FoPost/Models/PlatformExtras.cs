@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Text.Json.Serialization;
 
 namespace FoPost;
@@ -311,4 +312,77 @@ public sealed class LinkedInMention : FoPostModel
 
     [JsonPropertyName("annotation")]
     public string Annotation { get; set; } = string.Empty;
+}
+
+/// <summary>A post read from X with a connected account's token, by id or from a search.</summary>
+public sealed class XPost : FoPostModel
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("text")]
+    public string? Text { get; set; }
+
+    [JsonPropertyName("permalink")]
+    public string? Permalink { get; set; }
+
+    [JsonPropertyName("author_name")]
+    public string? AuthorName { get; set; }
+
+    [JsonPropertyName("author_handle")]
+    public string? AuthorHandle { get; set; }
+
+    [JsonPropertyName("author_avatar_url")]
+    public string? AuthorAvatarUrl { get; set; }
+
+    [JsonPropertyName("author_followers")]
+    public int? AuthorFollowers { get; set; }
+
+    /// <summary>Thread root id.</summary>
+    [JsonPropertyName("conversation_id")]
+    public string? ConversationId { get; set; }
+
+    /// <summary>The post this one replied to.</summary>
+    [JsonPropertyName("parent_external_id")]
+    public string? ParentExternalId { get; set; }
+
+    [JsonPropertyName("likes")]
+    public int? Likes { get; set; }
+
+    [JsonPropertyName("replies")]
+    public int? Replies { get; set; }
+
+    [JsonPropertyName("reposts")]
+    public int? Reposts { get; set; }
+
+    [JsonPropertyName("quotes")]
+    public int? Quotes { get; set; }
+
+    [JsonPropertyName("platform_created_at")]
+    public DateTimeOffset? PlatformCreatedAt { get; set; }
+}
+
+/// <summary>
+/// One page of X search results. Pass <see cref="NextToken"/> back as the cursor for the next
+/// page; it is <c>null</c> at the end.
+/// </summary>
+public sealed class XSearchPage : IReadOnlyList<XPost>
+{
+    public XSearchPage(IReadOnlyList<XPost> items, string? nextToken)
+    {
+        Items = items;
+        NextToken = nextToken;
+    }
+
+    public IReadOnlyList<XPost> Items { get; }
+
+    public string? NextToken { get; }
+
+    public int Count => Items.Count;
+
+    public XPost this[int index] => Items[index];
+
+    public IEnumerator<XPost> GetEnumerator() => Items.GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }

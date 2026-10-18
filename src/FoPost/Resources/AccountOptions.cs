@@ -122,3 +122,19 @@ public sealed class InstagramAudioSearchOptions
     /// <summary>music (the default) or original_sound.</summary>
     public string? AudioType { get; set; }
 }
+
+/// <summary>An X recent search, read with one connected X account's token.</summary>
+public sealed class XSearchOptions
+{
+    /// <summary>The X account whose token does the read.</summary>
+    public string AccountId { get; set; } = string.Empty;
+
+    /// <summary>X search query, 1 to 512 characters.</summary>
+    public string Query { get; set; } = string.Empty;
+
+    /// <summary>10 to 100; the API defaults to 10 when unset.</summary>
+    public int? MaxResults { get; set; }
+
+    /// <summary><c>XSearchPage.NextToken</c> from the previous page.</summary>
+    public string? NextToken { get; set; }
+}

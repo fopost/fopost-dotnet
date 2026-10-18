@@ -729,3 +729,17 @@ public sealed class RedditDefaultSubreddit : FoPostModel
     [JsonPropertyName("subreddit")]
     public string? Subreddit { get; set; }
 }
+
+/// <summary>Whether an X account follows a user after <c>FollowXUserAsync</c> or <c>UnfollowXUserAsync</c>.</summary>
+public sealed class XFollowResult : FoPostModel
+{
+    [JsonPropertyName("account_id")]
+    public string AccountId { get; set; } = string.Empty;
+
+    /// <summary>The numeric X user id that was followed or unfollowed.</summary>
+    [JsonPropertyName("user_id")]
+    public string UserId { get; set; } = string.Empty;
+
+    [JsonPropertyName("following")]
+    public bool Following { get; set; }
+}

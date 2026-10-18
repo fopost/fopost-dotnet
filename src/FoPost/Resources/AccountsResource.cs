@@ -238,6 +238,76 @@ public sealed class AccountsResource
     }
 
     /// <summary>
+    /// Follow a user from an X account. <paramref name="userId"/> is the numeric X user id. Needs
+    /// the <c>inbox</c> and <c>publish</c> scopes. A 409 <c>reconnect_required</c> means the account
+    /// was connected before the follow permission was asked for; reconnect it. A 402
+    /// <c>platform_balance_spent</c> means X's own pay-per-use balance is spent. The same applies
+    /// to the other X calls.
+    /// </summary>
+    public async Task<XFollowResult> FollowXUserAsync(
+        string accountId,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["user_id"] = userId };
+        var response = await _http
+            .PostAsync($"{AccountPath(accountId)}/x/follow", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<XFollowResult>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Unfollow a user from an X account. Needs the <c>inbox</c> and <c>publish</c> scopes.</summary>
+    public async Task<XFollowResult> UnfollowXUserAsync(
+        string accountId,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["user_id"] = userId };
+        var response = await _http
+            .PostAsync($"{AccountPath(accountId)}/x/unfollow", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<XFollowResult>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
+    /// One X post by id, read with <paramref name="accountId"/>'s token. Needs the <c>inbox</c>
+    /// scope; 404 when X has no such post.
+    /// </summary>
+    public async Task<XPost> GetXPostAsync(
+        string postId,
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new Dictionary<string, object?> { ["account_id"] = accountId };
+        var response = await _http
+            .GetAsync($"/v1/x/posts/{Uri.EscapeDataString(postId)}", query, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<XPost>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
+    /// X recent search, read with the account's token. Needs the <c>inbox</c> scope. Pass the
+    /// page's <c>NextToken</c> back in <see cref="XSearchOptions.NextToken"/> for the next one.
+    /// </summary>
+    public async Task<XSearchPage> SearchXPostsAsync(
+        XSearchOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var query = new Dictionary<string, object?>
+        {
+            ["account_id"] = options.AccountId,
+            ["q"] = options.Query,
+            ["max_results"] = options.MaxResults,
+            ["next_token"] = options.NextToken,
+        };
+        var response = await _http.GetAsync("/v1/x/search", query, cancellationToken).ConfigureAwait(false);
+        var nextToken = response?["meta"]?["next_token"]?.GetValue<string?>();
+        return new XSearchPage(ToList<XPost>(FoPostHttpClient.Unwrap(response)), nextToken);
+    }
+
+    /// <summary>
     /// Channels the Slack app can post to: every public channel, and private ones it was invited to.
     /// A 409 <c>webhook_connection</c> means the account posts through a webhook; reconnect it with
     /// the Slack app. The same applies to the other Slack calls.
