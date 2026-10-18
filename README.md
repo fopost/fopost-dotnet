@@ -150,6 +150,39 @@ var ad = await client.Ads.BoostAsync(new BoostPostOptions
 await client.Ads.SetStatusAsync(ad.Id, ad.WorkspaceId!, AdStatuses.Active);
 ```
 
+### Pixels and conversions
+
+`PixelsAsync`, `CreatePixelAsync`, `PixelAsync`, `UpdatePixelAsync`, `SharePixelAsync`,
+`PixelStatsAsync` and `EventMatchQualityAsync` manage the ad account's pixels, and
+`CustomConversionsAsync`, `CreateCustomConversionAsync`, `CustomConversionAsync`,
+`UpdateCustomConversionAsync` and `DeleteCustomConversionAsync` the custom conversions on them.
+`SendPixelConversionsAsync` is the Conversions API send: it needs an `Idempotency-Key`, so the same
+key answers the stored batch with `Replayed` true and nothing is sent twice. `ConversionBatchesAsync`
+lists what was stored, with hashed identifiers only.
+
+```csharp
+var result = await client.Ads.SendPixelConversionsAsync(new UploadConversionsOptions
+{
+    WorkspaceId = "9b2f6c1e-…",
+    ConnectionId = "c1d2e3f4-…",
+    AdAccountId = "act_123",
+    PixelId = "1234567890",
+    Events = new List<ConversionEvent>
+    {
+        new()
+        {
+            EventName = "Purchase",
+            OccurredAt = "2026-10-18T10:04:00Z",
+            EventId = "order-77",
+            ActionSource = ConversionActionSources.Website,
+            ClickId = "fb.1.1700000000.abc",
+            ValueMinor = 4999,
+            Currency = "USD",
+        },
+    },
+}, idempotencyKey: "order-77");
+```
+
 ## Analytics
 
 ```csharp
@@ -396,7 +429,7 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | `Validate`   | `PostAsync`, `LengthAsync`, `MediaAsync`, `SubredditAsync`                                                                                           |
 | `Analytics`  | `OverviewAsync`, `TimeSeriesAsync`, `TopPostsAsync`, `LabelsAsync`, `PostsTableAsync`, `PostingStreakAsync`, `DemographicsAsync`, `InboxAsync`, `CollectAsync`, `DecayAsync`, `FrequencyAsync`, `TimelineAsync`, `ChangesAsync`, `CollectPostAsync`, `NativePostsAsync` |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync` |
-| `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `ProvidersAsync`, `AuthorizeAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `AddAudienceCompaniesAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync`, `GoalsAsync`, `CatalogsAsync`, `CreateCatalogAsync`, `GetCatalogAsync`, `UpdateCatalogAsync`, `DeleteCatalogAsync`, `CatalogProductsAsync`, `WriteCatalogProductsAsync`, `ProductFeedsAsync`, `CreateProductFeedAsync`, `DeleteProductFeedAsync`, `FeedUploadsAsync`, `StartFeedUploadAsync`, `ProductSetsAsync`, `CreateProductSetAsync`, `UpdateProductSetAsync`, `DeleteProductSetAsync`, `ReachFrequencyAsync`, `CreateReachFrequencyAsync`, `GetReachFrequencyAsync`, `ReserveReachFrequencyAsync`, `CancelReachFrequencyAsync`, `LibraryAsync`, `PartnershipCreatorsAsync`, `RequestPartnershipAsync`, `RevokePartnershipAsync`, `AccountActivityAsync`, `LabelsAsync`, `CreateLabelAsync`, `UpdateLabelAsync`, `DeleteLabelAsync`, `ApplyLabelAsync`, `StudiesAsync`, `CreateStudyAsync`, `GetStudyAsync`, `DeleteStudyAsync`, `IosCampaignLimitsAsync`, `HighDemandPeriodsAsync`, `CreateHighDemandPeriodAsync`, `DeleteHighDemandPeriodAsync`, `ValueRuleSetsAsync`, `CreateValueRuleSetAsync`, `DeleteValueRuleSetAsync`, `BidPricingAsync`, `SupplyForecastAsync`, `ConversionRulesAsync`, `CreateConversionRuleAsync`, `ConversionRuleAsync`, `UpdateConversionRuleAsync`, `DeleteConversionRuleAsync`, `AttachConversionRuleAsync`, `DetachConversionRuleAsync`, `ConversionMetricsAsync`, `SendConversionEventsAsync` |
+| `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `ProvidersAsync`, `AuthorizeAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `AddAudienceCompaniesAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync`, `GoalsAsync`, `CatalogsAsync`, `CreateCatalogAsync`, `GetCatalogAsync`, `UpdateCatalogAsync`, `DeleteCatalogAsync`, `CatalogProductsAsync`, `WriteCatalogProductsAsync`, `ProductFeedsAsync`, `CreateProductFeedAsync`, `DeleteProductFeedAsync`, `FeedUploadsAsync`, `StartFeedUploadAsync`, `ProductSetsAsync`, `CreateProductSetAsync`, `UpdateProductSetAsync`, `DeleteProductSetAsync`, `ReachFrequencyAsync`, `CreateReachFrequencyAsync`, `GetReachFrequencyAsync`, `ReserveReachFrequencyAsync`, `CancelReachFrequencyAsync`, `LibraryAsync`, `PartnershipCreatorsAsync`, `RequestPartnershipAsync`, `RevokePartnershipAsync`, `AccountActivityAsync`, `LabelsAsync`, `CreateLabelAsync`, `UpdateLabelAsync`, `DeleteLabelAsync`, `ApplyLabelAsync`, `StudiesAsync`, `CreateStudyAsync`, `GetStudyAsync`, `DeleteStudyAsync`, `IosCampaignLimitsAsync`, `HighDemandPeriodsAsync`, `CreateHighDemandPeriodAsync`, `DeleteHighDemandPeriodAsync`, `ValueRuleSetsAsync`, `CreateValueRuleSetAsync`, `DeleteValueRuleSetAsync`, `BidPricingAsync`, `SupplyForecastAsync`, `ConversionRulesAsync`, `CreateConversionRuleAsync`, `ConversionRuleAsync`, `UpdateConversionRuleAsync`, `DeleteConversionRuleAsync`, `AttachConversionRuleAsync`, `DetachConversionRuleAsync`, `ConversionMetricsAsync`, `SendConversionEventsAsync`, `UploadConversionsAsync`, `SendPixelConversionsAsync`, `ConversionBatchesAsync`, `PixelsAsync`, `CreatePixelAsync`, `PixelAsync`, `UpdatePixelAsync`, `SharePixelAsync`, `PixelStatsAsync`, `EventMatchQualityAsync`, `CustomConversionsAsync`, `CreateCustomConversionAsync`, `CustomConversionAsync`, `UpdateCustomConversionAsync`, `DeleteCustomConversionAsync` |
 | `Media`      | `LimitsAsync`, `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                                               |
 | `Activity`   | `ListAsync`                                                                                                                       |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync` |

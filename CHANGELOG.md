@@ -4,6 +4,28 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- **Breaking:** `Ads.UploadConversionsAsync` returns `ConversionUploadResult` (`Id`, `Accepted`,
+  `EventCount`, `Replayed`) instead of the accepted count, and takes an optional `idempotencyKey`
+  sent as the `Idempotency-Key` header.
+- `ConversionEvent` gained `EventId`, `ActionSource` (`ConversionActionSources`), `SourceUrl`,
+  `ExternalId`, `ClientIpAddress`, `ClientUserAgent`, `ClickId`, `BrowserId` and `ContentIds`.
+
+### Added
+- `Ads.SendPixelConversionsAsync` (`POST /v1/ads/conversions/events`): the Conversions API send
+  with a required `Idempotency-Key`; a replay answers the stored batch with `Replayed` true.
+- `Ads.ConversionBatchesAsync` (`GET /v1/ads/conversions/events`) lists stored batches as
+  `ConversionBatch` with `HashedConversionEvent` rows.
+- Pixels: `PixelsAsync`, `CreatePixelAsync`, `PixelAsync`, `UpdatePixelAsync`, `SharePixelAsync`,
+  `PixelStatsAsync` and `EventMatchQualityAsync`, with `AdPixelDetail`, `PixelDataUseSettings`,
+  `AdPixelStats` and `EventMatchQuality`.
+- Custom conversions: `CustomConversionsAsync`, `CreateCustomConversionAsync`,
+  `CustomConversionAsync`, `UpdateCustomConversionAsync` and `DeleteCustomConversionAsync`, with
+  `CustomConversion`, `CustomConversionRule` and `CustomConversionEventTypes`.
+- `FoPostHttpClient.RequestAsync` accepts per-request headers.
+
 ## [0.4.0] - 2026-10-18
 
 ### Added
