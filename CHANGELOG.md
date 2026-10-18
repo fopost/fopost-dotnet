@@ -4,7 +4,7 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.3.0] - 2026-10-18
 
 ### Removed
 - **Breaking:** `BlogSettings.AutoPublish` and `UpdateBlogSettingsOptions.AutoPublish` are removed;
@@ -116,6 +116,12 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
   it needs the `publish` scope.
 - `Platforms.WhatsApp`.
 
+- `client.Blogs` for content that already lives on a connected site: `ListBlogsAsync`,
+  `ListArticlesAsync`, `GetArticleAsync`, `CreateArticleAsync`, `UpdateArticleAsync`,
+  `DeleteArticleAsync`, `ListProductsAsync` and `UpdateProductAsync`, with `RemoteBlog`,
+  `RemoteArticle` and `RemoteProduct`. Reads need the `posts` scope; the writes need
+  `posts` and `publish`. Updating an article changes the live one in place and never
+  creates a duplicate.
 - `client.Accounts.ListSlackChannelsAsync`, `ListSlackMembersAsync`, `GetSlackIdentityAsync` and
   `UpdateSlackIdentityAsync` (`UpdateSlackIdentityOptions`) for a Slack account. All four need the
   `accounts` scope; a webhook-connected account answers 409 `webhook_connection`.
@@ -134,10 +140,6 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 - `client.Accounts.GetTelegramBotCommandsAsync`, `SetTelegramBotCommandsAsync` and
   `DeleteTelegramBotCommandsAsync` manage the bot's command menu in a connected chat. All five
   need the `accounts` scope.
-
-## [0.3.0] - 2026-09-19
-
-### Added
 
 - `client.Ads`: the campaign tree (`AccountTreeAsync`; get, create, update, delete and duplicate for
   campaigns, ad sets and network ads; `BulkSetStatusAsync`), creatives (`CreativesAsync`,
