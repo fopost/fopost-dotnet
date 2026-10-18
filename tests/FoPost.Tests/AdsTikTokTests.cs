@@ -63,10 +63,10 @@ public class AdsTikTokTests
     [Fact]
     public async Task Conversions_report_what_the_network_accepted()
     {
-        var handler = new StubHandler().Json("""{"data":{"accepted":2}}""");
+        var handler = new StubHandler().Json("""{"data":{"id":"batch_1","accepted":2,"eventCount":2,"replayed":false}}""");
         using var test = new TestClient(handler);
 
-        var accepted = await test.Client.Ads.UploadConversionsAsync(new UploadConversionsOptions
+        var result = await test.Client.Ads.UploadConversionsAsync(new UploadConversionsOptions
         {
             WorkspaceId = "ws_1",
             ConnectionId = "conn_1",
@@ -78,8 +78,10 @@ public class AdsTikTokTests
             },
         });
 
-        Assert.Equal(2, accepted);
+        Assert.Equal(2, result.Accepted);
+        Assert.False(result.Replayed);
         Assert.Contains("\"pixelId\":\"px_1\"", handler.LastBody);
+        Assert.False(handler.LastRequest.Headers.Contains("Idempotency-Key"));
     }
 
     [Fact]
