@@ -260,6 +260,26 @@ public sealed class InboxResource
         Act(itemId, "unlike", cancellationToken);
 
     /// <summary>
+    /// Repost the item to the account's own timeline where <c>CanRepost</c> is true (X). Needs
+    /// the <c>publish</c> scope; a 402 <c>platform_balance_spent</c> means X's own pay-per-use
+    /// balance is spent.
+    /// </summary>
+    public Task<InboxItem> RepostAsync(string itemId, CancellationToken cancellationToken = default) =>
+        Act(itemId, "repost", cancellationToken);
+
+    /// <summary>Take our repost back. Needs the <c>publish</c> scope.</summary>
+    public Task<InboxItem> UnrepostAsync(string itemId, CancellationToken cancellationToken = default) =>
+        Act(itemId, "unrepost", cancellationToken);
+
+    /// <summary>Bookmark the item on the account where <c>CanBookmark</c> is true (X). Needs the <c>publish</c> scope.</summary>
+    public Task<InboxItem> BookmarkAsync(string itemId, CancellationToken cancellationToken = default) =>
+        Act(itemId, "bookmark", cancellationToken);
+
+    /// <summary>Remove our bookmark. Needs the <c>publish</c> scope.</summary>
+    public Task<InboxItem> UnbookmarkAsync(string itemId, CancellationToken cancellationToken = default) =>
+        Act(itemId, "unbookmark", cancellationToken);
+
+    /// <summary>
     /// Vote an item up or down where the network ranks by votes (Reddit). <paramref name="direction"/>
     /// is <c>up</c>, <c>down</c>, or <c>none</c> to take an earlier vote back. An upvote is the same
     /// call <see cref="LikeAsync"/> makes, so <c>Liked</c> moves with it. Needs the <c>publish</c> scope.
