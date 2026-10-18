@@ -49,6 +49,7 @@ public sealed class FoPostClient : IDisposable
         GoogleBusiness = new GoogleBusinessResource(_http);
         Blog = new BlogResource(_http);
         Whatsapp = new WhatsappResource(_http);
+        Blogs = new BlogsResource(_http);
     }
 
     public FoPostClient(string apiKey)
@@ -102,6 +103,8 @@ public sealed class FoPostClient : IDisposable
     public BlogResource Blog { get; }
     /// <summary>WhatsApp Business: templates, flows, groups, blocking and commerce.</summary>
     public WhatsappResource Whatsapp { get; }
+    /// <summary>Articles and products on a connected site, by the platform's own ids.</summary>
+    public BlogsResource Blogs { get; }
 
     public string BaseUrl => _http.BaseUrl;
 
