@@ -11,6 +11,12 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
   the API no longer auto-publishes. An article publishes only after `SubmitArticleAsync` moves it
   to review.
 
+### Changed
+- The blog resource follows the live wire format: `workspace_id` on the query string, snake_case
+  answers (bare objects, `{data: [...]}` lists), and `website_secret` beside the settings on
+  update. `BlogWebsiteTest.Status` is now `HttpStatus`, read from `http_status`; a failed test
+  carries the API's message in `Error`.
+
 ### Added
 - `Blog.SuggestSeedsAsync` (`POST /v1/blog/keywords/suggest`, scope `ai`) suggests about 10 search
   terms from the blog goal and topics into `BlogSeedSuggestions`; pass `Seeds` to refine and
