@@ -438,6 +438,7 @@ public sealed class AccountsResource
     /// means the account posts through a webhook; upgrade it to the bot first. The same applies to
     /// every other Discord call here.
     /// </summary>
+    /// <remarks>Wraps the API's <c>listDiscordChannels</c> operation.</remarks>
     public async Task<IReadOnlyList<DiscordChannel>> ListDiscordChannelsAsync(
         string accountId,
         CancellationToken cancellationToken = default)
@@ -449,6 +450,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>Move the account to another channel in the same server.</summary>
+    /// <remarks>Wraps the API's <c>switchDiscordChannel</c> operation.</remarks>
     public async Task<DiscordChannel> SwitchDiscordChannelAsync(
         string accountId,
         string channelId,
@@ -462,6 +464,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>The nickname and avatar the bot wears in the server.</summary>
+    /// <remarks>Wraps the API's <c>getDiscordIdentity</c> operation.</remarks>
     public async Task<DiscordIdentity> GetDiscordIdentityAsync(
         string accountId,
         CancellationToken cancellationToken = default)
@@ -473,6 +476,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>Change the nickname or avatar the bot wears. Only the fields you set are sent.</summary>
+    /// <remarks>Wraps the API's <c>updateDiscordIdentity</c> operation.</remarks>
     public async Task<DiscordIdentity> UpdateDiscordIdentityAsync(
         string accountId,
         UpdateDiscordIdentityOptions options,
@@ -497,6 +501,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>Pinned messages in the account's channel.</summary>
+    /// <remarks>Wraps the API's <c>listDiscordPins</c> operation.</remarks>
     public async Task<IReadOnlyList<DiscordMessage>> ListDiscordPinsAsync(
         string accountId,
         CancellationToken cancellationToken = default)
@@ -508,6 +513,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>Remove a message from the account's channel.</summary>
+    /// <remarks>Wraps the API's <c>deleteDiscordMessage</c> operation.</remarks>
     public async Task<DiscordAck> DeleteDiscordMessageAsync(
         string accountId,
         string messageId,
@@ -575,6 +581,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>Send one message to a member of the server.</summary>
+    /// <remarks>Wraps the API's <c>sendDiscordDm</c> operation.</remarks>
     public async Task<DiscordMessageRef> SendDiscordDmAsync(
         string accountId,
         string memberId,
@@ -589,6 +596,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>The server's scheduled events.</summary>
+    /// <remarks>Wraps the API's <c>listDiscordEvents</c> operation.</remarks>
     public async Task<IReadOnlyList<DiscordScheduledEvent>> ListDiscordEventsAsync(
         string accountId,
         CancellationToken cancellationToken = default)
@@ -600,6 +608,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>One scheduled event.</summary>
+    /// <remarks>Wraps the API's <c>getDiscordEvent</c> operation.</remarks>
     public async Task<DiscordScheduledEvent> GetDiscordEventAsync(
         string accountId,
         string eventId,
@@ -611,6 +620,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>Add an event to the server's calendar.</summary>
+    /// <remarks>Wraps the API's <c>createDiscordEvent</c> operation.</remarks>
     public async Task<DiscordScheduledEvent> CreateDiscordEventAsync(
         string accountId,
         DiscordEventOptions options,
@@ -625,6 +635,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>Change a scheduled event; only the fields you set are sent.</summary>
+    /// <remarks>Wraps the API's <c>updateDiscordEvent</c> operation.</remarks>
     public async Task<DiscordScheduledEvent> UpdateDiscordEventAsync(
         string accountId,
         string eventId,
@@ -641,6 +652,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>Remove a scheduled event.</summary>
+    /// <remarks>Wraps the API's <c>deleteDiscordEvent</c> operation.</remarks>
     public async Task<DiscordAck> DeleteDiscordEventAsync(
         string accountId,
         string eventId,
@@ -654,6 +666,7 @@ public sealed class AccountsResource
     /// <summary>
     /// The server's roster, or the members whose name starts with <paramref name="query"/>.
     /// </summary>
+    /// <remarks>Wraps the API's <c>listDiscordMembers</c> operation.</remarks>
     public async Task<IReadOnlyList<DiscordMember>> ListDiscordMembersAsync(
         string accountId,
         string? query = null,
@@ -668,6 +681,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>One member of the server.</summary>
+    /// <remarks>Wraps the API's <c>getDiscordMember</c> operation.</remarks>
     public async Task<DiscordMember> GetDiscordMemberAsync(
         string accountId,
         string memberId,
@@ -679,6 +693,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>The server's roles, highest first.</summary>
+    /// <remarks>Wraps the API's <c>listDiscordRoles</c> operation.</remarks>
     public async Task<IReadOnlyList<DiscordRole>> ListDiscordRolesAsync(
         string accountId,
         CancellationToken cancellationToken = default)
@@ -690,6 +705,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>Add a role to the server.</summary>
+    /// <remarks>Wraps the API's <c>createDiscordRole</c> operation.</remarks>
     public async Task<DiscordRole> CreateDiscordRoleAsync(
         string accountId,
         DiscordRoleOptions options,
@@ -704,6 +720,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>Change a role on the server; only the fields you set are sent.</summary>
+    /// <remarks>Wraps the API's <c>updateDiscordRole</c> operation.</remarks>
     public async Task<DiscordRole> UpdateDiscordRoleAsync(
         string accountId,
         string roleId,
@@ -720,6 +737,7 @@ public sealed class AccountsResource
     }
 
     /// <summary>Remove a role from the server.</summary>
+    /// <remarks>Wraps the API's <c>deleteDiscordRole</c> operation.</remarks>
     public async Task<DiscordAck> DeleteDiscordRoleAsync(
         string accountId,
         string roleId,
@@ -1114,6 +1132,77 @@ public sealed class AccountsResource
             .GetAsync($"{AccountPath(accountId)}/linkedin/mentions", parameters, cancellationToken)
             .ConfigureAwait(false);
         return ToList<LinkedInMention>(FoPostHttpClient.Unwrap(response));
+    }
+
+
+    // ── X communities ────────────────────────────────────────────────────
+
+    /// <summary>The X communities stored for the account, from the last sync or added by hand.</summary>
+    public async Task<IReadOnlyList<XCommunity>> ListCommunitiesAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/communities", null, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<XCommunity>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Re-read the account's communities from X and store them.</summary>
+    public async Task<XCommunitySync> SyncCommunitiesAsync(
+        string accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .PostAsync($"{AccountPath(accountId)}/communities/sync", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<XCommunitySync>(response);
+    }
+
+    /// <summary>Search X for communities by name. Nothing is stored.</summary>
+    public async Task<IReadOnlyList<XCommunitySearchResult>> SearchCommunitiesAsync(
+        string accountId,
+        string q,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(q);
+
+        var query = new Dictionary<string, object?> { ["q"] = q };
+        var response = await _http
+            .GetAsync($"{AccountPath(accountId)}/communities/search", query, cancellationToken)
+            .ConfigureAwait(false);
+        return ToList<XCommunitySearchResult>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Store a community by its X id, for one the sync cannot see.</summary>
+    public async Task<XCommunity> AddCommunityAsync(
+        string accountId,
+        string communityId,
+        string? name = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(communityId);
+
+        var body = new Dictionary<string, object?> { ["communityId"] = communityId };
+        if (name is not null)
+        {
+            body["name"] = name;
+        }
+        var response = await _http
+            .PostAsync($"{AccountPath(accountId)}/communities/manual", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<XCommunity>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>Forget a stored community. <paramref name="id"/> is the stored <see cref="XCommunity.Id"/>, not the X id.</summary>
+    public async Task RemoveCommunityAsync(
+        string accountId,
+        long id,
+        CancellationToken cancellationToken = default)
+    {
+        await _http
+            .DeleteAsync($"{AccountPath(accountId)}/communities/{id}", null, cancellationToken)
+            .ConfigureAwait(false);
     }
 
 }

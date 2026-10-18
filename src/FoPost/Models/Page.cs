@@ -46,3 +46,41 @@ public sealed class Page<T> : IReadOnlyList<T>
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
+
+/// <summary>The <c>{ page, per_page, total, total_pages }</c> footer on an offset-paged list.</summary>
+public sealed class OffsetPageMeta : FoPostModel
+{
+    [JsonPropertyName("page")]
+    public int? Page { get; set; }
+
+    [JsonPropertyName("per_page")]
+    public int? PerPage { get; set; }
+
+    [JsonPropertyName("total")]
+    public int? Total { get; set; }
+
+    [JsonPropertyName("total_pages")]
+    public int? TotalPages { get; set; }
+}
+
+/// <summary>One page of an offset-paged list: its items plus the <see cref="OffsetPageMeta"/>.</summary>
+public sealed class OffsetPage<T> : IReadOnlyList<T>
+{
+    public OffsetPage(IReadOnlyList<T> items, OffsetPageMeta meta)
+    {
+        Items = items;
+        Meta = meta;
+    }
+
+    public IReadOnlyList<T> Items { get; }
+
+    public OffsetPageMeta Meta { get; }
+
+    public int Count => Items.Count;
+
+    public T this[int index] => Items[index];
+
+    public IEnumerator<T> GetEnumerator() => Items.GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+}

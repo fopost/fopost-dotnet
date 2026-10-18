@@ -26,6 +26,42 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
   `CustomConversion`, `CustomConversionRule` and `CustomConversionEventTypes`.
 - `FoPostHttpClient.RequestAsync` accepts per-request headers.
 
+## [0.4.0] - 2026-10-18
+
+### Added
+- `client.Queue` (scope `posts`): the posting queue. `ListSlotsAsync`, `CreateSlotAsync`,
+  `UpdateSlotAsync`, `DeleteSlotAsync`, `NextAsync` and `PreviewAsync`, with the `QueueSlot`,
+  `QueueMove`, `QueueSlotDeletion` and `QueueNext` models. `CreatePostOptions.Schedule` and
+  `UpdatePostOptions.Schedule` take `PostSchedules.Queue` to drop a post into the next free slot.
+- `Posts.UnpublishAsync` (`POST /v1/posts/{id}/unpublish`, scope `publish`) takes a published post
+  down everywhere and answers an `UnpublishResult`. `PostStatuses` gains `PartiallyFailed` and
+  `Unpublished`.
+- `client.ConnectSessions` (scope `accounts`): hosted connect links. `CreateAsync` and `GetAsync`,
+  with `ConnectSession`, `ConnectSessionBranding` and `ConnectSessionStatuses`.
+- `client.Webhooks` (scope `webhooks`): `ListAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`,
+  `TestAsync`, `DeliveriesAsync`, `GetDeliveryAsync` and `RedeliverAsync`, with the `Webhook`,
+  `WebhookDelivery` models and the `WebhookEvents` constants.
+- `client.Automations` (scope `automations`): `ListAsync`, `CreateAsync`, `StatsAsync`, `GetAsync`,
+  `UpdateAsync`, `DeleteAsync`, `ToggleAsync`, `ListVersionsAsync`, `GetVersionAsync`,
+  `RestoreVersionAsync`, `ListRunsAsync` and `GetRunAsync`, with the `Automation`, `AutomationGraph`,
+  `AutomationVersion`, `AutomationRestore`, `AutomationRun`, `AutomationStats` models and the
+  `AutomationTriggerTypes` and `AutomationNodeKinds` constants.
+- `client.Logs` (scope `workspaces`): `ListAsync` reads request logs into a `RequestLogPage` with a
+  `before` cursor and the window's `RequestLogSummary`.
+- `Analytics` (scope `analytics`) gains the dashboard reports: `OverviewAsync`, `TimeSeriesAsync`,
+  `TopPostsAsync`, `LabelsAsync`, `PostsTableAsync`, `PostingStreakAsync`, `DemographicsAsync`,
+  `InboxAsync` and `CollectAsync`.
+- `Workspaces.CreateAsync`, `UpdateAsync` and `DeleteAsync`; `Workspace` reads `RequireApproval`,
+  `AiAltTextEnabled`, `BrandColor`, `ConnectRedirectDomains` and `BypassAbilities`.
+- `Labels.GetAsync`, `CreateAsync`, `UpdateAsync` and `DeleteAsync`.
+- `Accounts.ListCommunitiesAsync`, `SyncCommunitiesAsync`, `SearchCommunitiesAsync`,
+  `AddCommunityAsync` and `RemoveCommunityAsync` for X communities.
+- `OffsetPage<T>` and `OffsetPageMeta` for lists footed with `{ page, per_page, total, total_pages }`.
+
+### Changed
+- The Discord, Google Business and WhatsApp methods name the API operation they wrap in their
+  doc comments, so the collections checker can see them.
+
 ## [0.3.0] - 2026-10-18
 
 ### Removed

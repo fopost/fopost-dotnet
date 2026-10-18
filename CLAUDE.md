@@ -11,7 +11,7 @@ exception per error status.
 - **.NET 8** (`net8.0`), **C# 12**, nullable reference types enabled, `TreatWarningsAsErrors`.
 - **No runtime package dependencies** — `System.Net.Http.HttpClient` and `System.Text.Json` from
   the BCL. Do not add one.
-- Assembly and package id `FoPost.Sdk`; root namespace `FoPost`. Version `0.3.0` in
+- Assembly and package id `FoPost.Sdk`; root namespace `FoPost`. Version `0.4.0` in
   `src/FoPost/FoPost.csproj` (the release workflow enforces the tag match).
 
 ## Downstream Packages
@@ -119,10 +119,16 @@ content block before the JSON request. `Blog` (scope `posts`; `ai` for suggest, 
 regenerate; `publish` for publish) wraps `/v1/blog/*`: `workspace_id` goes on the query, `workspaceId`
 and the other request fields are camelCase in bodies, and answers are snake_case (bare objects,
 `{data: [...]}` lists). `FoPostWebhooks.Verify` (namespace `FoPost`) verifies any
-delivery's signature headers; there is no `Webhooks` *resource*. There is no `Communities`,
-`Analytics`, or `Automations` resource here — reach those
-through the escape hatch `FoPostClient.RequestAsync(...)`, which returns the raw `JsonNode?`
-envelope and all.
+delivery's signature headers; `client.Webhooks` (scope `webhooks`) manages the endpoints and
+their deliveries. `Queue` (scope `posts`) is the posting queue, and `Schedule = PostSchedules.Queue`
+on a post create or update takes the next free slot. `ConnectSessions` (scope `accounts`) mints
+hosted connect links. `Automations` (scope `automations`) covers the graph, its versions and runs;
+its bodies are camelCase and serialised straight from the options objects. `Logs` (scope
+`workspaces`) reads request logs with a `before` cursor. X communities live on `Accounts`. Anything
+still unwrapped is reachable through the escape hatch `FoPostClient.RequestAsync(...)`, which
+returns the raw `JsonNode?` envelope and all. The checker in `fopost-api-collections`
+(`scripts/sdk-gaps.mjs`) lists every operation with no method; a method whose path is built from
+fragments it cannot read names its operationId in a `/// <remarks>` line instead.
 
 ## API Contract
 

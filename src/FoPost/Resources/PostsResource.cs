@@ -143,6 +143,10 @@ public sealed class PostsResource
         {
             body["schedule_at"] = Iso(scheduleAt);
         }
+        if (options.Schedule is not null)
+        {
+            body["schedule"] = options.Schedule;
+        }
         if (options.Labels is not null)
         {
             body["labels"] = options.Labels;
@@ -224,6 +228,10 @@ public sealed class PostsResource
         if (options.ScheduleAt.IsSet)
         {
             body["schedule_at"] = options.ScheduleAt.Value is { } at ? Iso(at) : null;
+        }
+        if (options.Schedule.IsSet)
+        {
+            body["schedule"] = options.Schedule.Value;
         }
         if (options.Labels.IsSet)
         {
@@ -392,6 +400,16 @@ public sealed class PostsResource
     /// <summary>Retry the deliveries that failed, leaving the successful ones alone.</summary>
     public Task<JsonNode?> RetryAsync(string postId, CancellationToken cancellationToken = default) =>
         Act(postId, "retry", cancellationToken);
+
+    /// <summary>
+    /// Take a published post down from every network it is live on. Needs the <c>publish</c> scope.
+    /// </summary>
+    /// <remarks>Wraps the API's <c>unpublishPost</c> operation.</remarks>
+    public async Task<UnpublishResult> UnpublishAsync(string postId, CancellationToken cancellationToken = default)
+    {
+        var body = await Act(postId, "unpublish", cancellationToken).ConfigureAwait(false);
+        return Require<UnpublishResult>(body);
+    }
 
     /// <summary>Per-account blockers and advisory content signals, without publishing.</summary>
     public Task<JsonNode?> PreflightAsync(string postId, CancellationToken cancellationToken = default) =>

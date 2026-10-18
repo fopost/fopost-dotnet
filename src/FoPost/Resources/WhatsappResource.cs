@@ -27,6 +27,7 @@ public sealed class WhatsappResource
     // ─── Profile ──────────────────────────────────────────────────────────
 
     /// <summary>The profile on the number, plus its quality rating and limit tier.</summary>
+    /// <remarks>Wraps the API's <c>getWhatsappProfile</c> operation.</remarks>
     public async Task<WhatsappProfile> GetProfileAsync(
         string accountId,
         CancellationToken cancellationToken = default)
@@ -37,6 +38,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>A partial update: omitted fields keep their value.</summary>
+    /// <remarks>Wraps the API's <c>updateWhatsappProfile</c> operation.</remarks>
     public async Task<WhatsappProfile> UpdateProfileAsync(
         string accountId,
         UpdateWhatsappProfileOptions options,
@@ -52,6 +54,7 @@ public sealed class WhatsappResource
     /// <summary>
     /// A review, not a write: the number keeps its old name until it passes.
     /// </summary>
+    /// <remarks>Wraps the API's <c>requestWhatsappDisplayName</c> operation.</remarks>
     public Task RequestDisplayNameAsync(
         string accountId,
         string displayName,
@@ -62,6 +65,7 @@ public sealed class WhatsappResource
             cancellationToken);
 
     /// <summary>Sets the public username on the number.</summary>
+    /// <remarks>Wraps the API's <c>setWhatsappUsername</c> operation.</remarks>
     public async Task<WhatsappProfile> SetUsernameAsync(
         string accountId,
         string username,
@@ -79,6 +83,7 @@ public sealed class WhatsappResource
     // ─── Templates ────────────────────────────────────────────────────────
 
     /// <summary>Every template on the account, with its review status.</summary>
+    /// <remarks>Wraps the API's <c>listWhatsappTemplates</c> operation.</remarks>
     public async Task<IReadOnlyList<WhatsappTemplate>> ListTemplatesAsync(
         string accountId,
         string? after = null,
@@ -91,6 +96,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>The pre-written templates the platform offers, for adapting.</summary>
+    /// <remarks>Wraps the API's <c>listWhatsappTemplateLibrary</c> operation.</remarks>
     public async Task<IReadOnlyList<JsonNode?>> ListTemplateLibraryAsync(
         string accountId,
         string? search = null,
@@ -104,6 +110,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>One template and the review status it currently has.</summary>
+    /// <remarks>Wraps the API's <c>getWhatsappTemplate</c> operation.</remarks>
     public async Task<WhatsappTemplate> GetTemplateAsync(
         string accountId,
         string templateId,
@@ -119,6 +126,7 @@ public sealed class WhatsappResource
     /// Files a template for review. The result carries the status the platform
     /// assigned, which is <c>PENDING</c> on a normal submission.
     /// </summary>
+    /// <remarks>Wraps the API's <c>createWhatsappTemplate</c> operation.</remarks>
     public async Task<WhatsappTemplate> CreateTemplateAsync(
         string accountId,
         CreateWhatsappTemplateOptions options,
@@ -132,6 +140,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>Creates a template from one of the platform's library entries.</summary>
+    /// <remarks>Wraps the API's <c>importWhatsappTemplate</c> operation.</remarks>
     public async Task<WhatsappTemplate> ImportTemplateAsync(
         string accountId,
         ImportWhatsappTemplateOptions options,
@@ -145,6 +154,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>Edits a template. The name cannot change.</summary>
+    /// <remarks>Wraps the API's <c>updateWhatsappTemplate</c> operation.</remarks>
     public async Task<WhatsappTemplate> UpdateTemplateAsync(
         string accountId,
         string templateId,
@@ -164,6 +174,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>The name is required: it is what the platform deletes by.</summary>
+    /// <remarks>Wraps the API's <c>deleteWhatsappTemplate</c> operation.</remarks>
     public Task DeleteTemplateAsync(
         string accountId,
         string templateId,
@@ -179,6 +190,7 @@ public sealed class WhatsappResource
     // ─── Groups ───────────────────────────────────────────────────────────
 
     /// <summary>The groups this number created.</summary>
+    /// <remarks>Wraps the API's <c>listWhatsappGroups</c> operation.</remarks>
     public async Task<IReadOnlyList<WhatsappGroup>> ListGroupsAsync(
         string accountId,
         CancellationToken cancellationToken = default)
@@ -191,6 +203,7 @@ public sealed class WhatsappResource
     /// <summary>
     /// Participation is invite-only: send the invite link, there is no add.
     /// </summary>
+    /// <remarks>Wraps the API's <c>createWhatsappGroup</c> operation.</remarks>
     public async Task<WhatsappGroup> CreateGroupAsync(
         string accountId,
         WhatsappGroupOptions options,
@@ -203,6 +216,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>One group and its participant count.</summary>
+    /// <remarks>Wraps the API's <c>getWhatsappGroup</c> operation.</remarks>
     public async Task<WhatsappGroup> GetGroupAsync(
         string accountId,
         string groupId,
@@ -215,6 +229,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>Changes a group's subject or description.</summary>
+    /// <remarks>Wraps the API's <c>updateWhatsappGroup</c> operation.</remarks>
     public async Task<WhatsappGroup> UpdateGroupAsync(
         string accountId,
         string groupId,
@@ -230,6 +245,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>Removes the group.</summary>
+    /// <remarks>Wraps the API's <c>deleteWhatsappGroup</c> operation.</remarks>
     public Task DeleteGroupAsync(
         string accountId,
         string groupId,
@@ -280,6 +296,7 @@ public sealed class WhatsappResource
     // ─── Blocking ─────────────────────────────────────────────────────────
 
     /// <summary>The numbers this account has blocked.</summary>
+    /// <remarks>Wraps the API's <c>listWhatsappBlocked</c> operation.</remarks>
     public async Task<IReadOnlyList<string>> ListBlockedAsync(
         string accountId,
         string? after = null,
@@ -292,6 +309,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>Blocks up to 100 numbers, and names the ones the platform refused.</summary>
+    /// <remarks>Wraps the API's <c>blockWhatsappUsers</c> operation.</remarks>
     public async Task<WhatsappBlockResult> BlockUsersAsync(
         string accountId,
         IEnumerable<string> users,
@@ -304,6 +322,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>Unblocks up to 100 numbers.</summary>
+    /// <remarks>Wraps the API's <c>unblockWhatsappUsers</c> operation.</remarks>
     public async Task<WhatsappBlockResult> UnblockUsersAsync(
         string accountId,
         IEnumerable<string> users,
@@ -318,6 +337,7 @@ public sealed class WhatsappResource
     // ─── Commerce ─────────────────────────────────────────────────────────
 
     /// <summary>Whether the cart and catalog show on the number.</summary>
+    /// <remarks>Wraps the API's <c>getWhatsappCommerce</c> operation.</remarks>
     public async Task<WhatsappCommerceSettings> GetCommerceSettingsAsync(
         string accountId,
         CancellationToken cancellationToken = default)
@@ -328,6 +348,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>Turns the cart or the catalog on or off.</summary>
+    /// <remarks>Wraps the API's <c>updateWhatsappCommerce</c> operation.</remarks>
     public async Task<WhatsappCommerceSettings> UpdateCommerceSettingsAsync(
         string accountId,
         UpdateWhatsappCommerceOptions options,
@@ -341,6 +362,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>Points the number at a catalog the customer already owns.</summary>
+    /// <remarks>Wraps the API's <c>linkWhatsappCatalog</c> operation.</remarks>
     public async Task<WhatsappCommerceSettings> LinkCatalogAsync(
         string accountId,
         string catalogId,
@@ -356,6 +378,7 @@ public sealed class WhatsappResource
     // ─── Flows ────────────────────────────────────────────────────────────
 
     /// <summary>The in-chat forms on this account, with their validation errors.</summary>
+    /// <remarks>Wraps the API's <c>listWhatsappFlows</c> operation.</remarks>
     public async Task<IReadOnlyList<WhatsappFlow>> ListFlowsAsync(
         string accountId,
         CancellationToken cancellationToken = default)
@@ -366,6 +389,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>One flow and what the platform found wrong with it.</summary>
+    /// <remarks>Wraps the API's <c>getWhatsappFlow</c> operation.</remarks>
     public async Task<WhatsappFlow> GetFlowAsync(
         string accountId,
         string flowId,
@@ -378,6 +402,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>Creates a draft flow; its screens are uploaded separately.</summary>
+    /// <remarks>Wraps the API's <c>createWhatsappFlow</c> operation.</remarks>
     public async Task<WhatsappFlow> CreateFlowAsync(
         string accountId,
         CreateWhatsappFlowOptions options,
@@ -390,6 +415,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>Changes a flow's name, categories or endpoint.</summary>
+    /// <remarks>Wraps the API's <c>updateWhatsappFlow</c> operation.</remarks>
     public async Task<WhatsappFlow> UpdateFlowAsync(
         string accountId,
         string flowId,
@@ -405,6 +431,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>Drafts only; a published flow is deprecated instead.</summary>
+    /// <remarks>Wraps the API's <c>deleteWhatsappFlow</c> operation.</remarks>
     public Task DeleteFlowAsync(
         string accountId,
         string flowId,
@@ -453,6 +480,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>What people submitted through this account's flows.</summary>
+    /// <remarks>Wraps the API's <c>listWhatsappFlowResponses</c> operation.</remarks>
     public async Task<IReadOnlyList<WhatsappFlowResponse>> ListFlowResponsesAsync(
         string accountId,
         CancellationToken cancellationToken = default)
@@ -464,6 +492,7 @@ public sealed class WhatsappResource
     }
 
     /// <summary>Whether a business public key is registered, and how it was judged.</summary>
+    /// <remarks>Wraps the API's <c>getWhatsappEncryptionKey</c> operation.</remarks>
     public async Task<WhatsappEncryptionKeyStatus> GetEncryptionKeyStatusAsync(
         string accountId,
         CancellationToken cancellationToken = default)
@@ -478,6 +507,7 @@ public sealed class WhatsappResource
     /// Registers the public half of the key the platform encrypts a flow
     /// endpoint's payloads with. The private half stays with the customer.
     /// </summary>
+    /// <remarks>Wraps the API's <c>setWhatsappEncryptionKey</c> operation.</remarks>
     public async Task<WhatsappEncryptionKeyStatus> SetEncryptionKeyAsync(
         string accountId,
         string businessPublicKey,
@@ -493,6 +523,7 @@ public sealed class WhatsappResource
     // ─── Account state and sandbox ────────────────────────────────────────
 
     /// <summary>The account review state and the number's quality and limit tier.</summary>
+    /// <remarks>Wraps the API's <c>getWhatsappAccountEvents</c> operation.</remarks>
     public async Task<JsonNode?> GetAccountEventsAsync(
         string accountId,
         CancellationToken cancellationToken = default)
