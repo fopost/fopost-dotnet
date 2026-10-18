@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using Xunit;
@@ -383,5 +384,50 @@ public class InboxTests
 
         var account = Assert.Single(await test.Client.Inbox.AccountsAsync("ws_1"));
         Assert.True(account.CanStartConversation);
+    }
+
+    [Fact]
+    public async Task Repost_unrepost_bookmark_and_unbookmark_post_to_their_actions()
+    {
+        const string xItem = """
+        {"data":{"id":"inb_3","platform":"twitter","type":"mention","state":"unread",
+                 "reposted":true,"bookmarked":false,"can_repost":true,"can_bookmark":true}}
+        """;
+        var handler = new StubHandler().Json(xItem).Json(xItem).Json(xItem).Json(xItem);
+        using var test = new TestClient(handler);
+
+        var item = await test.Client.Inbox.RepostAsync("inb_3");
+        Assert.Equal(HttpMethod.Post, handler.LastRequest.Method);
+        Assert.Equal("/v1/inbox/inb_3/repost", handler.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Null(handler.LastBody);
+        Assert.True(item.Reposted);
+        Assert.False(item.Bookmarked);
+        Assert.True(item.CanRepost);
+        Assert.True(item.CanBookmark);
+
+        await test.Client.Inbox.UnrepostAsync("inb_3");
+        Assert.Equal("/v1/inbox/inb_3/unrepost", handler.LastRequest.RequestUri!.AbsolutePath);
+
+        await test.Client.Inbox.BookmarkAsync("inb_3");
+        Assert.Equal("/v1/inbox/inb_3/bookmark", handler.LastRequest.RequestUri!.AbsolutePath);
+
+        await test.Client.Inbox.UnbookmarkAsync("inb_3");
+        Assert.Equal("/v1/inbox/inb_3/unbookmark", handler.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Null(handler.LastBody);
+    }
+
+    [Fact]
+    public async Task A_spent_platform_balance_is_a_payment_required_error()
+    {
+        var handler = new StubHandler().Json(
+            """{"error":"platform_balance_spent","message":"The X API balance is spent"}""",
+            HttpStatusCode.PaymentRequired);
+        using var test = new TestClient(handler);
+
+        var error = await Assert.ThrowsAsync<FoPostPaymentRequiredException>(
+            () => test.Client.Inbox.RepostAsync("inb_3"));
+
+        Assert.Equal(402, error.Status);
+        Assert.Equal("platform_balance_spent", error.Code);
     }
 }
