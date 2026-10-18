@@ -33,6 +33,7 @@ public sealed class GoogleBusinessResource
     internal GoogleBusinessResource(FoPostHttpClient http) => _http = http;
 
     /// <summary>The connected location, in the Business Information shape.</summary>
+    /// <remarks>Wraps the API's <c>getGoogleBusinessLocation</c> operation.</remarks>
     public async Task<JsonNode?> GetLocationAsync(
         string accountId,
         CancellationToken cancellationToken = default) =>
@@ -45,6 +46,7 @@ public sealed class GoogleBusinessResource
     /// <c>title</c>, <c>description</c>, <c>website_uri</c>, <c>primary_phone</c>,
     /// <c>additional_phones</c>, <c>store_code</c> and <c>regular_hours</c>.
     /// </summary>
+    /// <remarks>Wraps the API's <c>updateGoogleBusinessLocation</c> operation.</remarks>
     public async Task<JsonNode?> UpdateLocationAsync(
         string accountId,
         IReadOnlyDictionary<string, object?> fields,
@@ -57,6 +59,7 @@ public sealed class GoogleBusinessResource
     /// The attribute values set on the location, or, with <paramref name="available"/>,
     /// the attributes Google offers for its category and region.
     /// </summary>
+    /// <remarks>Wraps the API's <c>getGoogleBusinessAttributes</c> operation.</remarks>
     public async Task<JsonNode?> GetAttributesAsync(
         string accountId,
         bool available = false,
@@ -77,6 +80,7 @@ public sealed class GoogleBusinessResource
     }
 
     /// <summary>Only the named attributes change; every other one is left alone.</summary>
+    /// <remarks>Wraps the API's <c>updateGoogleBusinessAttributes</c> operation.</remarks>
     public async Task<JsonNode?> UpdateAttributesAsync(
         string accountId,
         IEnumerable<IReadOnlyDictionary<string, object?>> attributes,
@@ -89,6 +93,7 @@ public sealed class GoogleBusinessResource
     }
 
     /// <summary>The location's food menus.</summary>
+    /// <remarks>Wraps the API's <c>getGoogleBusinessMenus</c> operation.</remarks>
     public async Task<JsonNode?> GetMenusAsync(
         string accountId,
         CancellationToken cancellationToken = default) =>
@@ -96,6 +101,7 @@ public sealed class GoogleBusinessResource
             await _http.GetAsync(Path(accountId, "/menus"), null, cancellationToken).ConfigureAwait(false));
 
     /// <summary>Google has no per-section patch, so the whole menu set is replaced.</summary>
+    /// <remarks>Wraps the API's <c>replaceGoogleBusinessMenus</c> operation.</remarks>
     public async Task<JsonNode?> ReplaceMenusAsync(
         string accountId,
         IEnumerable<object> menus,
@@ -106,6 +112,7 @@ public sealed class GoogleBusinessResource
             .ConfigureAwait(false));
 
     /// <summary>The location's service list.</summary>
+    /// <remarks>Wraps the API's <c>getGoogleBusinessServices</c> operation.</remarks>
     public async Task<JsonNode?> GetServicesAsync(
         string accountId,
         CancellationToken cancellationToken = default) =>
@@ -113,6 +120,7 @@ public sealed class GoogleBusinessResource
             await _http.GetAsync(Path(accountId, "/services"), null, cancellationToken).ConfigureAwait(false));
 
     /// <summary>Replace the whole service list.</summary>
+    /// <remarks>Wraps the API's <c>replaceGoogleBusinessServices</c> operation.</remarks>
     public async Task<JsonNode?> ReplaceServicesAsync(
         string accountId,
         IEnumerable<object> serviceItems,
@@ -123,6 +131,7 @@ public sealed class GoogleBusinessResource
             .ConfigureAwait(false));
 
     /// <summary>The photos on the location.</summary>
+    /// <remarks>Wraps the API's <c>listGoogleBusinessMedia</c> operation.</remarks>
     public async Task<JsonNode?> ListMediaAsync(
         string accountId,
         int? pageSize = null,
@@ -138,6 +147,7 @@ public sealed class GoogleBusinessResource
     /// Add a photo from the media library. The asset has to be in a workspace
     /// the caller can reach, and JPEG or PNG.
     /// </summary>
+    /// <remarks>Wraps the API's <c>addGoogleBusinessMedia</c> operation.</remarks>
     public async Task<JsonNode?> AddMediaAsync(
         string accountId,
         string mediaId,
@@ -160,6 +170,7 @@ public sealed class GoogleBusinessResource
     }
 
     /// <summary>Remove a photo by the media key Google returned.</summary>
+    /// <remarks>Wraps the API's <c>deleteGoogleBusinessMedia</c> operation.</remarks>
     public async Task<JsonNode?> DeleteMediaAsync(
         string accountId,
         string mediaKey,
@@ -169,6 +180,7 @@ public sealed class GoogleBusinessResource
             .ConfigureAwait(false));
 
     /// <summary>The Book, Order and Reserve links on the listing.</summary>
+    /// <remarks>Wraps the API's <c>listGoogleBusinessPlaceActions</c> operation.</remarks>
     public async Task<JsonNode?> ListPlaceActionsAsync(
         string accountId,
         CancellationToken cancellationToken = default) =>
@@ -176,6 +188,7 @@ public sealed class GoogleBusinessResource
             await _http.GetAsync(Path(accountId, "/place-actions"), null, cancellationToken).ConfigureAwait(false));
 
     /// <summary>Add an action link to the listing.</summary>
+    /// <remarks>Wraps the API's <c>createGoogleBusinessPlaceAction</c> operation.</remarks>
     public async Task<JsonNode?> CreatePlaceActionAsync(
         string accountId,
         string uri,
@@ -198,6 +211,7 @@ public sealed class GoogleBusinessResource
     }
 
     /// <summary>Patch one action link; a null argument is left alone.</summary>
+    /// <remarks>Wraps the API's <c>updateGoogleBusinessPlaceAction</c> operation.</remarks>
     public async Task<JsonNode?> UpdatePlaceActionAsync(
         string accountId,
         string linkId,
@@ -223,6 +237,7 @@ public sealed class GoogleBusinessResource
     }
 
     /// <summary>Remove one action link.</summary>
+    /// <remarks>Wraps the API's <c>deleteGoogleBusinessPlaceAction</c> operation.</remarks>
     public async Task<JsonNode?> DeletePlaceActionAsync(
         string accountId,
         string linkId,
@@ -232,6 +247,7 @@ public sealed class GoogleBusinessResource
             .ConfigureAwait(false));
 
     /// <summary>The ways Google will let this location be verified.</summary>
+    /// <remarks>Wraps the API's <c>getGoogleBusinessVerificationOptions</c> operation.</remarks>
     public async Task<JsonNode?> GetVerificationOptionsAsync(
         string accountId,
         string? languageCode = null,
@@ -247,6 +263,7 @@ public sealed class GoogleBusinessResource
     /// <c>EMAIL</c>, <c>PHONE_CALL</c>, <c>SMS</c>, <c>AUTO</c> or
     /// <c>VETTED_PARTNER</c>; the response names the pending verification.
     /// </summary>
+    /// <remarks>Wraps the API's <c>startGoogleBusinessVerification</c> operation.</remarks>
     public async Task<JsonNode?> StartVerificationAsync(
         string accountId,
         string method,
@@ -268,6 +285,7 @@ public sealed class GoogleBusinessResource
     }
 
     /// <summary>Complete a pending verification with the PIN Google sent.</summary>
+    /// <remarks>Wraps the API's <c>completeGoogleBusinessVerification</c> operation.</remarks>
     public async Task<JsonNode?> CompleteVerificationAsync(
         string accountId,
         string verificationName,
@@ -288,6 +306,7 @@ public sealed class GoogleBusinessResource
     /// Daily impressions, calls, direction requests and clicks for the range.
     /// A null or empty <paramref name="dailyMetrics"/> leaves the API's own set.
     /// </summary>
+    /// <remarks>Wraps the API's <c>getGoogleBusinessPerformance</c> operation.</remarks>
     public async Task<JsonNode?> GetPerformanceAsync(
         string accountId,
         string startDate,
@@ -329,6 +348,7 @@ public sealed class GoogleBusinessResource
     /// Hand the location to another workspace the caller owns. The connection
     /// and every row keyed to it move in one transaction.
     /// </summary>
+    /// <remarks>Wraps the API's <c>assignGoogleBusinessLocation</c> operation.</remarks>
     public async Task<JsonNode?> AssignAsync(
         string accountId,
         string workspaceId,
