@@ -31,6 +31,7 @@ public sealed class FoPostClient : IDisposable
         _http = new FoPostHttpClient(options ?? new FoPostClientOptions());
 
         Accounts = new AccountsResource(_http);
+        ConnectSessions = new ConnectSessionsResource(_http);
         AccountGroups = new AccountGroupsResource(_http);
         Workspaces = new WorkspacesResource(_http);
         Labels = new LabelsResource(_http);
@@ -64,6 +65,9 @@ public sealed class FoPostClient : IDisposable
     public QueueResource Queue { get; }
 
     public AccountsResource Accounts { get; }
+
+    /// <summary>Hosted connect links for your own users.</summary>
+    public ConnectSessionsResource ConnectSessions { get; }
 
     public AccountGroupsResource AccountGroups { get; }
 
