@@ -41,6 +41,18 @@ internal static class ResourceHelpers
         return new PageMeta();
     }
 
+    public static OffsetPageMeta ReadOffsetMeta(JsonNode? body)
+    {
+        if (body is JsonObject obj &&
+            obj.TryGetPropertyValue("meta", out var meta) &&
+            meta is JsonObject)
+        {
+            return meta.Deserialize<OffsetPageMeta>(FoPostJson.Options) ?? new OffsetPageMeta();
+        }
+
+        return new OffsetPageMeta();
+    }
+
     /// <summary>The API takes UTC ISO 8601 timestamps; normalize whatever the caller had.</summary>
     public static string Iso(DateTimeOffset moment) =>
         moment.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);

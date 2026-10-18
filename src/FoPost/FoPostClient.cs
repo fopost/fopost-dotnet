@@ -45,6 +45,7 @@ public sealed class FoPostClient : IDisposable
         Validate = new ValidateResource(_http);
         Media = new MediaResource(_http);
         Posts = new PostsResource(_http, Media);
+        Queue = new QueueResource(_http);
         Analytics = new AnalyticsResource(_http);
         GoogleBusiness = new GoogleBusinessResource(_http);
         Blog = new BlogResource(_http);
@@ -58,6 +59,9 @@ public sealed class FoPostClient : IDisposable
     }
 
     public PostsResource Posts { get; }
+
+    /// <summary>The posting queue: weekly slots and the times they produce.</summary>
+    public QueueResource Queue { get; }
 
     public AccountsResource Accounts { get; }
 

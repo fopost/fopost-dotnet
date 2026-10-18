@@ -143,6 +143,10 @@ public sealed class PostsResource
         {
             body["schedule_at"] = Iso(scheduleAt);
         }
+        if (options.Schedule is not null)
+        {
+            body["schedule"] = options.Schedule;
+        }
         if (options.Labels is not null)
         {
             body["labels"] = options.Labels;
@@ -224,6 +228,10 @@ public sealed class PostsResource
         if (options.ScheduleAt.IsSet)
         {
             body["schedule_at"] = options.ScheduleAt.Value is { } at ? Iso(at) : null;
+        }
+        if (options.Schedule.IsSet)
+        {
+            body["schedule"] = options.Schedule.Value;
         }
         if (options.Labels.IsSet)
         {
