@@ -175,7 +175,7 @@ var result = await client.Ads.SendPixelConversionsAsync(new UploadConversionsOpt
             OccurredAt = "2026-10-18T10:04:00Z",
             EventId = "order-77",
             ActionSource = ConversionActionSources.Website,
-            Email = "buyer@yourbrand.com",
+            ClickId = "fb.1.1700000000.abc",
             ValueMinor = 4999,
             Currency = "USD",
         },
