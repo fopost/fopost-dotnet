@@ -14,7 +14,8 @@ namespace FoPost.Resources;
 /// credits (<see cref="SuggestSeedsAsync"/>, <see cref="PlanKeywordsAsync"/>, <see cref="RequestArticleAsync"/>,
 /// <see cref="RegenerateArticleAsync"/>) needs <c>ai</c>, and
 /// <see cref="PublishArticleAsync"/> needs <c>publish</c>. Every request is bound to one
-/// workspace, passed as the first argument. Wire fields are camelCase on these routes.
+/// workspace, passed as the first argument: <c>workspace_id</c> on the query string for reads and
+/// per-id calls, <c>workspaceId</c> in camelCase request bodies. Answers are snake_case.
 /// </remarks>
 /// <example>
 /// <code>
@@ -36,6 +37,9 @@ public sealed class BlogResource
     private static string ArticlePath(string articleId) => $"/v1/blog/articles/{articleId}";
 
     private static Dictionary<string, object?> WorkspaceQuery(string workspaceId) =>
+        new() { ["workspace_id"] = workspaceId };
+
+    private static Dictionary<string, object?> WorkspaceBody(string workspaceId) =>
         new() { ["workspaceId"] = workspaceId };
 
     private static string Date(DateOnly day) => day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
@@ -85,9 +89,10 @@ public sealed class BlogResource
         var response = await _http
             .RequestAsync(HttpMethod.Patch, "/v1/blog/settings", body, null, cancellationToken)
             .ConfigureAwait(false);
+        // The secret sits beside the settings fields, not in an envelope.
         var settings = Require<BlogSettings>(FoPostHttpClient.Unwrap(response));
         var secret = response is JsonObject obj &&
-                     obj.TryGetPropertyValue("websiteSecret", out var node) &&
+                     obj.TryGetPropertyValue("website_secret", out var node) &&
                      node is JsonValue value
             ? value.GetValue<string>()
             : null;
@@ -100,7 +105,7 @@ public sealed class BlogResource
         CancellationToken cancellationToken = default)
     {
         var response = await _http
-            .PostAsync("/v1/blog/settings/website-secret", WorkspaceQuery(workspaceId), cancellationToken)
+            .PostAsync("/v1/blog/settings/website-secret", WorkspaceBody(workspaceId), cancellationToken)
             .ConfigureAwait(false);
         return Require<BlogWebsiteSecret>(FoPostHttpClient.Unwrap(response));
     }
@@ -116,14 +121,19 @@ public sealed class BlogResource
         try
         {
             var response = await _http
-                .PostAsync("/v1/blog/settings/website-test", WorkspaceQuery(workspaceId), cancellationToken)
+                .PostAsync("/v1/blog/settings/website-test", WorkspaceBody(workspaceId), cancellationToken)
                 .ConfigureAwait(false);
-            return Require<BlogWebsiteTest>(FoPostHttpClient.Unwrap(response));
+            var passed = Require<BlogWebsiteTest>(FoPostHttpClient.Unwrap(response));
+            passed.Ok = true;
+            return passed;
         }
-        catch (FoPostException error) when (error.Status == 502 && FoPostHttpClient.Unwrap(error.Body) is JsonObject result)
+        catch (FoPostException error) when (error.Status == 502 && error.Body is JsonObject result)
         {
-            // The API reports a failed test as 502 with the same body shape.
-            return Require<BlogWebsiteTest>(result);
+            // A failed test answers 502 carrying the status the website gave.
+            var failed = Require<BlogWebsiteTest>(result);
+            failed.Ok = false;
+            failed.Error = error.Message;
+            return failed;
         }
     }
 
@@ -150,7 +160,7 @@ public sealed class BlogResource
         SuggestBlogSeedsOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        var body = WorkspaceQuery(workspaceId);
+        var body = WorkspaceBody(workspaceId);
         if (options?.Seeds is not null)
         {
             body["seeds"] = options.Seeds;
@@ -173,7 +183,7 @@ public sealed class BlogResource
         PlanBlogKeywordsOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        var body = WorkspaceQuery(workspaceId);
+        var body = WorkspaceBody(workspaceId);
         if (options?.Seeds is not null)
         {
             body["seeds"] = options.Seeds;
@@ -191,7 +201,7 @@ public sealed class BlogResource
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        var body = WorkspaceQuery(workspaceId);
+        var body = WorkspaceBody(workspaceId);
         body["keyword"] = options.Keyword;
         if (options.PlannedFor is { } day)
         {
@@ -263,7 +273,7 @@ public sealed class BlogResource
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        var body = WorkspaceQuery(workspaceId);
+        var body = WorkspaceBody(workspaceId);
         AddIfPresent(body, "title", options.Title);
         AddIfPresent(body, "keyword", options.Keyword);
         AddIfPresent(body, "keywordId", options.KeywordId);

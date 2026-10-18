@@ -6,36 +6,36 @@ using Xunit;
 namespace FoPost.Tests;
 
 /// <summary>
-/// The blog resource: paths, the camelCase <c>workspaceId</c> on query and body,
-/// partial bodies, and that camelCase answers read back into the models.
+/// The blog resource: paths, <c>workspace_id</c> on the query and <c>workspaceId</c> in bodies,
+/// partial bodies, and that snake_case answers read back into the models.
 /// </summary>
 public class BlogTests
 {
     private const string Settings = """
     {
-      "siteUrl": "https://yourbrand.com",
+      "site_url": "https://yourbrand.com",
       "topic": "social media scheduling",
       "audience": "marketing teams",
       "goal": "signups",
-      "focusTopics": "scheduling, analytics",
-      "avoidTopics": "politics",
+      "focus_topics": "scheduling, analytics",
+      "avoid_topics": "politics",
       "language": "en",
-      "locationCode": 2840,
-      "cadencePerWeek": 2,
-      "reviewHoldDays": 3,
-      "imageTier": "standard",
-      "inBodyImages": 1,
-      "minWords": 900,
-      "maxWords": 1600,
-      "brandVoiceId": null,
-      "targetKind": "website",
-      "targetAccountId": null,
-      "targetPlatform": null,
-      "websiteUrl": "https://yourbrand.com/api/fopost",
-      "hasWebsiteSecret": true,
-      "planRun": { "status": "done", "error": null, "added": 12, "finishedAt": "2026-10-01T00:05:00.000Z" },
-      "keywordDataAvailable": true,
-      "updatedAt": "2026-10-01T00:00:00.000Z"
+      "location_code": 2840,
+      "cadence_per_week": 2,
+      "review_hold_days": 3,
+      "image_tier": "standard",
+      "in_body_images": 1,
+      "min_words": 900,
+      "max_words": 1600,
+      "brand_voice_id": null,
+      "target_kind": "website",
+      "target_account_id": null,
+      "target_platform": null,
+      "website_url": "https://yourbrand.com/api/fopost",
+      "has_website_secret": true,
+      "plan_run": { "status": "done", "error": null, "added": 12, "finished_at": "2026-10-01T00:05:00.000Z" },
+      "keyword_data_available": true,
+      "updated_at": "2026-10-01T00:00:00.000Z"
     }
     """;
 
@@ -43,15 +43,15 @@ public class BlogTests
     {
       "id": "kw_1",
       "keyword": "social media scheduling",
-      "searchVolume": 5400,
+      "search_volume": 5400,
       "difficulty": 42,
       "cpc": 3.1,
       "intent": "commercial",
       "source": "provider",
       "status": "planned",
-      "plannedFor": "2026-10-20",
-      "fitReason": "Buyers search it before choosing a scheduler",
-      "createdAt": "2026-10-01T00:00:00.000Z"
+      "planned_for": "2026-10-20",
+      "fit_reason": "Buyers search it before choosing a scheduler",
+      "created_at": "2026-10-01T00:00:00.000Z"
     }
     """;
 
@@ -62,36 +62,36 @@ public class BlogTests
       "slug": "schedule-a-week-of-posts",
       "keyword": "social media scheduling",
       "excerpt": null,
-      "metaTitle": null,
-      "metaDescription": null,
-      "featuredImage": { "mediaId": "media_1", "url": "https://cdn.test/featured.png", "alt": "A calendar" },
+      "meta_title": null,
+      "meta_description": null,
+      "featured_image": { "media_id": "media_1", "url": "https://cdn.test/featured.png", "alt": "A calendar" },
       "tags": ["scheduling"],
-      "wordCount": 1200,
+      "word_count": 1200,
       "status": "draft",
       "origin": "user",
-      "reviewUntil": "2026-10-05T00:00:00.000Z",
-      "publishAt": null,
-      "publishedAt": null,
-      "publishedUrl": null,
+      "review_until": "2026-10-05T00:00:00.000Z",
+      "publish_at": null,
+      "published_at": null,
+      "published_url": null,
       "error": null,
-      "createdAt": "2026-10-01T00:00:00.000Z",
-      "updatedAt": "2026-10-02T00:00:00.000Z"
+      "created_at": "2026-10-01T00:00:00.000Z",
+      "updated_at": "2026-10-02T00:00:00.000Z"
     }
     """;
 
     // ─── Settings ────────────────────────────────────────────────────
 
     [Fact]
-    public async Task GetSettings_sends_workspaceId_in_camel_case_and_reads_the_target()
+    public async Task GetSettings_sends_workspace_id_on_the_query_and_reads_the_target()
     {
-        var handler = new StubHandler().Json($$"""{ "data": {{Settings}} }""");
+        var handler = new StubHandler().Json(Settings);
         using var test = new TestClient(handler);
 
         var settings = await test.Client.Blog.GetSettingsAsync("ws_1");
 
         Assert.Equal(HttpMethod.Get, handler.LastRequest.Method);
         Assert.Equal("/v1/blog/settings", handler.LastRequest.RequestUri!.AbsolutePath);
-        Assert.Equal("?workspaceId=ws_1", handler.LastRequest.RequestUri!.Query);
+        Assert.Equal("?workspace_id=ws_1", handler.LastRequest.RequestUri!.Query);
         Assert.Equal(BlogTargetKinds.Website, settings.TargetKind);
         Assert.True(settings.HasWebsiteSecret);
         Assert.Equal(2, settings.CadencePerWeek);
@@ -99,12 +99,15 @@ public class BlogTests
         Assert.Equal("politics", settings.AvoidTopics);
         Assert.Equal(BlogPlanRunStatuses.Done, settings.PlanRun!.Status);
         Assert.Equal(12, settings.PlanRun.Added);
+        Assert.NotNull(settings.PlanRun.FinishedAt);
+        Assert.True(settings.KeywordDataAvailable);
+        Assert.Equal("https://yourbrand.com/api/fopost", settings.WebsiteUrl);
     }
 
     [Fact]
     public async Task UpdateSettings_puts_workspaceId_in_the_body_and_returns_the_secret_once()
     {
-        var handler = new StubHandler().Json($$"""{ "data": {{Settings}}, "websiteSecret": "whsec_new" }""");
+        var handler = new StubHandler().Json(Settings.TrimEnd().TrimEnd('}') + """, "website_secret": "whsec_new" }""");
         using var test = new TestClient(handler);
 
         var result = await test.Client.Blog.UpdateSettingsAsync("ws_1", new UpdateBlogSettingsOptions
@@ -134,7 +137,7 @@ public class BlogTests
     [Fact]
     public async Task UpdateSettings_reads_a_null_secret_when_nothing_was_issued()
     {
-        var handler = new StubHandler().Json($$"""{ "data": {{Settings}}, "websiteSecret": null }""");
+        var handler = new StubHandler().Json(Settings.TrimEnd().TrimEnd('}') + """, "website_secret": null }""");
         using var test = new TestClient(handler);
 
         var result = await test.Client.Blog.UpdateSettingsAsync("ws_1", new UpdateBlogSettingsOptions { Topic = "x" });
@@ -146,8 +149,8 @@ public class BlogTests
     public async Task RotateWebsiteSecret_and_TestWebsite_post_the_workspace_as_body()
     {
         var handler = new StubHandler()
-            .Json("""{ "data": { "websiteSecret": "whsec_rotated" } }""")
-            .Json("""{ "data": { "ok": true, "status": 200, "error": null } }""");
+            .Json("""{ "website_secret": "whsec_rotated" }""")
+            .Json("""{ "http_status": 200 }""");
         using var test = new TestClient(handler);
 
         var secret = await test.Client.Blog.RotateWebsiteSecretAsync("ws_1");
@@ -158,21 +161,21 @@ public class BlogTests
         Assert.Equal("whsec_rotated", secret.WebsiteSecret);
         Assert.Equal("/v1/blog/settings/website-test", handler.Requests[1].RequestUri!.AbsolutePath);
         Assert.True(check.Ok);
-        Assert.Equal(200, check.Status);
+        Assert.Equal(200, check.HttpStatus);
     }
 
     [Fact]
     public async Task TestWebsite_reads_a_failed_test_off_the_502_instead_of_throwing()
     {
         var handler = new StubHandler().Json(
-            """{ "data": { "ok": false, "status": 500, "error": "Internal Server Error" } }""",
+            """{ "error": "website_test_failed", "message": "Internal Server Error", "http_status": 500 }""",
             HttpStatusCode.BadGateway);
         using var test = new TestClient(handler);
 
         var check = await test.Client.Blog.TestWebsiteAsync("ws_1");
 
         Assert.False(check.Ok);
-        Assert.Equal(500, check.Status);
+        Assert.Equal(500, check.HttpStatus);
         Assert.Equal("Internal Server Error", check.Error);
     }
 
@@ -192,7 +195,7 @@ public class BlogTests
 
         Assert.Equal("/v1/blog/keywords", handler.LastRequest.RequestUri!.AbsolutePath);
         var query = handler.LastRequest.RequestUri!.Query;
-        Assert.Contains("workspaceId=ws_1", query, StringComparison.Ordinal);
+        Assert.Contains("workspace_id=ws_1", query, StringComparison.Ordinal);
         Assert.Contains("status=suggested%2Cplanned", query, StringComparison.Ordinal);
         Assert.Contains("limit=50", query, StringComparison.Ordinal);
 
@@ -205,7 +208,7 @@ public class BlogTests
     [Fact]
     public async Task SuggestSeeds_posts_seeds_and_prompt_and_reads_the_terms()
     {
-        var handler = new StubHandler().Json("""{ "data": { "seeds": ["social media calendar", "post scheduler"] } }""");
+        var handler = new StubHandler().Json("""{ "seeds": ["social media calendar", "post scheduler"] }""");
         using var test = new TestClient(handler);
 
         var result = await test.Client.Blog.SuggestSeedsAsync("ws_1", new SuggestBlogSeedsOptions
@@ -240,7 +243,7 @@ public class BlogTests
     [Fact]
     public async Task PlanKeywords_posts_seeds_and_reads_queued()
     {
-        var handler = new StubHandler().Json("""{ "data": { "status": "queued" } }""", HttpStatusCode.Accepted);
+        var handler = new StubHandler().Json("""{ "status": "queued" }""", HttpStatusCode.Accepted);
         using var test = new TestClient(handler);
 
         var result = await test.Client.Blog.PlanKeywordsAsync("ws_1", new PlanBlogKeywordsOptions
@@ -272,8 +275,8 @@ public class BlogTests
     public async Task AddKeyword_formats_the_planned_day_and_UpdateKeyword_patches_with_the_workspace_query()
     {
         var handler = new StubHandler()
-            .Json($$"""{ "data": {{Keyword}} }""", HttpStatusCode.Created)
-            .Json($$"""{ "data": {{Keyword}} }""");
+            .Json(Keyword, HttpStatusCode.Created)
+            .Json(Keyword);
         using var test = new TestClient(handler);
 
         await test.Client.Blog.AddKeywordAsync("ws_1", new CreateBlogKeywordOptions
@@ -294,7 +297,7 @@ public class BlogTests
 
         Assert.Equal(HttpMethod.Patch, handler.Requests[1].Method);
         Assert.Equal("/v1/blog/keywords/kw_1", handler.Requests[1].RequestUri!.AbsolutePath);
-        Assert.Equal("?workspaceId=ws_1", handler.Requests[1].RequestUri!.Query);
+        Assert.Equal("?workspace_id=ws_1", handler.Requests[1].RequestUri!.Query);
         Assert.Equal("""{"plannedFor":null}""", handler.Bodies[1]);
     }
 
@@ -308,7 +311,7 @@ public class BlogTests
 
         Assert.Equal(HttpMethod.Delete, handler.LastRequest.Method);
         Assert.Equal("/v1/blog/keywords/kw_1", handler.LastRequest.RequestUri!.AbsolutePath);
-        Assert.Equal("?workspaceId=ws_1", handler.LastRequest.RequestUri!.Query);
+        Assert.Equal("?workspace_id=ws_1", handler.LastRequest.RequestUri!.Query);
         Assert.Null(handler.LastBody);
     }
 
@@ -336,7 +339,7 @@ public class BlogTests
     [Fact]
     public async Task RequestArticle_sends_only_what_was_given_and_reads_the_queued_article()
     {
-        var handler = new StubHandler().Json($$"""{ "data": {{Article}} }""", HttpStatusCode.Accepted);
+        var handler = new StubHandler().Json(Article, HttpStatusCode.Accepted);
         using var test = new TestClient(handler);
 
         var article = await test.Client.Blog.RequestArticleAsync("ws_1", new RequestBlogArticleOptions
@@ -361,18 +364,18 @@ public class BlogTests
               "instructions": null,
               "outline": ["Why batch", "How to batch"],
               "brief": { "sources": 3 },
-              "bodyMarkdown": "# Hello",
-              "bodyHtml": "<h1>Hello</h1>",
-              "images": [{ "mediaId": "media_2", "url": "https://cdn.test/one.png", "alt": "One", "position": 1 }]
+              "body_markdown": "# Hello",
+              "body_html": "<h1>Hello</h1>",
+              "images": [{ "media_id": "media_2", "url": "https://cdn.test/one.png", "alt": "One", "position": 1 }]
             }
             """;
-        var handler = new StubHandler().Json($$"""{ "data": {{full}} }""");
+        var handler = new StubHandler().Json(full);
         using var test = new TestClient(handler);
 
         var article = await test.Client.Blog.GetArticleAsync("ws_1", "art_1");
 
         Assert.Equal("/v1/blog/articles/art_1", handler.LastRequest.RequestUri!.AbsolutePath);
-        Assert.Equal("?workspaceId=ws_1", handler.LastRequest.RequestUri!.Query);
+        Assert.Equal("?workspace_id=ws_1", handler.LastRequest.RequestUri!.Query);
         Assert.Equal("# Hello", article.BodyMarkdown);
         Assert.Equal(2, article.Outline.Count);
         Assert.Equal(1, Assert.Single(article.Images).Position);
@@ -382,7 +385,7 @@ public class BlogTests
     [Fact]
     public async Task UpdateArticle_patches_only_set_fields_and_formats_publishAt()
     {
-        var handler = new StubHandler().Json($$"""{ "data": {{Article}} }""");
+        var handler = new StubHandler().Json(Article);
         using var test = new TestClient(handler);
 
         await test.Client.Blog.UpdateArticleAsync("ws_1", "art_1", new UpdateBlogArticleOptions
@@ -394,7 +397,7 @@ public class BlogTests
 
         Assert.Equal(HttpMethod.Patch, handler.LastRequest.Method);
         Assert.Equal("/v1/blog/articles/art_1", handler.LastRequest.RequestUri!.AbsolutePath);
-        Assert.Equal("?workspaceId=ws_1", handler.LastRequest.RequestUri!.Query);
+        Assert.Equal("?workspace_id=ws_1", handler.LastRequest.RequestUri!.Query);
         Assert.Equal(
             """{"title":"New title","tags":["a","b"],"publishAt":"2026-10-20T09:00:00.000Z"}""",
             handler.LastBody);
@@ -404,9 +407,9 @@ public class BlogTests
     public async Task Regenerate_Publish_and_Reject_post_to_the_action_path()
     {
         var handler = new StubHandler()
-            .Json($$"""{ "data": {{Article}} }""", HttpStatusCode.Accepted)
-            .Json($$"""{ "data": {{Article}} }""", HttpStatusCode.Accepted)
-            .Json($$"""{ "data": {{Article}} }""");
+            .Json(Article, HttpStatusCode.Accepted)
+            .Json(Article, HttpStatusCode.Accepted)
+            .Json(Article);
         using var test = new TestClient(handler);
 
         await test.Client.Blog.RegenerateArticleAsync("ws_1", "art_1");
@@ -416,7 +419,7 @@ public class BlogTests
         Assert.All(handler.Requests, request =>
         {
             Assert.Equal(HttpMethod.Post, request.Method);
-            Assert.Equal("?workspaceId=ws_1", request.RequestUri!.Query);
+            Assert.Equal("?workspace_id=ws_1", request.RequestUri!.Query);
         });
         Assert.Equal("/v1/blog/articles/art_1/regenerate", handler.Requests[0].RequestUri!.AbsolutePath);
         Assert.Equal("/v1/blog/articles/art_1/publish", handler.Requests[1].RequestUri!.AbsolutePath);
@@ -427,14 +430,14 @@ public class BlogTests
     public async Task SubmitArticle_posts_to_the_submit_path_and_reads_in_review()
     {
         var inReview = Article.Replace("\"status\": \"draft\"", "\"status\": \"in_review\"", StringComparison.Ordinal);
-        var handler = new StubHandler().Json($$"""{ "data": {{inReview}} }""");
+        var handler = new StubHandler().Json(inReview);
         using var test = new TestClient(handler);
 
         var article = await test.Client.Blog.SubmitArticleAsync("ws_1", "art_1");
 
         Assert.Equal(HttpMethod.Post, handler.LastRequest.Method);
         Assert.Equal("/v1/blog/articles/art_1/submit", handler.LastRequest.RequestUri!.AbsolutePath);
-        Assert.Equal("?workspaceId=ws_1", handler.LastRequest.RequestUri!.Query);
+        Assert.Equal("?workspace_id=ws_1", handler.LastRequest.RequestUri!.Query);
         Assert.Null(handler.LastBody);
         Assert.Equal(BlogArticleStatuses.InReview, article.Status);
     }
@@ -479,6 +482,6 @@ public class BlogTests
 
         Assert.Equal(HttpMethod.Delete, handler.LastRequest.Method);
         Assert.Equal("/v1/blog/articles/art_1", handler.LastRequest.RequestUri!.AbsolutePath);
-        Assert.Equal("?workspaceId=ws_1", handler.LastRequest.RequestUri!.Query);
+        Assert.Equal("?workspace_id=ws_1", handler.LastRequest.RequestUri!.Query);
     }
 }
