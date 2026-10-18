@@ -301,10 +301,16 @@ await client.Sequences.UnenrollAsync(sequence.Id, new[] { contactId });
 ## Blog
 
 Articles for a website, as distinct from posts to a social network. `client.Blog` holds the
-settings (where articles publish, how often they are planned), the keyword plan and the articles.
-Reads, settings and keyword edits need the `posts` scope; `PlanKeywordsAsync`,
-`RequestArticleAsync` and `RegenerateArticleAsync` spend credits and need `ai`;
-`PublishArticleAsync` needs `publish`. Every call takes the workspace id first.
+settings (where articles publish, what the blog is for, how often it is planned), the keyword plan
+and the articles. Reads, settings, keyword edits and `SubmitArticleAsync` need the `posts` scope;
+`SuggestSeedsAsync`, `PlanKeywordsAsync`, `RequestArticleAsync` and `RegenerateArticleAsync` spend
+credits and need `ai`; `PublishArticleAsync` needs `publish`. Every call takes the workspace id first.
+
+Planning is goal-driven: `SuggestSeedsAsync` proposes search terms from the goal and topics,
+`PlanKeywordsAsync` researches them into `suggested` keywords (follow the run on
+`BlogSettings.PlanRun`), and setting a keyword to `planned` picks it onto the next free date.
+A written article stops at `draft` until `SubmitArticleAsync` moves it to `in_review`; only then can
+it be published or given a `PublishAt`.
 
 ```csharp
 var article = await client.Blog.RequestArticleAsync(workspaceId, new RequestBlogArticleOptions
@@ -312,8 +318,9 @@ var article = await client.Blog.RequestArticleAsync(workspaceId, new RequestBlog
     Keyword = "social media scheduling",
     Instructions = "Lead with the time saved.",
 });
-// article.Status is "queued"; poll until it is "draft", then review or publish.
+// article.Status is "queued"; poll until it is "draft", then submit and publish.
 var draft = await client.Blog.GetArticleAsync(workspaceId, article.Id);
+await client.Blog.SubmitArticleAsync(workspaceId, draft.Id);
 await client.Blog.PublishArticleAsync(workspaceId, draft.Id);
 ```
 
@@ -384,7 +391,7 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `EditCommentAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `LikeAsync`, `UnlikeAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`, `DeleteAsync`, `StartConversationAsync`, `SetTypingAsync`, `HandoverAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
 | `Contacts`   | `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `ConversationsAsync`, `ImportAsync`, `ListFieldsAsync`, `CreateFieldAsync`, `UpdateFieldAsync`, `DeleteFieldAsync`, `ConversationAnalyticsAsync` |
 | `Knowledge`  | `ListAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `SyncAsync`, `SearchAsync`                                              |
-| `Blog`       | `GetSettingsAsync`, `UpdateSettingsAsync`, `RotateWebsiteSecretAsync`, `TestWebsiteAsync`, `ListKeywordsAsync`, `PlanKeywordsAsync`, `AddKeywordAsync`, `UpdateKeywordAsync`, `DeleteKeywordAsync`, `ListArticlesAsync`, `RequestArticleAsync`, `GetArticleAsync`, `UpdateArticleAsync`, `RegenerateArticleAsync`, `PublishArticleAsync`, `RejectArticleAsync`, `DeleteArticleAsync` |
+| `Blog`       | `GetSettingsAsync`, `UpdateSettingsAsync`, `RotateWebsiteSecretAsync`, `TestWebsiteAsync`, `ListKeywordsAsync`, `SuggestSeedsAsync`, `PlanKeywordsAsync`, `AddKeywordAsync`, `UpdateKeywordAsync`, `DeleteKeywordAsync`, `ListArticlesAsync`, `RequestArticleAsync`, `GetArticleAsync`, `UpdateArticleAsync`, `RegenerateArticleAsync`, `SubmitArticleAsync`, `PublishArticleAsync`, `RejectArticleAsync`, `DeleteArticleAsync` |
 | `Whatsapp`   | `GetProfileAsync`, `UpdateProfileAsync`, `RequestDisplayNameAsync`, `SetUsernameAsync`, `ListTemplatesAsync`, `ListTemplateLibraryAsync`, `GetTemplateAsync`, `CreateTemplateAsync`, `ImportTemplateAsync`, `UpdateTemplateAsync`, `DeleteTemplateAsync`, `ListGroupsAsync`, `CreateGroupAsync`, `GetGroupAsync`, `UpdateGroupAsync`, `DeleteGroupAsync`, `GetGroupInviteLinkAsync`, `ResetGroupInviteLinkAsync`, `RemoveGroupParticipantsAsync`, `ListBlockedAsync`, `BlockUsersAsync`, `UnblockUsersAsync`, `GetCommerceSettingsAsync`, `UpdateCommerceSettingsAsync`, `LinkCatalogAsync`, `ListFlowsAsync`, `GetFlowAsync`, `CreateFlowAsync`, `UpdateFlowAsync`, `DeleteFlowAsync`, `UploadFlowJsonAsync`, `PublishFlowAsync`, `DeprecateFlowAsync`, `ListFlowResponsesAsync`, `GetEncryptionKeyStatusAsync`, `SetEncryptionKeyAsync`, `GetAccountEventsAsync`, `ListSandboxSessionsAsync`, `CreateSandboxSessionAsync` |
 | `Validate`   | `PostAsync`, `LengthAsync`, `MediaAsync`                                                                                           |
 | `Analytics`  | `DecayAsync`, `FrequencyAsync`, `TimelineAsync`, `ChangesAsync`, `CollectPostAsync`, `NativePostsAsync`                             |

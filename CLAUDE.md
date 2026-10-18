@@ -115,9 +115,10 @@ snake_case and `PATCH /v1/inbox/{id}` is camelCase, so those are built by hand. 
 route by size: every file within `UploadLimits.MultipartMaxFileBytes` (100 MB fallback when the
 limits call fails) goes as one multipart request (`post` JSON field + `files` parts, built per
 attempt so a 429 retry works); otherwise each file is uploaded directly and attached to the first
-content block before the JSON request. `Blog` (scope `posts`; `ai` for plan, request and
-regenerate; `publish` for publish) wraps `/v1/blog/*`: `workspaceId` is camelCase on the query and in
-bodies, and every field is camelCase. `FoPostWebhooks.Verify` (namespace `FoPost`) verifies any
+content block before the JSON request. `Blog` (scope `posts`; `ai` for suggest, plan, request and
+regenerate; `publish` for publish) wraps `/v1/blog/*`: `workspace_id` goes on the query, `workspaceId`
+and the other request fields are camelCase in bodies, and answers are snake_case (bare objects,
+`{data: [...]}` lists). `FoPostWebhooks.Verify` (namespace `FoPost`) verifies any
 delivery's signature headers; there is no `Webhooks` *resource*. There is no `Communities`,
 `Analytics`, or `Automations` resource here — reach those
 through the escape hatch `FoPostClient.RequestAsync(...)`, which returns the raw `JsonNode?`

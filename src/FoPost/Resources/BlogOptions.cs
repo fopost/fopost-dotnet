@@ -13,6 +13,15 @@ public sealed class UpdateBlogSettingsOptions
 
     public Optional<string?> Audience { get; set; }
 
+    /// <summary>One of <see cref="BlogGoals"/>.</summary>
+    public Optional<string?> Goal { get; set; }
+
+    /// <summary>What the blog wants to write about.</summary>
+    public Optional<string?> FocusTopics { get; set; }
+
+    /// <summary>What the blog never writes about.</summary>
+    public Optional<string?> AvoidTopics { get; set; }
+
     public Optional<string> Language { get; set; }
 
     public Optional<int> LocationCode { get; set; }
@@ -20,10 +29,8 @@ public sealed class UpdateBlogSettingsOptions
     /// <summary>0 to 7; 0 turns planning off.</summary>
     public Optional<int> CadencePerWeek { get; set; }
 
-    /// <summary>0 to 14.</summary>
+    /// <summary>0 to 14 days before its planned date that a picked keyword starts being written.</summary>
     public Optional<int> ReviewHoldDays { get; set; }
-
-    public Optional<bool> AutoPublish { get; set; }
 
     /// <summary><c>draft</c>, <c>standard</c> or <c>best</c>.</summary>
     public Optional<string> ImageTier { get; set; }
@@ -63,6 +70,16 @@ public sealed class PlanBlogKeywordsOptions
     public IReadOnlyList<string>? Seeds { get; set; }
 }
 
+/// <summary>The body of <see cref="Resources.BlogResource.SuggestSeedsAsync"/>.</summary>
+public sealed class SuggestBlogSeedsOptions
+{
+    /// <summary>Up to 20 current terms to refine.</summary>
+    public IReadOnlyList<string>? Seeds { get; set; }
+
+    /// <summary>Up to 500 characters to steer the suggestions.</summary>
+    public string? Prompt { get; set; }
+}
+
 /// <summary>The body of <see cref="Resources.BlogResource.AddKeywordAsync"/>.</summary>
 public sealed class CreateBlogKeywordOptions
 {
@@ -75,7 +92,7 @@ public sealed class CreateBlogKeywordOptions
 /// <summary>The body of <see cref="Resources.BlogResource.UpdateKeywordAsync"/>. Only set fields are sent.</summary>
 public sealed class UpdateBlogKeywordOptions
 {
-    /// <summary>One of <see cref="BlogKeywordStatuses"/>.</summary>
+    /// <summary>One of <see cref="BlogKeywordStatuses"/>; <c>planned</c> picks it onto the next free date.</summary>
     public Optional<string> Status { get; set; }
 
     public Optional<DateOnly?> PlannedFor { get; set; }
@@ -126,6 +143,9 @@ public sealed class UpdateBlogArticleOptions
 
     public Optional<IReadOnlyList<string>> Tags { get; set; }
 
-    /// <summary>Puts the draft on the calendar; null returns it to review.</summary>
+    /// <summary>
+    /// Puts the article on the calendar; null returns it to review. Needs the article
+    /// <c>in_review</c> (or already scheduled or failed); a draft answers 409.
+    /// </summary>
     public Optional<DateTimeOffset?> PublishAt { get; set; }
 }

@@ -6,7 +6,30 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
 
 ## [Unreleased]
 
+### Removed
+- **Breaking:** `BlogSettings.AutoPublish` and `UpdateBlogSettingsOptions.AutoPublish` are removed;
+  the API no longer auto-publishes. An article publishes only after `SubmitArticleAsync` moves it
+  to review.
+
+### Changed
+- The blog resource follows the live wire format: `workspace_id` on the query string, snake_case
+  answers (bare objects, `{data: [...]}` lists), and `website_secret` beside the settings on
+  update. `BlogWebsiteTest.Status` is now `HttpStatus`, read from `http_status`; a failed test
+  carries the API's message in `Error`.
+
 ### Added
+- `Blog.SuggestSeedsAsync` (`POST /v1/blog/keywords/suggest`, scope `ai`) suggests about 10 search
+  terms from the blog goal and topics into `BlogSeedSuggestions`; pass `Seeds` to refine and
+  `Prompt` to steer.
+- `Blog.SubmitArticleAsync` (`POST /v1/blog/articles/{id}/submit`, scope `posts`) moves a draft,
+  failed or rejected article to the new `BlogArticleStatuses.InReview`. Publishing and setting
+  `PublishAt` now need an article in review; a draft answers 409.
+- `BlogSettings.Goal` (`BlogGoals`), `FocusTopics`, `AvoidTopics` and `PlanRun` (`BlogPlanRun`,
+  `BlogPlanRunStatuses`), with `Goal`, `FocusTopics` and `AvoidTopics` on
+  `UpdateBlogSettingsOptions`. `BlogKeyword.FitReason` says why a keyword serves the goal.
+  `PlanKeywordsAsync` no longer fills the calendar: results land as `suggested`, and setting a
+  keyword to `planned` picks it. `ReviewHoldDays` is now the days before its planned date that a
+  picked keyword starts being written.
 - `client.Blog`: articles for a website. Settings (`GetSettingsAsync`, `UpdateSettingsAsync`,
   `RotateWebsiteSecretAsync`, `TestWebsiteAsync`), the keyword plan (`ListKeywordsAsync`,
   `PlanKeywordsAsync`, `AddKeywordAsync`, `UpdateKeywordAsync`, `DeleteKeywordAsync`) and the

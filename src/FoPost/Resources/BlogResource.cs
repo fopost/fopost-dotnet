@@ -11,10 +11,11 @@ namespace FoPost.Resources;
 /// </summary>
 /// <remarks>
 /// Reads, settings and keyword edits need the <c>posts</c> scope. Anything that spends
-/// credits (<see cref="PlanKeywordsAsync"/>, <see cref="RequestArticleAsync"/>,
+/// credits (<see cref="SuggestSeedsAsync"/>, <see cref="PlanKeywordsAsync"/>, <see cref="RequestArticleAsync"/>,
 /// <see cref="RegenerateArticleAsync"/>) needs <c>ai</c>, and
 /// <see cref="PublishArticleAsync"/> needs <c>publish</c>. Every request is bound to one
-/// workspace, passed as the first argument. Wire fields are camelCase on these routes.
+/// workspace, passed as the first argument: <c>workspace_id</c> on the query string for reads and
+/// per-id calls, <c>workspaceId</c> in camelCase request bodies. Answers are snake_case.
 /// </remarks>
 /// <example>
 /// <code>
@@ -22,7 +23,7 @@ namespace FoPost.Resources;
 /// {
 ///     Keyword = "social media scheduling",
 /// });
-/// // article.Status is "queued"; poll GetArticleAsync until it is "draft".
+/// // article.Status is "queued"; poll GetArticleAsync until it is "draft", then SubmitArticleAsync.
 /// </code>
 /// </example>
 public sealed class BlogResource
@@ -36,6 +37,9 @@ public sealed class BlogResource
     private static string ArticlePath(string articleId) => $"/v1/blog/articles/{articleId}";
 
     private static Dictionary<string, object?> WorkspaceQuery(string workspaceId) =>
+        new() { ["workspace_id"] = workspaceId };
+
+    private static Dictionary<string, object?> WorkspaceBody(string workspaceId) =>
         new() { ["workspaceId"] = workspaceId };
 
     private static string Date(DateOnly day) => day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
@@ -66,11 +70,13 @@ public sealed class BlogResource
         Set(body, "siteUrl", options.SiteUrl);
         Set(body, "topic", options.Topic);
         Set(body, "audience", options.Audience);
+        Set(body, "goal", options.Goal);
+        Set(body, "focusTopics", options.FocusTopics);
+        Set(body, "avoidTopics", options.AvoidTopics);
         Set(body, "language", options.Language);
         Set(body, "locationCode", options.LocationCode);
         Set(body, "cadencePerWeek", options.CadencePerWeek);
         Set(body, "reviewHoldDays", options.ReviewHoldDays);
-        Set(body, "autoPublish", options.AutoPublish);
         Set(body, "imageTier", options.ImageTier);
         Set(body, "inBodyImages", options.InBodyImages);
         Set(body, "minWords", options.MinWords);
@@ -83,9 +89,10 @@ public sealed class BlogResource
         var response = await _http
             .RequestAsync(HttpMethod.Patch, "/v1/blog/settings", body, null, cancellationToken)
             .ConfigureAwait(false);
+        // The secret sits beside the settings fields, not in an envelope.
         var settings = Require<BlogSettings>(FoPostHttpClient.Unwrap(response));
         var secret = response is JsonObject obj &&
-                     obj.TryGetPropertyValue("websiteSecret", out var node) &&
+                     obj.TryGetPropertyValue("website_secret", out var node) &&
                      node is JsonValue value
             ? value.GetValue<string>()
             : null;
@@ -98,7 +105,7 @@ public sealed class BlogResource
         CancellationToken cancellationToken = default)
     {
         var response = await _http
-            .PostAsync("/v1/blog/settings/website-secret", WorkspaceQuery(workspaceId), cancellationToken)
+            .PostAsync("/v1/blog/settings/website-secret", WorkspaceBody(workspaceId), cancellationToken)
             .ConfigureAwait(false);
         return Require<BlogWebsiteSecret>(FoPostHttpClient.Unwrap(response));
     }
@@ -114,14 +121,19 @@ public sealed class BlogResource
         try
         {
             var response = await _http
-                .PostAsync("/v1/blog/settings/website-test", WorkspaceQuery(workspaceId), cancellationToken)
+                .PostAsync("/v1/blog/settings/website-test", WorkspaceBody(workspaceId), cancellationToken)
                 .ConfigureAwait(false);
-            return Require<BlogWebsiteTest>(FoPostHttpClient.Unwrap(response));
+            var passed = Require<BlogWebsiteTest>(FoPostHttpClient.Unwrap(response));
+            passed.Ok = true;
+            return passed;
         }
-        catch (FoPostException error) when (error.Status == 502 && FoPostHttpClient.Unwrap(error.Body) is JsonObject result)
+        catch (FoPostException error) when (error.Status == 502 && error.Body is JsonObject result)
         {
-            // The API reports a failed test as 502 with the same body shape.
-            return Require<BlogWebsiteTest>(result);
+            // A failed test answers 502 carrying the status the website gave.
+            var failed = Require<BlogWebsiteTest>(result);
+            failed.Ok = false;
+            failed.Error = error.Message;
+            return failed;
         }
     }
 
@@ -139,13 +151,39 @@ public sealed class BlogResource
         return ToList<BlogKeyword>(FoPostHttpClient.Unwrap(body));
     }
 
-    /// <summary>Queues keyword research. Spends credits; answers once the job is queued.</summary>
+    /// <summary>
+    /// Suggests about 10 search terms from the blog goal and topics. Pass the current seeds
+    /// to refine them and a prompt to steer. Spends credits; 402 when the balance is empty.
+    /// </summary>
+    public async Task<BlogSeedSuggestions> SuggestSeedsAsync(
+        string workspaceId,
+        SuggestBlogSeedsOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = WorkspaceBody(workspaceId);
+        if (options?.Seeds is not null)
+        {
+            body["seeds"] = options.Seeds;
+        }
+
+        AddIfPresent(body, "prompt", options?.Prompt);
+
+        var response = await _http.PostAsync("/v1/blog/keywords/suggest", body, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<BlogSeedSuggestions>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
+    /// Queues keyword research. Spends credits; answers once the job is queued. Results land
+    /// as <c>suggested</c> keywords and do not fill the calendar; follow the run on
+    /// <see cref="BlogSettings.PlanRun"/> and set a keyword to <c>planned</c> to pick it.
+    /// </summary>
     public async Task<BlogPlanResult> PlanKeywordsAsync(
         string workspaceId,
         PlanBlogKeywordsOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        var body = WorkspaceQuery(workspaceId);
+        var body = WorkspaceBody(workspaceId);
         if (options?.Seeds is not null)
         {
             body["seeds"] = options.Seeds;
@@ -163,7 +201,7 @@ public sealed class BlogResource
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        var body = WorkspaceQuery(workspaceId);
+        var body = WorkspaceBody(workspaceId);
         body["keyword"] = options.Keyword;
         if (options.PlannedFor is { } day)
         {
@@ -175,7 +213,10 @@ public sealed class BlogResource
         return Require<BlogKeyword>(FoPostHttpClient.Unwrap(response));
     }
 
-    /// <summary>Partial update: only the fields you set are sent.</summary>
+    /// <summary>
+    /// Partial update: only the fields you set are sent. Setting the status to <c>planned</c>
+    /// picks the keyword, and it takes the next free date.
+    /// </summary>
     public async Task<BlogKeyword> UpdateKeywordAsync(
         string workspaceId,
         string keywordId,
@@ -232,7 +273,7 @@ public sealed class BlogResource
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        var body = WorkspaceQuery(workspaceId);
+        var body = WorkspaceBody(workspaceId);
         AddIfPresent(body, "title", options.Title);
         AddIfPresent(body, "keyword", options.Keyword);
         AddIfPresent(body, "keywordId", options.KeywordId);
@@ -253,7 +294,10 @@ public sealed class BlogResource
         return Require<BlogArticleFull>(FoPostHttpClient.Unwrap(body));
     }
 
-    /// <summary>Partial update. Answers 409 <c>invalid_state</c> once the article is no longer editable.</summary>
+    /// <summary>
+    /// Partial update. Answers 409 <c>invalid_state</c> once the article is no longer editable.
+    /// Setting <c>publishAt</c> needs the article <c>in_review</c> (or already scheduled or failed).
+    /// </summary>
     public async Task<BlogArticleFull> UpdateArticleAsync(
         string workspaceId,
         string articleId,
@@ -288,9 +332,17 @@ public sealed class BlogResource
         CancellationToken cancellationToken = default) =>
         ArticleAction(workspaceId, articleId, "regenerate", cancellationToken);
 
+    /// <summary>Moves a draft, failed or rejected article to <c>in_review</c>; 409 from any other state.</summary>
+    public Task<BlogArticle> SubmitArticleAsync(
+        string workspaceId,
+        string articleId,
+        CancellationToken cancellationToken = default) =>
+        ArticleAction(workspaceId, articleId, "submit", cancellationToken);
+
     /// <summary>
-    /// Publishes to the configured target. Needs the <c>publish</c> scope; answers 409
-    /// <c>no_target</c> when the settings name no target.
+    /// Publishes to the configured target. Needs the <c>publish</c> scope and the article
+    /// <c>in_review</c> (or already scheduled or failed); a draft answers 409 until it is
+    /// submitted, and 409 <c>no_target</c> when the settings name no target.
     /// </summary>
     public Task<BlogArticle> PublishArticleAsync(
         string workspaceId,
