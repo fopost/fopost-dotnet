@@ -51,7 +51,6 @@ public sealed class FoPostClient : IDisposable
         Queue = new QueueResource(_http);
         Analytics = new AnalyticsResource(_http);
         GoogleBusiness = new GoogleBusinessResource(_http);
-        Blog = new BlogResource(_http);
         Whatsapp = new WhatsappResource(_http);
         Blogs = new BlogsResource(_http);
         Automations = new AutomationsResource(_http);
@@ -116,8 +115,6 @@ public sealed class FoPostClient : IDisposable
     /// <summary>Manage a connected Google Business Profile location.</summary>
     public GoogleBusinessResource GoogleBusiness { get; }
 
-    /// <summary>Articles for a website: settings, the keyword plan and the articles themselves.</summary>
-    public BlogResource Blog { get; }
     /// <summary>WhatsApp Business: templates, flows, groups, blocking and commerce.</summary>
     public WhatsappResource Whatsapp { get; }
     /// <summary>Articles and products on a connected site, by the platform's own ids.</summary>

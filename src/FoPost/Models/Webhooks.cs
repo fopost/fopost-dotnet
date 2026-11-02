@@ -17,7 +17,6 @@ public static class WebhookEvents
     public const string AccountConnected = "account.connected";
     public const string AccountDisconnected = "account.disconnected";
     public const string AccountHealthChanged = "account.health_changed";
-    public const string ArticlePublished = "article.published";
     public const string InboxCommentReceived = "inbox.comment_received";
     public const string InboxMentionReceived = "inbox.mention_received";
     public const string InboxMessageReceived = "inbox.message_received";

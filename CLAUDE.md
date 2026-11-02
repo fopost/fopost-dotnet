@@ -53,11 +53,11 @@ src/FoPost/
   Models/
     FoPostModel.cs         base; unknown keys land in AdditionalData
     Optional.cs            struct sentinel for partial updates
-    Post.cs Account.cs Page.cs Media.cs Ai.cs Platforms.cs Inbox.cs Contacts.cs Broadcasts.cs Ads.cs Validate.cs Blog.cs
+    Post.cs Account.cs Page.cs Media.cs Ai.cs Platforms.cs Inbox.cs Contacts.cs Broadcasts.cs Ads.cs Validate.cs
   Resources/
     PostsResource.cs AccountsResource.cs WorkspacesResource.cs LabelsResource.cs AiResource.cs
-    InboxResource.cs ContactsResource.cs BroadcastsResource.cs SequencesResource.cs AdsResource.cs ValidateResource.cs BlogResource.cs
-    PostOptions.cs PostFile.cs MediaOptions.cs AiOptions.cs InboxOptions.cs ContactOptions.cs BroadcastOptions.cs AdsOptions.cs ValidateOptions.cs BlogOptions.cs ResourceHelpers.cs
+    InboxResource.cs ContactsResource.cs BroadcastsResource.cs SequencesResource.cs AdsResource.cs ValidateResource.cs
+    PostOptions.cs PostFile.cs MediaOptions.cs AiOptions.cs InboxOptions.cs ContactOptions.cs BroadcastOptions.cs AdsOptions.cs ValidateOptions.cs ResourceHelpers.cs
   Webhooks/
     FoPostWebhooks.cs      signature verifier (raw bytes, constant time, timestamped first) + envelope
 tests/FoPost.Tests/        xunit; TestServer.cs holds the stub handler and fixtures
@@ -115,10 +115,7 @@ snake_case and `PATCH /v1/inbox/{id}` is camelCase, so those are built by hand. 
 route by size: every file within `UploadLimits.MultipartMaxFileBytes` (100 MB fallback when the
 limits call fails) goes as one multipart request (`post` JSON field + `files` parts, built per
 attempt so a 429 retry works); otherwise each file is uploaded directly and attached to the first
-content block before the JSON request. `Blog` (scope `posts`; `ai` for suggest, plan, request and
-regenerate; `publish` for publish) wraps `/v1/blog/*`: `workspace_id` goes on the query, `workspaceId`
-and the other request fields are camelCase in bodies, and answers are snake_case (bare objects,
-`{data: [...]}` lists). `FoPostWebhooks.Verify` (namespace `FoPost`) verifies any
+content block before the JSON request. `FoPostWebhooks.Verify` (namespace `FoPost`) verifies any
 delivery's signature headers; `client.Webhooks` (scope `webhooks`) manages the endpoints and
 their deliveries. `Queue` (scope `posts`) is the posting queue, and `Schedule = PostSchedules.Queue`
 on a post create or update takes the next free slot. `ConnectSessions` (scope `accounts`) mints

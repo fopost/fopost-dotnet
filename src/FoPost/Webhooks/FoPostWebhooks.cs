@@ -19,9 +19,9 @@ namespace FoPost;
 /// <example>
 /// <code>
 /// var envelope = FoPostWebhooks.Verify(rawBody, headers, secret);
-/// if (envelope.Event == "article.published")
+/// if (envelope.Event == "post.published")
 /// {
-///     var article = envelope.DataAs&lt;BlogArticlePublishedPayload&gt;();
+///     var postId = envelope.Data.GetProperty("id").GetString();
 /// }
 /// </code>
 /// </example>
@@ -173,7 +173,7 @@ public sealed class FoPostWebhookEnvelope
         DeliveryId = deliveryId;
     }
 
-    /// <summary>For example <c>article.published</c> or <c>post.published</c>.</summary>
+    /// <summary>For example <c>post.published</c>.</summary>
     public string Event { get; }
 
     /// <summary>The event-specific body, untyped. See <see cref="DataAs{T}"/>.</summary>
@@ -184,7 +184,7 @@ public sealed class FoPostWebhookEnvelope
     /// <summary>The <c>X-FoPost-Delivery</c> header, when sent.</summary>
     public string? DeliveryId { get; }
 
-    /// <summary>Reads <see cref="Data"/> as a model, for example <see cref="BlogArticlePublishedPayload"/>.</summary>
+    /// <summary>Reads <see cref="Data"/> as a model.</summary>
     public T DataAs<T>()
     {
         if (Data.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)

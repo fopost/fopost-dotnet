@@ -13,7 +13,7 @@ public class WebhooksTests
     private const string Secret = "whsec_test";
 
     private const string Body = """
-    {"event":"article.published","data":{"id":"art_1","title":"Hello","slug":"hello","excerpt":null,"metaTitle":null,"metaDescription":null,"bodyMarkdown":"# Hello","bodyHtml":"<h1>Hello</h1>","featuredImage":{"mediaId":"media_1","url":"https://cdn.test/f.png","alt":"F"},"images":[],"tags":["a"],"keyword":"hello","wordCount":900,"publishedAt":"2026-10-11T09:00:00.000Z","publishedUrl":"https://yourbrand.com/blog/hello"},"timestamp":"2026-10-11T09:00:01.000Z"}
+    {"event":"post.published","data":{"id":"post_1","status":"published","wordCount":900},"timestamp":"2026-10-11T09:00:01.000Z"}
     """;
 
     private static string Sign(string payload) =>
@@ -24,7 +24,7 @@ public class WebhooksTests
     {
         var headers = new Dictionary<string, string?>
         {
-            ["X-FoPost-Event"] = "article.published",
+            ["X-FoPost-Event"] = "post.published",
             ["X-FoPost-Delivery"] = "dlv_1",
             ["X-FoPost-Signature"] = Sign(body),
         };
@@ -44,15 +44,11 @@ public class WebhooksTests
 
         var envelope = FoPostWebhooks.Verify(Body, Headers(Body, now), Secret);
 
-        Assert.Equal("article.published", envelope.Event);
+        Assert.Equal("post.published", envelope.Event);
         Assert.Equal("dlv_1", envelope.DeliveryId);
         Assert.Equal(new DateTimeOffset(2026, 10, 11, 9, 0, 1, TimeSpan.Zero), envelope.Timestamp);
 
-        var article = envelope.DataAs<BlogArticlePublishedPayload>();
-        Assert.Equal("hello", article.Slug);
-        Assert.Equal("https://yourbrand.com/blog/hello", article.PublishedUrl);
-        Assert.Equal("media_1", article.FeaturedImage!.MediaId);
-        Assert.Equal(900, article.WordCount);
+        Assert.Equal("post_1", envelope.Data.GetProperty("id").GetString());
     }
 
     [Fact]
@@ -64,7 +60,7 @@ public class WebhooksTests
 
         var envelope = FoPostWebhooks.Verify(Encoding.UTF8.GetBytes(Body), headers, Secret);
 
-        Assert.Equal("article.published", envelope.Event);
+        Assert.Equal("post.published", envelope.Event);
     }
 
     [Fact]
@@ -97,7 +93,7 @@ public class WebhooksTests
         var legacy = Headers(Body, null);
 
         var envelope = FoPostWebhooks.Verify(Body, legacy, Secret);
-        Assert.Equal("article.published", envelope.Event);
+        Assert.Equal("post.published", envelope.Event);
 
         // With a timestamp present the plain signature alone is not enough.
         var withTimestamp = Headers(Body, null);
