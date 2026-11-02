@@ -39,6 +39,12 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
   Results are `XPost`; a search page carries `NextToken` for the next one.
 - The inbox item's `Reposted`, `Bookmarked`, `CanRepost` and `CanBookmark`.
 
+### Removed
+- `client.Blog` (`BlogResource`) and the retired `/v1/blog/*` endpoints it wrapped (settings,
+  website secret and test, destinations, keywords, articles), with the blog options and models
+  (including `BlogArticlePublishedPayload`) and `WebhookEvents.ArticlePublished`. Articles are
+  ordinary posts now; `client.Blogs` (remote articles on a connected site) is unchanged.
+
 ## [0.4.0] - 2026-10-18
 
 ### Added

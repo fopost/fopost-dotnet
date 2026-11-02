@@ -351,49 +351,21 @@ await client.Sequences.EnrollAsync(sequence.Id, new EnrollOptions { ContactIds =
 await client.Sequences.UnenrollAsync(sequence.Id, new[] { contactId });
 ```
 
-## Blog
+## Webhooks
 
-Articles for a website, as distinct from posts to a social network. `client.Blog` holds the
-settings (where articles publish, what the blog is for, how often it is planned), the keyword plan
-and the articles. Reads, settings, keyword edits and `SubmitArticleAsync` need the `posts` scope;
-`SuggestSeedsAsync`, `PlanKeywordsAsync`, `RequestArticleAsync` and `RegenerateArticleAsync` spend
-credits and need `ai`; `PublishArticleAsync` needs `publish`. Every call takes the workspace id first.
-
-Planning is goal-driven: `SuggestSeedsAsync` proposes search terms from the goal and topics,
-`PlanKeywordsAsync` researches them into `suggested` keywords (follow the run on
-`BlogSettings.PlanRun`), and setting a keyword to `planned` picks it onto the next free date.
-A written article stops at `draft` until `SubmitArticleAsync` moves it to `in_review`; only then can
-it be published or given a `PublishAt`.
-
-```csharp
-var article = await client.Blog.RequestArticleAsync(workspaceId, new RequestBlogArticleOptions
-{
-    Keyword = "social media scheduling",
-    Instructions = "Lead with the time saved.",
-});
-// article.Status is "queued"; poll until it is "draft", then submit and publish.
-var draft = await client.Blog.GetArticleAsync(workspaceId, article.Id);
-await client.Blog.SubmitArticleAsync(workspaceId, draft.Id);
-await client.Blog.PublishArticleAsync(workspaceId, draft.Id);
-```
-
-A `website` target receives each published article as a signed webhook at `websiteUrl`, keyed by
-the secret `UpdateSettingsAsync` returns once (or `RotateWebsiteSecretAsync` reissues).
 `FoPostWebhooks.Verify` checks the raw request bytes against the headers, prefers the timestamped
 signature and refuses one older than five minutes, then hands back the envelope:
 
 ```csharp
 // rawBody is the request body exactly as received, never re-serialised JSON.
 var envelope = FoPostWebhooks.Verify(rawBody, headers, secret);
-if (envelope.Event == "article.published")
+if (envelope.Event == "post.published")
 {
-    var published = envelope.DataAs<BlogArticlePublishedPayload>();
-    Console.WriteLine($"{published.Title} -> {published.PublishedUrl}");
+    Console.WriteLine(envelope.Data.GetProperty("id").GetString());
 }
 ```
 
-A failed check throws `FoPostWebhookVerificationException`. Image URLs in the payload are
-fetchable for six hours, so download and store your own copy.
+A failed check throws `FoPostWebhookVerificationException`.
 
 ## Error handling
 
@@ -444,7 +416,6 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `EditCommentAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `LikeAsync`, `UnlikeAsync`, `RepostAsync`, `UnrepostAsync`, `BookmarkAsync`, `UnbookmarkAsync`, `VoteAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`, `DeleteAsync`, `StartConversationAsync`, `SetTypingAsync`, `HandoverAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
 | `Contacts`   | `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `ConversationsAsync`, `ImportAsync`, `ListFieldsAsync`, `CreateFieldAsync`, `UpdateFieldAsync`, `DeleteFieldAsync`, `ConversationAnalyticsAsync` |
 | `Knowledge`  | `ListAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `SyncAsync`, `SearchAsync`                                              |
-| `Blog`       | `GetSettingsAsync`, `UpdateSettingsAsync`, `RotateWebsiteSecretAsync`, `TestWebsiteAsync`, `ListKeywordsAsync`, `SuggestSeedsAsync`, `PlanKeywordsAsync`, `AddKeywordAsync`, `UpdateKeywordAsync`, `DeleteKeywordAsync`, `ListArticlesAsync`, `RequestArticleAsync`, `GetArticleAsync`, `UpdateArticleAsync`, `RegenerateArticleAsync`, `SubmitArticleAsync`, `PublishArticleAsync`, `RejectArticleAsync`, `DeleteArticleAsync` |
 | `Whatsapp`   | `GetProfileAsync`, `UpdateProfileAsync`, `RequestDisplayNameAsync`, `SetUsernameAsync`, `ListTemplatesAsync`, `ListTemplateLibraryAsync`, `GetTemplateAsync`, `CreateTemplateAsync`, `ImportTemplateAsync`, `UpdateTemplateAsync`, `DeleteTemplateAsync`, `ListGroupsAsync`, `CreateGroupAsync`, `GetGroupAsync`, `UpdateGroupAsync`, `DeleteGroupAsync`, `GetGroupInviteLinkAsync`, `ResetGroupInviteLinkAsync`, `RemoveGroupParticipantsAsync`, `ListBlockedAsync`, `BlockUsersAsync`, `UnblockUsersAsync`, `GetCommerceSettingsAsync`, `UpdateCommerceSettingsAsync`, `LinkCatalogAsync`, `ListFlowsAsync`, `GetFlowAsync`, `CreateFlowAsync`, `UpdateFlowAsync`, `DeleteFlowAsync`, `UploadFlowJsonAsync`, `PublishFlowAsync`, `DeprecateFlowAsync`, `ListFlowResponsesAsync`, `GetEncryptionKeyStatusAsync`, `SetEncryptionKeyAsync`, `GetAccountEventsAsync`, `ListSandboxSessionsAsync`, `CreateSandboxSessionAsync` |
 | `Validate`   | `PostAsync`, `LengthAsync`, `MediaAsync`, `SubredditAsync`                                                                                           |
 | `Analytics`  | `OverviewAsync`, `TimeSeriesAsync`, `TopPostsAsync`, `LabelsAsync`, `PostsTableAsync`, `PostingStreakAsync`, `DemographicsAsync`, `InboxAsync`, `CollectAsync`, `DecayAsync`, `FrequencyAsync`, `TimelineAsync`, `ChangesAsync`, `CollectPostAsync`, `NativePostsAsync` |
