@@ -170,6 +170,34 @@ public sealed class InboxResource
         return Require<InboxRefreshResult>(FoPostHttpClient.Unwrap(response));
     }
 
+    /// <summary>
+    /// Resolve every unanswered item of one type in bulk. Nothing reaches a platform. Returns how
+    /// many items changed.
+    /// </summary>
+    public async Task<int> ResolveAsync(
+        ResolveInboxOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var body = new Dictionary<string, object?>
+        {
+            ["workspace_id"] = options.WorkspaceId,
+            ["type"] = options.Type,
+        };
+        if (options.AccountIds is { Count: > 0 } accountIds)
+        {
+            body["account_id"] = accountIds;
+        }
+        if (options.Before is { } before)
+        {
+            body["before"] = Iso(before);
+        }
+
+        var response = await _http.PostAsync("/v1/inbox/resolve", body, cancellationToken).ConfigureAwait(false);
+        return ReadInt(FoPostHttpClient.Unwrap(response), "resolved");
+    }
+
     /// <summary>Change an item's state; a snooze needs <c>SnoozedUntil</c>.</summary>
     public async Task<InboxItem> UpdateAsync(
         string itemId,

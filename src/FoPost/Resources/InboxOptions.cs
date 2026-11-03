@@ -94,6 +94,25 @@ public sealed class ListInboxConversationsOptions
 }
 
 /// <summary>
+/// The body of <see cref="Resources.InboxResource.ResolveAsync"/>: every unanswered item of one
+/// <see cref="Type"/> in the workspace, optionally only on <see cref="AccountIds"/> or only
+/// items the platform dates before <see cref="Before"/>.
+/// </summary>
+public sealed class ResolveInboxOptions
+{
+    public string WorkspaceId { get; set; } = string.Empty;
+
+    /// <summary>One of <see cref="InboxItemTypes"/>.</summary>
+    public string Type { get; set; } = InboxItemTypes.Comment;
+
+    /// <summary>Only these connected accounts.</summary>
+    public IList<string>? AccountIds { get; set; }
+
+    /// <summary>Only items the platform dates before this moment.</summary>
+    public DateTimeOffset? Before { get; set; }
+}
+
+/// <summary>
 /// The body of <see cref="Resources.InboxResource.MarkThreadReadAsync"/>. Name
 /// either the platform post whose comments to settle or the DM thread.
 /// </summary>

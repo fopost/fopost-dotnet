@@ -42,6 +42,9 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
   `ListInboxConversationsOptions`) take `Status` (`InboxStatuses`: unanswered, replied,
   resolved), `Since`, and `AccountIds`, which joins with `AccountId` into one comma-separated
   `account_id`.
+- `client.Inbox.ResolveAsync` (`ResolveInboxOptions`) resolves every unanswered item of one type
+  in bulk, optionally only on some accounts or only items dated `Before` a moment, and returns how
+  many changed. Nothing reaches a platform. Needs `inbox`.
 
 ### Removed
 - **Breaking:** the inbox list options drop `State`, `Platform` and `Q`, and `Sort` takes `newest`

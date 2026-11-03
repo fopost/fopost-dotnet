@@ -145,6 +145,32 @@ public class InboxTests
     }
 
     [Fact]
+    public async Task Resolve_posts_the_type_accounts_and_cutoff()
+    {
+        var handler = new StubHandler().Json("""{"data":{"resolved":4}}""");
+        using var test = new TestClient(handler);
+
+        var resolved = await test.Client.Inbox.ResolveAsync(new ResolveInboxOptions
+        {
+            WorkspaceId = "ws_1",
+            Type = InboxItemTypes.Comment,
+            AccountIds = new List<string> { "acc_1", "acc_2" },
+            Before = new DateTimeOffset(2026, 9, 1, 0, 0, 0, TimeSpan.Zero),
+        });
+
+        Assert.Equal(4, resolved);
+        Assert.Equal(HttpMethod.Post, handler.LastRequest.Method);
+        Assert.Equal("/v1/inbox/resolve", handler.LastRequest.RequestUri!.AbsolutePath);
+        var body = JsonDocument.Parse(handler.LastBody!).RootElement;
+        Assert.Equal("ws_1", body.GetProperty("workspace_id").GetString());
+        Assert.Equal("comment", body.GetProperty("type").GetString());
+        Assert.Equal(
+            new[] { "acc_1", "acc_2" },
+            body.GetProperty("account_id").EnumerateArray().Select(e => e.GetString()).ToArray());
+        Assert.Equal("2026-09-01T00:00:00.000Z", body.GetProperty("before").GetString());
+    }
+
+    [Fact]
     public async Task Update_patches_a_camelCase_snooze()
     {
         var handler = new StubHandler().Json($$"""{"data":{{Item}}}""");
