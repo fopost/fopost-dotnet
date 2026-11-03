@@ -38,8 +38,18 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
   (`XSearchOptions`) runs an X recent search, both with the named account's token (`inbox`).
   Results are `XPost`; a search page carries `NextToken` for the next one.
 - The inbox item's `Reposted`, `Bookmarked`, `CanRepost` and `CanBookmark`.
+- The inbox list options (`ListInboxOptions`, `ListInboxThreadsOptions`,
+  `ListInboxConversationsOptions`) take `Status` (`InboxStatuses`: unanswered, replied,
+  resolved), `Since`, and `AccountIds`, which joins with `AccountId` into one comma-separated
+  `account_id`.
+- `client.Inbox.ResolveAsync` (`ResolveInboxOptions`) resolves every unanswered item of one type
+  in bulk, optionally only on some accounts or only items dated `Before` a moment, and returns how
+  many changed. Nothing reaches a platform. Needs `inbox`.
 
 ### Removed
+- **Breaking:** the inbox list options drop `State`, `Platform` and `Q`, and `Sort` takes `newest`
+  or `oldest` only; the inbox list endpoints no longer read them. Filter by `Status` and the
+  account ids instead.
 - `client.Blog` (`BlogResource`) and the retired `/v1/blog/*` endpoints it wrapped (settings,
   website secret and test, destinations, keywords, articles), with the blog options and models
   (including `BlogArticlePublishedPayload`) and `WebhookEvents.ArticlePublished`. Articles are

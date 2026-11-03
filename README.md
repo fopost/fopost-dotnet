@@ -126,13 +126,22 @@ Console.WriteLine($"{balance.CreditsRemaining} of {balance.CreditsTotal} credits
 ## Inbox and ads
 
 ```csharp
-// Unread comments and mentions, then answer one
-var unread = await client.Inbox.ListAsync(new ListInboxOptions
+// Unanswered comments and mentions from the last week, then answer one
+var unanswered = await client.Inbox.ListAsync(new ListInboxOptions
 {
     WorkspaceId = "9b2f6c1e-…",
-    State = InboxItemStates.Unread,
+    Status = InboxStatuses.Unanswered,
+    Since = DateTimeOffset.UtcNow.AddDays(-7),
 });
-await client.Inbox.ReplyAsync(unread[0].Id, "Thanks for reaching out!");
+await client.Inbox.ReplyAsync(unanswered[0].Id, "Thanks for reaching out!");
+
+// Resolve every unanswered comment older than a week, without replying
+await client.Inbox.ResolveAsync(new ResolveInboxOptions
+{
+    WorkspaceId = "9b2f6c1e-…",
+    Type = InboxItemTypes.Comment,
+    Before = DateTimeOffset.UtcNow.AddDays(-7),
+});
 
 // Boost a published post; it starts paused until you resume it
 var ad = await client.Ads.BoostAsync(new BoostPostOptions
@@ -413,7 +422,7 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | `Workspaces` | `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync` |
 | `Labels`     | `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync` |
 | `Ai`         | `CreditsAsync`, `GenerateCaptionAsync`, `RewriteAsync`, `RepurposeUrlAsync`                                                        |
-| `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `EditCommentAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `LikeAsync`, `UnlikeAsync`, `RepostAsync`, `UnrepostAsync`, `BookmarkAsync`, `UnbookmarkAsync`, `VoteAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`, `DeleteAsync`, `StartConversationAsync`, `SetTypingAsync`, `HandoverAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
+| `Inbox`      | `ListAsync`, `ThreadsAsync`, `ConversationsAsync`, `UnreadCountAsync`, `AccountsAsync`, `PlatformsAsync`, `MarkThreadReadAsync`, `RefreshAsync`, `UpdateAsync`, `ResolveAsync`, `EditCommentAsync`, `ReplyAsync`, `HideAsync`, `UnhideAsync`, `LikeAsync`, `UnlikeAsync`, `RepostAsync`, `UnrepostAsync`, `BookmarkAsync`, `UnbookmarkAsync`, `VoteAsync`, `PinAsync`, `UnpinAsync`, `ReactAsync`, `DeleteAsync`, `StartConversationAsync`, `SetTypingAsync`, `HandoverAsync`, `ApprovalsAsync`, `ApproveReplyAsync`, `RejectReplyAsync` |
 | `Contacts`   | `ListAsync`, `GetAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `ConversationsAsync`, `ImportAsync`, `ListFieldsAsync`, `CreateFieldAsync`, `UpdateFieldAsync`, `DeleteFieldAsync`, `ConversationAnalyticsAsync` |
 | `Knowledge`  | `ListAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `SyncAsync`, `SearchAsync`                                              |
 | `Whatsapp`   | `GetProfileAsync`, `UpdateProfileAsync`, `RequestDisplayNameAsync`, `SetUsernameAsync`, `ListTemplatesAsync`, `ListTemplateLibraryAsync`, `GetTemplateAsync`, `CreateTemplateAsync`, `ImportTemplateAsync`, `UpdateTemplateAsync`, `DeleteTemplateAsync`, `ListGroupsAsync`, `CreateGroupAsync`, `GetGroupAsync`, `UpdateGroupAsync`, `DeleteGroupAsync`, `GetGroupInviteLinkAsync`, `ResetGroupInviteLinkAsync`, `RemoveGroupParticipantsAsync`, `ListBlockedAsync`, `BlockUsersAsync`, `UnblockUsersAsync`, `GetCommerceSettingsAsync`, `UpdateCommerceSettingsAsync`, `LinkCatalogAsync`, `ListFlowsAsync`, `GetFlowAsync`, `CreateFlowAsync`, `UpdateFlowAsync`, `DeleteFlowAsync`, `UploadFlowJsonAsync`, `PublishFlowAsync`, `DeprecateFlowAsync`, `ListFlowResponsesAsync`, `GetEncryptionKeyStatusAsync`, `SetEncryptionKeyAsync`, `GetAccountEventsAsync`, `ListSandboxSessionsAsync`, `CreateSandboxSessionAsync` |

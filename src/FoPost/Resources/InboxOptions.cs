@@ -8,13 +8,17 @@ public sealed class ListInboxOptions
     /// <summary>One of <see cref="InboxItemTypes"/>.</summary>
     public string? Type { get; set; }
 
-    /// <summary>One of <see cref="InboxItemStates"/>.</summary>
-    public string? State { get; set; }
-
-    /// <summary>One of <see cref="Platforms"/>.</summary>
-    public string? Platform { get; set; }
-
+    /// <summary>One connected account. Joined with <see cref="AccountIds"/> into one comma-separated <c>account_id</c>.</summary>
     public string? AccountId { get; set; }
+
+    /// <summary>One or more connected accounts.</summary>
+    public IList<string>? AccountIds { get; set; }
+
+    /// <summary>One of <see cref="InboxStatuses"/>. A reply also resolves an item, so the three never overlap.</summary>
+    public string? Status { get; set; }
+
+    /// <summary>Only items the platform dates at or after this moment.</summary>
+    public DateTimeOffset? Since { get; set; }
 
     /// <summary>Comments under one FoPost post.</summary>
     public string? PostId { get; set; }
@@ -28,10 +32,7 @@ public sealed class ListInboxOptions
     /// <summary><c>inbound</c> or <c>outbound</c>.</summary>
     public string? Direction { get; set; }
 
-    /// <summary>Free-text search.</summary>
-    public string? Q { get; set; }
-
-    /// <summary><c>newest</c>, <c>oldest</c>, or <c>unanswered</c>.</summary>
+    /// <summary><c>newest</c> or <c>oldest</c>.</summary>
     public string? Sort { get; set; }
 
     public int? Page { get; set; }
@@ -47,16 +48,19 @@ public sealed class ListInboxThreadsOptions
     /// <summary><c>comments</c> (default) for threads under our posts, <c>mentions</c> for posts we were tagged in, <c>reviews</c> for reviews left on the business.</summary>
     public string? Kind { get; set; }
 
-    public string? Platform { get; set; }
-
+    /// <summary>One connected account. Joined with <see cref="AccountIds"/> into one comma-separated <c>account_id</c>.</summary>
     public string? AccountId { get; set; }
 
-    /// <summary>One of <see cref="InboxItemStates"/>.</summary>
-    public string? State { get; set; }
+    /// <summary>One or more connected accounts.</summary>
+    public IList<string>? AccountIds { get; set; }
 
-    public string? Q { get; set; }
+    /// <summary>One of <see cref="InboxStatuses"/>. A reply also resolves an item, so the three never overlap.</summary>
+    public string? Status { get; set; }
 
-    /// <summary><c>newest</c>, <c>oldest</c>, or <c>unanswered</c>.</summary>
+    /// <summary>Only items the platform dates at or after this moment.</summary>
+    public DateTimeOffset? Since { get; set; }
+
+    /// <summary><c>newest</c> or <c>oldest</c>.</summary>
     public string? Sort { get; set; }
 
     public int? Page { get; set; }
@@ -69,21 +73,43 @@ public sealed class ListInboxConversationsOptions
 {
     public string? WorkspaceId { get; set; }
 
-    public string? Platform { get; set; }
-
+    /// <summary>One connected account. Joined with <see cref="AccountIds"/> into one comma-separated <c>account_id</c>.</summary>
     public string? AccountId { get; set; }
 
-    /// <summary>One of <see cref="InboxItemStates"/>.</summary>
-    public string? State { get; set; }
+    /// <summary>One or more connected accounts.</summary>
+    public IList<string>? AccountIds { get; set; }
 
-    public string? Q { get; set; }
+    /// <summary>One of <see cref="InboxStatuses"/>. A reply also resolves an item, so the three never overlap.</summary>
+    public string? Status { get; set; }
 
-    /// <summary><c>newest</c>, <c>oldest</c>, or <c>unanswered</c>.</summary>
+    /// <summary>Only items the platform dates at or after this moment.</summary>
+    public DateTimeOffset? Since { get; set; }
+
+    /// <summary><c>newest</c> or <c>oldest</c>.</summary>
     public string? Sort { get; set; }
 
     public int? Page { get; set; }
 
     public int? PerPage { get; set; }
+}
+
+/// <summary>
+/// The body of <see cref="Resources.InboxResource.ResolveAsync"/>: every unanswered item of one
+/// <see cref="Type"/> in the workspace, optionally only on <see cref="AccountIds"/> or only
+/// items the platform dates before <see cref="Before"/>.
+/// </summary>
+public sealed class ResolveInboxOptions
+{
+    public string WorkspaceId { get; set; } = string.Empty;
+
+    /// <summary>One of <see cref="InboxItemTypes"/>.</summary>
+    public string Type { get; set; } = InboxItemTypes.Comment;
+
+    /// <summary>Only these connected accounts.</summary>
+    public IList<string>? AccountIds { get; set; }
+
+    /// <summary>Only items the platform dates before this moment.</summary>
+    public DateTimeOffset? Before { get; set; }
 }
 
 /// <summary>
