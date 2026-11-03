@@ -126,13 +126,14 @@ Console.WriteLine($"{balance.CreditsRemaining} of {balance.CreditsTotal} credits
 ## Inbox and ads
 
 ```csharp
-// Unread comments and mentions, then answer one
-var unread = await client.Inbox.ListAsync(new ListInboxOptions
+// Unanswered comments and mentions from the last week, then answer one
+var unanswered = await client.Inbox.ListAsync(new ListInboxOptions
 {
     WorkspaceId = "9b2f6c1e-…",
-    State = InboxItemStates.Unread,
+    Status = InboxStatuses.Unanswered,
+    Since = DateTimeOffset.UtcNow.AddDays(-7),
 });
-await client.Inbox.ReplyAsync(unread[0].Id, "Thanks for reaching out!");
+await client.Inbox.ReplyAsync(unanswered[0].Id, "Thanks for reaching out!");
 
 // Boost a published post; it starts paused until you resume it
 var ad = await client.Ads.BoostAsync(new BoostPostOptions

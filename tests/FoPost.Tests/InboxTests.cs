@@ -50,9 +50,12 @@ public class InboxTests
         {
             WorkspaceId = "ws_1",
             Type = InboxItemTypes.Comment,
-            State = InboxItemStates.Unread,
+            Status = InboxStatuses.Unanswered,
+            Since = new DateTimeOffset(2026, 9, 1, 2, 0, 0, TimeSpan.FromHours(2)),
+            AccountId = "acc_1",
+            AccountIds = new List<string> { "acc_2", "acc_1" },
             PostExternalId = "ext_9",
-            Sort = "unanswered",
+            Sort = "oldest",
             Page = 2,
             PerPage = 20,
         });
@@ -62,12 +65,13 @@ public class InboxTests
         var query = handler.LastRequest.RequestUri!.Query;
         Assert.Contains("workspace_id=ws_1", query, StringComparison.Ordinal);
         Assert.Contains("type=comment", query, StringComparison.Ordinal);
-        Assert.Contains("state=unread", query, StringComparison.Ordinal);
+        Assert.Contains("status=unanswered", query, StringComparison.Ordinal);
+        Assert.Contains("since=2026-09-01T00%3A00%3A00.000Z", query, StringComparison.Ordinal);
+        Assert.Contains("account_id=acc_1%2Cacc_2", query, StringComparison.Ordinal);
         Assert.Contains("post_external_id=ext_9", query, StringComparison.Ordinal);
-        Assert.Contains("sort=unanswered", query, StringComparison.Ordinal);
+        Assert.Contains("sort=oldest", query, StringComparison.Ordinal);
         Assert.Contains("page=2", query, StringComparison.Ordinal);
         Assert.Contains("per_page=20", query, StringComparison.Ordinal);
-        Assert.DoesNotContain("account_id", query, StringComparison.Ordinal);
 
         var item = Assert.Single(page);
         Assert.Equal("inb_1", item.Id);
@@ -94,9 +98,15 @@ public class InboxTests
             """);
         using var test = new TestClient(handler);
 
-        var threads = await test.Client.Inbox.ThreadsAsync(new ListInboxThreadsOptions { WorkspaceId = "ws_1", Kind = "mentions" });
+        var threads = await test.Client.Inbox.ThreadsAsync(new ListInboxThreadsOptions
+        {
+            WorkspaceId = "ws_1",
+            Kind = "mentions",
+            Status = InboxStatuses.Replied,
+        });
         Assert.Equal("/v1/inbox/posts", handler.LastRequest.RequestUri!.AbsolutePath);
         Assert.Contains("kind=mentions", handler.LastRequest.RequestUri!.Query, StringComparison.Ordinal);
+        Assert.Contains("status=replied", handler.LastRequest.RequestUri!.Query, StringComparison.Ordinal);
         Assert.Equal(3, Assert.Single(threads).CommentCount);
 
         var conversations = await test.Client.Inbox.ConversationsAsync(new ListInboxConversationsOptions { WorkspaceId = "ws_1" });

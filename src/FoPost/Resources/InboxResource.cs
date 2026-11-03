@@ -11,13 +11,13 @@ namespace FoPost.Resources;
 /// </summary>
 /// <example>
 /// <code>
-/// var unread = await client.Inbox.ListAsync(new ListInboxOptions
+/// var unanswered = await client.Inbox.ListAsync(new ListInboxOptions
 /// {
 ///     WorkspaceId = "9b2f6c1e-…",
-///     State = InboxItemStates.Unread,
+///     Status = InboxStatuses.Unanswered,
 /// });
 ///
-/// foreach (var item in unread)
+/// foreach (var item in unanswered)
 /// {
 ///     if (item.CanReply)
 ///     {
@@ -43,14 +43,13 @@ public sealed class InboxResource
         {
             ["workspace_id"] = options.WorkspaceId,
             ["type"] = options.Type,
-            ["state"] = options.State,
-            ["platform"] = options.Platform,
-            ["account_id"] = options.AccountId,
+            ["account_id"] = JoinAccountIds(options.AccountId, options.AccountIds),
+            ["status"] = options.Status,
+            ["since"] = options.Since is { } since ? Iso(since) : null,
             ["post_id"] = options.PostId,
             ["post_external_id"] = options.PostExternalId,
             ["conversation_id"] = options.ConversationId,
             ["direction"] = options.Direction,
-            ["q"] = options.Q,
             ["sort"] = options.Sort,
             ["page"] = options.Page,
             ["per_page"] = options.PerPage,
@@ -71,10 +70,9 @@ public sealed class InboxResource
         {
             ["workspace_id"] = options.WorkspaceId,
             ["kind"] = options.Kind,
-            ["platform"] = options.Platform,
-            ["account_id"] = options.AccountId,
-            ["state"] = options.State,
-            ["q"] = options.Q,
+            ["account_id"] = JoinAccountIds(options.AccountId, options.AccountIds),
+            ["status"] = options.Status,
+            ["since"] = options.Since is { } since ? Iso(since) : null,
             ["sort"] = options.Sort,
             ["page"] = options.Page,
             ["per_page"] = options.PerPage,
@@ -94,10 +92,9 @@ public sealed class InboxResource
         var query = new Dictionary<string, object?>
         {
             ["workspace_id"] = options.WorkspaceId,
-            ["platform"] = options.Platform,
-            ["account_id"] = options.AccountId,
-            ["state"] = options.State,
-            ["q"] = options.Q,
+            ["account_id"] = JoinAccountIds(options.AccountId, options.AccountIds),
+            ["status"] = options.Status,
+            ["since"] = options.Since is { } since ? Iso(since) : null,
             ["sort"] = options.Sort,
             ["page"] = options.Page,
             ["per_page"] = options.PerPage,
@@ -457,6 +454,20 @@ public sealed class InboxResource
     }
 
     private static string ItemPath(string itemId) => $"/v1/inbox/{Uri.EscapeDataString(itemId)}";
+
+    private static string? JoinAccountIds(string? accountId, IList<string>? accountIds)
+    {
+        var ids = new List<string>();
+        if (!string.IsNullOrEmpty(accountId))
+        {
+            ids.Add(accountId);
+        }
+        if (accountIds is not null)
+        {
+            ids.AddRange(accountIds.Where(id => !string.IsNullOrEmpty(id)));
+        }
+        return ids.Count == 0 ? null : string.Join(",", ids.Distinct());
+    }
 
     private static int ReadInt(JsonNode? node, string key) => node?[key]?.GetValue<int>() ?? 0;
 

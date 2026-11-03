@@ -14,6 +14,14 @@ public static class InboxItemTypes
     public const string Review = "review";
 }
 
+/// <summary>The inbox list <c>status</c> filter. A reply also resolves an item, so the three never overlap.</summary>
+public static class InboxStatuses
+{
+    public const string Unanswered = "unanswered";
+    public const string Replied = "replied";
+    public const string Resolved = "resolved";
+}
+
 /// <summary>The states an inbox item moves through.</summary>
 public static class InboxItemStates
 {
