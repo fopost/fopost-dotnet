@@ -54,6 +54,7 @@ public sealed class FoPostClient : IDisposable
         Whatsapp = new WhatsappResource(_http);
         Blogs = new BlogsResource(_http);
         Automations = new AutomationsResource(_http);
+        Designs = new DesignsResource(_http);
     }
 
     public FoPostClient(string apiKey)
@@ -122,6 +123,9 @@ public sealed class FoPostClient : IDisposable
 
     /// <summary>Triggers, the graphs they run, their versions and their runs.</summary>
     public AutomationsResource Automations { get; }
+
+    /// <summary>Designs, their versions and exports, and the tools that build them.</summary>
+    public DesignsResource Designs { get; }
 
     public string BaseUrl => _http.BaseUrl;
 
