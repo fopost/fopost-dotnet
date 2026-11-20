@@ -17,6 +17,20 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
   follow permissions. Every one of these calls is an X API call metered to the workspace.
 
 ### Added
+- `client.Designs` (`DesignsResource`, scope `posts`): `ListAsync`, `CreateAsync`, `GetAsync`,
+  `UpdateAsync`, `DeleteAsync`, `ListVersionsAsync`, `RestoreVersionAsync`, `DuplicateAsync`,
+  `ExportAsync`, `BulkCreateAsync`, `ListPostsAsync`, `FromPostAsync`, and `TextToSlidesAsync`
+  (also `ai`), with `Design`, `DesignVersion`, `DesignChange`, `DesignExport`, `DesignPost`,
+  `DesignSlides` and the `DesignKinds`, `DesignExportFormats` and `DesignFromPostStyles` constants.
+  The design document is passed through as given and read back as a `JsonElement`.
+- `client.Fonts` (`FontsResource`, scope `posts`): `ListAsync` (`FontList` of `LibraryFont` and
+  `UploadedFont`), `UploadAsync` from a path, bytes or a stream (`UploadFontOptions`), and
+  `DeleteAsync`.
+- `client.VideoEdits` (`VideoEditsResource`, scope `posts`): `OpsAsync`, `ListAsync`,
+  `CreateAsync` with `VideoEditOperation` steps, and `GetAsync`, answering `VideoEdit`. Operations
+  that use AI also need `ai`.
+- `Media.GenerateAltTextAsync` (`MediaAltText`, also `ai`) and `Media.FileUrlAsync`, the signed
+  URL from `GET /v1/media/{id}/file?format=json` (session only, so it needs `BearerToken`).
 - `Ads.SendPixelConversionsAsync` (`POST /v1/ads/conversions/events`): the Conversions API send
   with a required `Idempotency-Key`; a replay answers the stored batch with `Replayed` true.
 - `Ads.ConversionBatchesAsync` (`GET /v1/ads/conversions/events`) lists stored batches as

@@ -121,7 +121,10 @@ their deliveries. `Queue` (scope `posts`) is the posting queue, and `Schedule = 
 on a post create or update takes the next free slot. `ConnectSessions` (scope `accounts`) mints
 hosted connect links. `Automations` (scope `automations`) covers the graph, its versions and runs;
 its bodies are camelCase and serialised straight from the options objects. `Logs` (scope
-`workspaces`) reads request logs with a `before` cursor. X communities live on `Accounts`. Anything
+`workspaces`) reads request logs with a `before` cursor. `Designs`, `Fonts` and `VideoEdits`
+(scope `posts`) are the create suite: bodies and answers are snake_case, a design document passes
+through as `object?` and comes back as `JsonElement`, `Fonts.UploadAsync` is multipart built per
+attempt, and a video edit is polled with `GetAsync` (there is no wait helper). X communities live on `Accounts`. Anything
 still unwrapped is reachable through the escape hatch `FoPostClient.RequestAsync(...)`, which
 returns the raw `JsonNode?` envelope and all. The checker in `fopost-api-collections`
 (`scripts/sdk-gaps.mjs`) lists every operation with no method; a method whose path is built from

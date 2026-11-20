@@ -430,7 +430,7 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | `Analytics`  | `OverviewAsync`, `TimeSeriesAsync`, `TopPostsAsync`, `LabelsAsync`, `PostsTableAsync`, `PostingStreakAsync`, `DemographicsAsync`, `InboxAsync`, `CollectAsync`, `DecayAsync`, `FrequencyAsync`, `TimelineAsync`, `ChangesAsync`, `CollectPostAsync`, `NativePostsAsync` |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync` |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `ProvidersAsync`, `AuthorizeAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `AddAudienceCompaniesAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync`, `GoalsAsync`, `CatalogsAsync`, `CreateCatalogAsync`, `GetCatalogAsync`, `UpdateCatalogAsync`, `DeleteCatalogAsync`, `CatalogProductsAsync`, `WriteCatalogProductsAsync`, `ProductFeedsAsync`, `CreateProductFeedAsync`, `DeleteProductFeedAsync`, `FeedUploadsAsync`, `StartFeedUploadAsync`, `ProductSetsAsync`, `CreateProductSetAsync`, `UpdateProductSetAsync`, `DeleteProductSetAsync`, `ReachFrequencyAsync`, `CreateReachFrequencyAsync`, `GetReachFrequencyAsync`, `ReserveReachFrequencyAsync`, `CancelReachFrequencyAsync`, `LibraryAsync`, `PartnershipCreatorsAsync`, `RequestPartnershipAsync`, `RevokePartnershipAsync`, `AccountActivityAsync`, `LabelsAsync`, `CreateLabelAsync`, `UpdateLabelAsync`, `DeleteLabelAsync`, `ApplyLabelAsync`, `StudiesAsync`, `CreateStudyAsync`, `GetStudyAsync`, `DeleteStudyAsync`, `IosCampaignLimitsAsync`, `HighDemandPeriodsAsync`, `CreateHighDemandPeriodAsync`, `DeleteHighDemandPeriodAsync`, `ValueRuleSetsAsync`, `CreateValueRuleSetAsync`, `DeleteValueRuleSetAsync`, `BidPricingAsync`, `SupplyForecastAsync`, `ConversionRulesAsync`, `CreateConversionRuleAsync`, `ConversionRuleAsync`, `UpdateConversionRuleAsync`, `DeleteConversionRuleAsync`, `AttachConversionRuleAsync`, `DetachConversionRuleAsync`, `ConversionMetricsAsync`, `SendConversionEventsAsync`, `UploadConversionsAsync`, `SendPixelConversionsAsync`, `ConversionBatchesAsync`, `PixelsAsync`, `CreatePixelAsync`, `PixelAsync`, `UpdatePixelAsync`, `SharePixelAsync`, `PixelStatsAsync`, `EventMatchQualityAsync`, `CustomConversionsAsync`, `CreateCustomConversionAsync`, `CustomConversionAsync`, `UpdateCustomConversionAsync`, `DeleteCustomConversionAsync` |
-| `Media`      | `LimitsAsync`, `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                                               |
+| `Media`      | `LimitsAsync`, `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`, `GenerateAltTextAsync`, `FileUrlAsync`                       |
 | `Activity`   | `ListAsync`                                                                                                                       |
 | `Ads`        | `ListAsync`, `ExternalAsync`, `BoostableAsync`, `ConnectionsAsync`, `SourcesAsync`, `AuthorizeMetaAsync`, `DeleteConnectionAsync`, `BoostAsync`, `CreateAsync`, `RefreshAsync`, `SetStatusAsync`, `DeleteAsync`, `AccountTreeAsync`, `CreateCampaignAsync`, `GetCampaignAsync`, `UpdateCampaignAsync`, `DeleteCampaignAsync`, `DuplicateCampaignAsync`, `CreateAdSetAsync`, `GetAdSetAsync`, `UpdateAdSetAsync`, `DeleteAdSetAsync`, `DuplicateAdSetAsync`, `CreateNetworkAdAsync`, `GetNetworkAdAsync`, `UpdateNetworkAdAsync`, `DeleteNetworkAdAsync`, `DuplicateNetworkAdAsync`, `BulkSetStatusAsync`, `CreativesAsync`, `CreateCreativeAsync`, `GetCreativeAsync`, `DeleteCreativeAsync`, `AudiencesAsync`, `CreateAudienceAsync`, `GetAudienceAsync`, `UpdateAudienceAsync`, `DeleteAudienceAsync`, `AddAudienceUsersAsync`, `SearchTargetingAsync`, `EstimateReachAsync`, `InsightsAsync`, `AdInsightsAsync`, `LeadFormsAsync`, `CreateLeadFormAsync`, `GetLeadFormAsync`, `ArchiveLeadFormAsync`, `LeadsAsync`, `LeadsFeedAsync`, `LeadPagesAsync`, `SubscribeLeadPageAsync`, `UnsubscribeLeadPageAsync` |
 | `Media`      | `LimitsAsync`, `PresignAsync`, `CompleteAsync`, `UploadDirectAsync`                                               |
@@ -441,6 +441,9 @@ for in `Retry-After`. The exception is raised only once the retries are spent.
 | `Webhooks` | `ListAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`, `TestAsync`, `DeliveriesAsync`, `GetDeliveryAsync`, `RedeliverAsync` |
 | `Logs` | `ListAsync` |
 | `Automations` | `ListAsync`, `CreateAsync`, `StatsAsync`, `GetAsync`, `UpdateAsync`, `DeleteAsync`, `ToggleAsync`, `ListVersionsAsync`, `GetVersionAsync`, `RestoreVersionAsync`, `ListRunsAsync`, `GetRunAsync` |
+| `Designs` | `ListAsync`, `CreateAsync`, `GetAsync`, `UpdateAsync`, `DeleteAsync`, `ListVersionsAsync`, `RestoreVersionAsync`, `DuplicateAsync`, `ExportAsync`, `BulkCreateAsync`, `ListPostsAsync`, `TextToSlidesAsync`, `FromPostAsync` |
+| `Fonts` | `ListAsync`, `UploadAsync`, `DeleteAsync` |
+| `VideoEdits` | `OpsAsync`, `ListAsync`, `CreateAsync`, `GetAsync` |
 
 `Validate` checks a draft, its length, or a media URL against platform rules without creating
 anything; it needs the `posts` scope.
@@ -531,6 +534,36 @@ var overview = await client.RequestAsync(
 
 The full surface is documented in the
 [API collection](https://github.com/fopost/fopost-api-collections).
+
+## Designs, fonts and video edits
+
+`Designs`, `Fonts` and `VideoEdits` need the `posts` scope. `Designs.TextToSlidesAsync`,
+`Media.GenerateAltTextAsync` and any video edit operation whose `UsesAi` is true spend AI
+balance and need `ai` as well. A design's document (its pages and layers) is passed through as
+given: send a dictionary or a `JsonNode`, and read it back as `Design.Document`.
+
+```csharp
+var design = await client.Designs.CreateAsync(new CreateDesignOptions
+{
+    WorkspaceId = "9b2f6c1e-…",
+    Kind = DesignKinds.Post,
+    Name = "Launch card",
+});
+var export = await client.Designs.ExportAsync(design.Id, new ExportDesignOptions { Format = DesignExportFormats.Png });
+
+var font = await client.Fonts.UploadAsync("9b2f6c1e-…", "fonts/Brand-Bold.woff2",
+    new UploadFontOptions { Family = "Brand", Weight = 700 });
+
+var job = await client.VideoEdits.CreateAsync(mediaId, new[]
+{
+    new VideoEditOperation(VideoEditOps.Trim, new Dictionary<string, object?> { ["startSec"] = 2, ["endSec"] = 12 }),
+});
+job = await client.VideoEdits.GetAsync(job.Id); // queued, running, succeeded or failed
+```
+
+A video edit runs in the background, so read it back with `GetAsync` until its `Status` is
+`succeeded` or `failed`. `Media.FileUrlAsync` returns a short-lived signed URL for a library file;
+that endpoint takes a session rather than an API key, so it needs `BearerToken`.
 
 ## Chatbots and the inbox
 
