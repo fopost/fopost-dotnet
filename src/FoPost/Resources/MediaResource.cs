@@ -159,4 +159,30 @@ public sealed class MediaResource
             .ConfigureAwait(false);
         return await CompleteAsync(upload.UploadId, cancellationToken).ConfigureAwait(false);
     }
+    /// <summary>Describe a library image with AI and store the alt text on it. Spends AI balance; needs <c>ai</c>.</summary>
+    public async Task<MediaAltText> GenerateAltTextAsync(
+        string mediaId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _http
+            .PostAsync($"/v1/media/{Uri.EscapeDataString(mediaId)}/alt-text", null, cancellationToken)
+            .ConfigureAwait(false);
+        return Require<MediaAltText>(FoPostHttpClient.Unwrap(response));
+    }
+
+    /// <summary>
+    /// A short-lived signed URL for a library file. This endpoint takes a session, not an API key,
+    /// so it needs <see cref="FoPostClientOptions.BearerToken"/>.
+    /// </summary>
+    public async Task<string> FileUrlAsync(
+        string mediaId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new Dictionary<string, object?> { ["format"] = "json" };
+        var response = await _http
+            .GetAsync($"/v1/media/{Uri.EscapeDataString(mediaId)}/file", query, cancellationToken)
+            .ConfigureAwait(false);
+        return response?["url"]?.GetValue<string>()
+            ?? throw new FoPostException("The API returned no file URL", 200);
+    }
 }
