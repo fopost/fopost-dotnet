@@ -55,6 +55,7 @@ public sealed class FoPostClient : IDisposable
         Blogs = new BlogsResource(_http);
         Automations = new AutomationsResource(_http);
         Designs = new DesignsResource(_http);
+        Fonts = new FontsResource(_http);
     }
 
     public FoPostClient(string apiKey)
@@ -126,6 +127,9 @@ public sealed class FoPostClient : IDisposable
 
     /// <summary>Designs, their versions and exports, and the tools that build them.</summary>
     public DesignsResource Designs { get; }
+
+    /// <summary>The font library and a workspace's uploaded fonts.</summary>
+    public FontsResource Fonts { get; }
 
     public string BaseUrl => _http.BaseUrl;
 
