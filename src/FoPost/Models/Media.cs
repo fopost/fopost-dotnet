@@ -137,3 +137,17 @@ public sealed class MediaLibraryItem : FoPostModel
     [JsonPropertyName("size")]
     public long? Size { get; set; }
 }
+
+/// <summary>Alt text generated for a library image, from <c>POST /v1/media/{id}/alt-text</c>.</summary>
+public sealed class MediaAltText : FoPostModel
+{
+    [JsonPropertyName("alt_text")]
+    public string AltText { get; set; } = string.Empty;
+
+    /// <summary>Always <c>ai</c> for a generated description.</summary>
+    [JsonPropertyName("alt_text_source")]
+    public string? AltTextSource { get; set; }
+
+    [JsonPropertyName("tags")]
+    public IList<string> Tags { get; set; } = new List<string>();
+}
