@@ -5,19 +5,17 @@ namespace FoPost.Resources;
 
 /// <summary>
 /// <c>client.Ads</c> — boosts and ads run from a connected ad account, plus the
-/// catalogs, audiences, targeting, predictions, public ad archive, and lead
-/// forms behind them. Needs the <c>ads</c> scope.
+/// audiences, targeting, predictions, and lead forms behind them. Needs the
+/// <c>ads</c> scope.
 /// </summary>
 /// <remarks>
-/// The calls that spend money — <see cref="BoostAsync"/>,
+/// The calls that spend money, <see cref="BoostAsync"/>,
 /// <see cref="CreateAsync"/>, <see cref="SetStatusAsync"/>,
-/// <see cref="DeleteAsync"/>, <see cref="BulkSetStatusAsync"/>, and the
-/// create, update, delete, and duplicate calls on campaigns, ad sets, and
-/// network ads — need the <c>publish</c> scope as well as <c>ads</c>.
-/// Anything created starts paused unless <c>Paused</c> is set to
-/// <c>false</c>, so nothing spends until it is resumed. Campaigns, ad sets,
-/// network ads, creatives, and audiences are addressed by the ad platform's
-/// own ids plus a <c>connectionId</c>, and are read live, never stored.
+/// <see cref="DeleteAsync"/> and <see cref="BulkSetStatusAsync"/>, need the
+/// <c>publish</c> scope as well as <c>ads</c>. Anything created starts paused
+/// unless <c>Paused</c> is set to <c>false</c>, so nothing spends until it is
+/// resumed. Audiences are addressed by the ad platform's own ids plus a
+/// <c>connectionId</c>, and are read live, never stored.
 /// </remarks>
 /// <example>
 /// <code>
@@ -48,8 +46,8 @@ public sealed class AdsResource
     }
 
     /// <summary>
-    /// The Search surface no other network has: keywords, assets,
-    /// conversions, and raw GAQL.
+    /// The Search surface no other network has: bid strategies, ad schedules,
+    /// Local Services, conversions, and raw GAQL.
     /// </summary>
     public GoogleAdsResource Google { get; }
 
@@ -672,151 +670,6 @@ public sealed class AdsResource
     }
 
     /// <summary>
-    /// An ad account's campaigns, each with its ad sets and their ads. Read live
-    /// from the ad platform, never stored.
-    /// </summary>
-    public Task<AdAccountTree> AccountTreeAsync(
-        string adAccountId,
-        string connectionId,
-        string? workspaceId = null,
-        CancellationToken cancellationToken = default) =>
-        GetObject<AdAccountTree>(
-            $"/v1/ads/accounts/{Uri.EscapeDataString(adAccountId)}/tree",
-            connectionId,
-            workspaceId,
-            cancellationToken);
-
-    /// <summary>
-    /// Create a campaign. Needs the <c>publish</c> scope as well as <c>ads</c>.
-    /// Starts paused unless <c>Paused</c> is <c>false</c>.
-    /// </summary>
-    public Task<AdCampaign> CreateCampaignAsync(
-        CreateAdCampaignOptions options,
-        CancellationToken cancellationToken = default) =>
-        PostObject<AdCampaign>("/v1/ads/campaigns", options, cancellationToken);
-
-    public Task<AdCampaign> GetCampaignAsync(
-        string campaignId,
-        string connectionId,
-        string? workspaceId = null,
-        CancellationToken cancellationToken = default) =>
-        GetObject<AdCampaign>(ObjectPath("campaigns", campaignId), connectionId, workspaceId, cancellationToken);
-
-    /// <summary>Rename, pause, or resume a campaign. Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
-    public Task<AdCampaign> UpdateCampaignAsync(
-        string campaignId,
-        string workspaceId,
-        string connectionId,
-        UpdateAdCampaignOptions options,
-        CancellationToken cancellationToken = default) =>
-        PatchObject<AdCampaign>(ObjectPath("campaigns", campaignId), workspaceId, connectionId, options, cancellationToken);
-
-    /// <summary>Delete a campaign on the ad platform. Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
-    public Task DeleteCampaignAsync(
-        string campaignId,
-        string workspaceId,
-        string connectionId,
-        CancellationToken cancellationToken = default) =>
-        DeleteObject(ObjectPath("campaigns", campaignId), workspaceId, connectionId, cancellationToken);
-
-    /// <summary>
-    /// Copy a campaign and return the copy's id. Needs the <c>publish</c> scope
-    /// as well as <c>ads</c>. The copy starts paused unless <paramref name="paused"/> is <c>false</c>.
-    /// </summary>
-    public Task<string> DuplicateCampaignAsync(
-        string campaignId,
-        string workspaceId,
-        string connectionId,
-        bool? paused = null,
-        CancellationToken cancellationToken = default) =>
-        Duplicate(ObjectPath("campaigns", campaignId), workspaceId, connectionId, paused, cancellationToken);
-
-    /// <summary>
-    /// Create an ad set in a campaign. Needs the <c>publish</c> scope as well as
-    /// <c>ads</c>. Starts paused unless <c>Paused</c> is <c>false</c>.
-    /// </summary>
-    public Task<AdSet> CreateAdSetAsync(
-        CreateAdSetOptions options,
-        CancellationToken cancellationToken = default) =>
-        PostObject<AdSet>("/v1/ads/ad-sets", options, cancellationToken);
-
-    public Task<AdSet> GetAdSetAsync(
-        string adSetId,
-        string connectionId,
-        string? workspaceId = null,
-        CancellationToken cancellationToken = default) =>
-        GetObject<AdSet>(ObjectPath("ad-sets", adSetId), connectionId, workspaceId, cancellationToken);
-
-    /// <summary>Change an ad set's name, status, budget, end, or targeting. Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
-    public Task<AdSet> UpdateAdSetAsync(
-        string adSetId,
-        string workspaceId,
-        string connectionId,
-        UpdateAdSetOptions options,
-        CancellationToken cancellationToken = default) =>
-        PatchObject<AdSet>(ObjectPath("ad-sets", adSetId), workspaceId, connectionId, options, cancellationToken);
-
-    /// <summary>Delete an ad set on the ad platform. Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
-    public Task DeleteAdSetAsync(
-        string adSetId,
-        string workspaceId,
-        string connectionId,
-        CancellationToken cancellationToken = default) =>
-        DeleteObject(ObjectPath("ad-sets", adSetId), workspaceId, connectionId, cancellationToken);
-
-    /// <summary>Copy an ad set and return the copy's id. Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
-    public Task<string> DuplicateAdSetAsync(
-        string adSetId,
-        string workspaceId,
-        string connectionId,
-        bool? paused = null,
-        CancellationToken cancellationToken = default) =>
-        Duplicate(ObjectPath("ad-sets", adSetId), workspaceId, connectionId, paused, cancellationToken);
-
-    /// <summary>
-    /// Create an ad inside an ad set from an existing creative. Needs the
-    /// <c>publish</c> scope as well as <c>ads</c>. Starts paused unless
-    /// <c>Paused</c> is <c>false</c>. Unlike <see cref="CreateAsync"/>, nothing is stored in FoPost.
-    /// </summary>
-    public Task<NetworkAd> CreateNetworkAdAsync(
-        CreateNetworkAdOptions options,
-        CancellationToken cancellationToken = default) =>
-        PostObject<NetworkAd>("/v1/ads/ads", options, cancellationToken);
-
-    public Task<NetworkAd> GetNetworkAdAsync(
-        string adId,
-        string connectionId,
-        string? workspaceId = null,
-        CancellationToken cancellationToken = default) =>
-        GetObject<NetworkAd>(ObjectPath("ads", adId), connectionId, workspaceId, cancellationToken);
-
-    /// <summary>Rename, pause, resume, or swap the creative of an ad. Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
-    public Task<NetworkAd> UpdateNetworkAdAsync(
-        string adId,
-        string workspaceId,
-        string connectionId,
-        UpdateNetworkAdOptions options,
-        CancellationToken cancellationToken = default) =>
-        PatchObject<NetworkAd>(ObjectPath("ads", adId), workspaceId, connectionId, options, cancellationToken);
-
-    /// <summary>Delete an ad on the ad platform. Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
-    public Task DeleteNetworkAdAsync(
-        string adId,
-        string workspaceId,
-        string connectionId,
-        CancellationToken cancellationToken = default) =>
-        DeleteObject(ObjectPath("ads", adId), workspaceId, connectionId, cancellationToken);
-
-    /// <summary>Copy an ad and return the copy's id. Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
-    public Task<string> DuplicateNetworkAdAsync(
-        string adId,
-        string workspaceId,
-        string connectionId,
-        bool? paused = null,
-        CancellationToken cancellationToken = default) =>
-        Duplicate(ObjectPath("ads", adId), workspaceId, connectionId, paused, cancellationToken);
-
-    /// <summary>
     /// Pause or resume up to 50 campaigns, ad sets, and ads at once; each object
     /// reports its own outcome. Needs the <c>publish</c> scope as well as <c>ads</c>.
     /// </summary>
@@ -829,43 +682,6 @@ public sealed class AdsResource
         var response = await _http.PostAsync("/v1/ads/status", options, cancellationToken).ConfigureAwait(false);
         return ToList<BulkAdStatusResult>(FoPostHttpClient.Unwrap(response));
     }
-
-    /// <summary>The creatives on one ad account.</summary>
-    public async Task<CreativesResult> CreativesAsync(
-        string connectionId,
-        string adAccountId,
-        string? workspaceId = null,
-        CancellationToken cancellationToken = default)
-    {
-        var query = new Dictionary<string, object?>
-        {
-            ["workspace_id"] = workspaceId,
-            ["connection_id"] = connectionId,
-            ["ad_account_id"] = adAccountId,
-        };
-        var body = await _http.GetAsync("/v1/ads/creatives", query, cancellationToken).ConfigureAwait(false);
-        return Require<CreativesResult>(FoPostHttpClient.Unwrap(body));
-    }
-
-    /// <summary>Build an image, video, or carousel creative to use in <see cref="CreateNetworkAdAsync"/>.</summary>
-    public Task<NetworkCreative> CreateCreativeAsync(
-        CreateAdCreativeOptions options,
-        CancellationToken cancellationToken = default) =>
-        PostObject<NetworkCreative>("/v1/ads/creatives", options, cancellationToken);
-
-    public Task<NetworkCreative> GetCreativeAsync(
-        string creativeId,
-        string connectionId,
-        string? workspaceId = null,
-        CancellationToken cancellationToken = default) =>
-        GetObject<NetworkCreative>(ObjectPath("creatives", creativeId), connectionId, workspaceId, cancellationToken);
-
-    public Task DeleteCreativeAsync(
-        string creativeId,
-        string workspaceId,
-        string connectionId,
-        CancellationToken cancellationToken = default) =>
-        DeleteObject(ObjectPath("creatives", creativeId), workspaceId, connectionId, cancellationToken);
 
     public Task<Audience> GetAudienceAsync(
         string audienceId,
@@ -1119,26 +935,6 @@ public sealed class AdsResource
             .ConfigureAwait(false);
     }
 
-    private async Task<string> Duplicate(
-        string path,
-        string workspaceId,
-        string connectionId,
-        bool? paused,
-        CancellationToken cancellationToken)
-    {
-        var body = paused is null ? null : new Dictionary<string, object?> { ["paused"] = paused };
-        var response = await _http
-            .RequestAsync(
-                HttpMethod.Post,
-                $"{path}/duplicate",
-                body,
-                MetaQuery(workspaceId, connectionId),
-                cancellationToken)
-            .ConfigureAwait(false);
-        var id = FoPostHttpClient.Unwrap(response)?["id"]?.GetValue<string>();
-        return id ?? throw new FoPostException("The API returned no id for the copy", 201);
-    }
-
     /// <summary>
     /// Adds companies to a company-list audience and returns how many the network took. The rows
     /// travel with the request and are never stored.
@@ -1381,204 +1177,6 @@ public sealed class AdsResource
         return ToList<string>(FoPostHttpClient.Unwrap(body));
     }
 
-    // ─── Product catalogs ───────────────────────────────────────────
-
-    /// <summary>Catalogs the connection's business portfolios reach. Read live, never stored.</summary>
-    public async Task<ProductCatalogsResult> CatalogsAsync(
-        string connectionId,
-        string? workspaceId = null,
-        CancellationToken cancellationToken = default)
-    {
-        var body = await _http
-            .GetAsync("/v1/ads/catalogs", MetaQuery(workspaceId, connectionId), cancellationToken)
-            .ConfigureAwait(false);
-        return Require<ProductCatalogsResult>(FoPostHttpClient.Unwrap(body));
-    }
-
-    /// <summary>
-    /// Creates a catalog on the connection's business portfolio. Needs the <c>publish</c> scope as
-    /// well as <c>ads</c>.
-    /// </summary>
-    public Task<ProductCatalog> CreateCatalogAsync(
-        CreateCatalogOptions options,
-        CancellationToken cancellationToken = default) =>
-        PostObject<ProductCatalog>("/v1/ads/catalogs", options, cancellationToken);
-
-    public Task<ProductCatalog> GetCatalogAsync(
-        string catalogId,
-        string connectionId,
-        string? workspaceId = null,
-        CancellationToken cancellationToken = default) =>
-        GetObject<ProductCatalog>(ObjectPath("catalogs", catalogId), connectionId, workspaceId, cancellationToken);
-
-    /// <summary>Renames a catalog. Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
-    public Task<ProductCatalog> UpdateCatalogAsync(
-        string catalogId,
-        string workspaceId,
-        string connectionId,
-        UpdateCatalogOptions options,
-        CancellationToken cancellationToken = default) =>
-        PatchObject<ProductCatalog>(
-            ObjectPath("catalogs", catalogId),
-            workspaceId,
-            connectionId,
-            options,
-            cancellationToken);
-
-    /// <summary>
-    /// Deletes the catalog with every product, feed and set in it. Needs the <c>publish</c> scope
-    /// as well as <c>ads</c>.
-    /// </summary>
-    public Task DeleteCatalogAsync(
-        string catalogId,
-        string workspaceId,
-        string connectionId,
-        CancellationToken cancellationToken = default) =>
-        DeleteObject(ObjectPath("catalogs", catalogId), workspaceId, connectionId, cancellationToken);
-
-    /// <summary>One page of products; pass <c>NextCursor</c> back as <c>after</c>.</summary>
-    public async Task<CatalogProductsPage> CatalogProductsAsync(
-        string catalogId,
-        string connectionId,
-        string? workspaceId = null,
-        string? after = null,
-        CancellationToken cancellationToken = default)
-    {
-        var query = MetaQuery(workspaceId, connectionId);
-        query["after"] = after;
-        var body = await _http
-            .GetAsync($"{ObjectPath("catalogs", catalogId)}/products", query, cancellationToken)
-            .ConfigureAwait(false);
-        return Require<CatalogProductsPage>(FoPostHttpClient.Unwrap(body));
-    }
-
-    /// <summary>
-    /// Up to 500 upserts and deletes in one batch, keyed by your own retailer id. Needs the
-    /// <c>publish</c> scope as well as <c>ads</c>.
-    /// </summary>
-    public Task<CatalogBatchResult> WriteCatalogProductsAsync(
-        string catalogId,
-        CatalogProductBatchOptions options,
-        CancellationToken cancellationToken = default) =>
-        PostObject<CatalogBatchResult>(
-            $"{ObjectPath("catalogs", catalogId)}/products",
-            options,
-            cancellationToken);
-
-    public async Task<IReadOnlyList<ProductFeed>> ProductFeedsAsync(
-        string catalogId,
-        string connectionId,
-        string? workspaceId = null,
-        CancellationToken cancellationToken = default)
-    {
-        var body = await _http
-            .GetAsync(
-                $"{ObjectPath("catalogs", catalogId)}/feeds",
-                MetaQuery(workspaceId, connectionId),
-                cancellationToken)
-            .ConfigureAwait(false);
-        return ToList<ProductFeed>(FoPostHttpClient.Unwrap(body));
-    }
-
-    /// <summary>Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
-    public Task<ProductFeed> CreateProductFeedAsync(
-        string catalogId,
-        CreateProductFeedOptions options,
-        CancellationToken cancellationToken = default) =>
-        PostObject<ProductFeed>($"{ObjectPath("catalogs", catalogId)}/feeds", options, cancellationToken);
-
-    /// <summary>Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
-    public Task DeleteProductFeedAsync(
-        string catalogId,
-        string feedId,
-        string workspaceId,
-        string connectionId,
-        CancellationToken cancellationToken = default) =>
-        DeleteObject(FeedPath(catalogId, feedId), workspaceId, connectionId, cancellationToken);
-
-    /// <summary>Each run the ad platform made of the feed.</summary>
-    public async Task<IReadOnlyList<ProductFeedUpload>> FeedUploadsAsync(
-        string catalogId,
-        string feedId,
-        string connectionId,
-        string? workspaceId = null,
-        CancellationToken cancellationToken = default)
-    {
-        var body = await _http
-            .GetAsync(
-                $"{FeedPath(catalogId, feedId)}/uploads",
-                MetaQuery(workspaceId, connectionId),
-                cancellationToken)
-            .ConfigureAwait(false);
-        return ToList<ProductFeedUpload>(FoPostHttpClient.Unwrap(body));
-    }
-
-    /// <summary>
-    /// Fetches the feed now and returns the id of the run. Needs the <c>publish</c> scope as well
-    /// as <c>ads</c>.
-    /// </summary>
-    public async Task<string> StartFeedUploadAsync(
-        string catalogId,
-        string feedId,
-        StartFeedUploadOptions options,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-
-        var response = await _http
-            .PostAsync($"{FeedPath(catalogId, feedId)}/uploads", options, cancellationToken)
-            .ConfigureAwait(false);
-        var id = FoPostHttpClient.Unwrap(response)?["id"]?.GetValue<string>();
-        return id ?? throw new FoPostException("The API returned no id for the upload", 201);
-    }
-
-    /// <summary>A catalog ad runs from a product set, not the whole catalog.</summary>
-    public async Task<IReadOnlyList<ProductSet>> ProductSetsAsync(
-        string catalogId,
-        string connectionId,
-        string? workspaceId = null,
-        CancellationToken cancellationToken = default)
-    {
-        var body = await _http
-            .GetAsync(
-                $"{ObjectPath("catalogs", catalogId)}/product-sets",
-                MetaQuery(workspaceId, connectionId),
-                cancellationToken)
-            .ConfigureAwait(false);
-        return ToList<ProductSet>(FoPostHttpClient.Unwrap(body));
-    }
-
-    /// <summary>Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
-    public Task<ProductSet> CreateProductSetAsync(
-        string catalogId,
-        ProductSetOptions options,
-        CancellationToken cancellationToken = default) =>
-        PostObject<ProductSet>($"{ObjectPath("catalogs", catalogId)}/product-sets", options, cancellationToken);
-
-    /// <summary>Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
-    public Task<ProductSet> UpdateProductSetAsync(
-        string catalogId,
-        string setId,
-        string workspaceId,
-        string connectionId,
-        ProductSetOptions options,
-        CancellationToken cancellationToken = default) =>
-        PatchObject<ProductSet>(
-            ProductSetPath(catalogId, setId),
-            workspaceId,
-            connectionId,
-            options,
-            cancellationToken);
-
-    /// <summary>Needs the <c>publish</c> scope as well as <c>ads</c>.</summary>
-    public Task DeleteProductSetAsync(
-        string catalogId,
-        string setId,
-        string workspaceId,
-        string connectionId,
-        CancellationToken cancellationToken = default) =>
-        DeleteObject(ProductSetPath(catalogId, setId), workspaceId, connectionId, cancellationToken);
-
     // ─── Reach and frequency ────────────────────────────────────────
 
     public async Task<ReachFrequencyResult> ReachFrequencyAsync(
@@ -1637,33 +1235,6 @@ public sealed class AdsResource
             $"{ObjectPath("reach-frequency", predictionId)}/cancel",
             options,
             cancellationToken);
-
-    // ─── Ad Library ─────────────────────────────────────────────────
-
-    /// <summary>
-    /// The public ad archive: ads anyone is running, by keyword or by Page. Read live on every
-    /// call and stored nowhere, so an ad that stops running is simply absent from the next search.
-    /// <paramref name="countries"/> are two-letter codes the ad reached.
-    /// </summary>
-    public async Task<AdLibraryPage> LibraryAsync(
-        string connectionId,
-        IEnumerable<string> countries,
-        string? query = null,
-        IEnumerable<string>? pageIds = null,
-        string? activeStatus = null,
-        string? workspaceId = null,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(countries);
-
-        var parameters = MetaQuery(workspaceId, connectionId);
-        parameters["countries"] = string.Join(",", countries);
-        parameters["q"] = query;
-        parameters["page_ids"] = pageIds is null ? null : string.Join(",", pageIds);
-        parameters["active_status"] = activeStatus;
-        var body = await _http.GetAsync("/v1/ads/library", parameters, cancellationToken).ConfigureAwait(false);
-        return Require<AdLibraryPage>(FoPostHttpClient.Unwrap(body));
-    }
 
     // ─── Partnership ads ────────────────────────────────────────────
 
@@ -1927,12 +1498,6 @@ public sealed class AdsResource
         query["ad_account_id"] = adAccountId;
         return query;
     }
-
-    private static string FeedPath(string catalogId, string feedId) =>
-        $"{ObjectPath("catalogs", catalogId)}/feeds/{Uri.EscapeDataString(feedId)}";
-
-    private static string ProductSetPath(string catalogId, string setId) =>
-        $"{ObjectPath("catalogs", catalogId)}/product-sets/{Uri.EscapeDataString(setId)}";
 
     private static string LabelPath(string labelId) =>
         $"/v1/ads/account/labels/{Uri.EscapeDataString(labelId)}";

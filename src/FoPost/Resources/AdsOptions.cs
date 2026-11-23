@@ -210,7 +210,7 @@ public sealed class CreateLeadFormOptions
     public string? FollowUpUrl { get; set; }
 }
 
-/// <summary>The workspace and ads connection every campaign-tree write names.</summary>
+/// <summary>The workspace and ads connection a connection-scoped write names.</summary>
 public abstract class AdConnectionRequestOptions
 {
     [JsonPropertyName("workspaceId")]
@@ -219,32 +219,6 @@ public abstract class AdConnectionRequestOptions
     /// <summary>An ads connection in the workspace.</summary>
     [JsonPropertyName("connectionId")]
     public string ConnectionId { get; set; } = string.Empty;
-}
-
-/// <summary>The body of <see cref="Resources.AdsResource.CreateCampaignAsync"/>.</summary>
-public sealed class CreateAdCampaignOptions : AdConnectionRequestOptions
-{
-    /// <summary>Ad account id, <c>act_…</c>.</summary>
-    [JsonPropertyName("adAccountId")]
-    public string AdAccountId { get; set; } = string.Empty;
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary>One of <see cref="AdGoals"/>.</summary>
-    [JsonPropertyName("goal")]
-    public string Goal { get; set; } = AdGoals.Engagement;
-
-    /// <summary>Left unset, the campaign is created paused. Set to <c>false</c> to go live at once.</summary>
-    [JsonPropertyName("paused")]
-    public bool? Paused { get; set; }
-
-    /// <summary>
-    /// Hands targeting and creative rotation to the network. Needs its
-    /// <c>smartPlus</c> capability.
-    /// </summary>
-    [JsonPropertyName("smartPlus")]
-    public bool? SmartPlus { get; set; }
 }
 
 /// <summary>One offline conversion. Identifiers are hashed before anything leaves FoPost.</summary>
@@ -411,98 +385,6 @@ public sealed class AdCommentOptions : AdConnectionRequestOptions
     public bool? Hidden { get; set; }
 }
 
-/// <summary>The body of <see cref="Resources.AdsResource.UpdateCampaignAsync"/>; unset fields are left alone.</summary>
-public sealed class UpdateAdCampaignOptions
-{
-    [JsonPropertyName("name")]
-    public string? Name { get; set; }
-
-    /// <summary>One of <see cref="AdStatuses"/>.</summary>
-    [JsonPropertyName("status")]
-    public string? Status { get; set; }
-}
-
-/// <summary>The body of <see cref="Resources.AdsResource.CreateAdSetAsync"/>.</summary>
-public sealed class CreateAdSetOptions : AdConnectionRequestOptions
-{
-    [JsonPropertyName("campaignId")]
-    public string CampaignId { get; set; } = string.Empty;
-
-    /// <summary>The Page the ads in this set run as.</summary>
-    [JsonPropertyName("pageId")]
-    public string PageId { get; set; } = string.Empty;
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary>One of <see cref="AdGoals"/>.</summary>
-    [JsonPropertyName("goal")]
-    public string Goal { get; set; } = AdGoals.Engagement;
-
-    [JsonPropertyName("budget")]
-    public AdBudget Budget { get; set; } = new();
-
-    [JsonPropertyName("targeting")]
-    public AdTargeting Targeting { get; set; } = new();
-
-    /// <summary>Left unset, the ad set is created paused. Set to <c>false</c> to go live at once.</summary>
-    [JsonPropertyName("paused")]
-    public bool? Paused { get; set; }
-}
-
-/// <summary>The body of <see cref="Resources.AdsResource.UpdateAdSetAsync"/>; unset fields are left alone.</summary>
-public sealed class UpdateAdSetOptions
-{
-    [JsonPropertyName("name")]
-    public string? Name { get; set; }
-
-    /// <summary>One of <see cref="AdStatuses"/>.</summary>
-    [JsonPropertyName("status")]
-    public string? Status { get; set; }
-
-    /// <summary>New budget in minor units; the budget type set at creation stays.</summary>
-    [JsonPropertyName("budgetMinor")]
-    public long? BudgetMinor { get; set; }
-
-    [JsonPropertyName("endAt")]
-    public DateTimeOffset? EndAt { get; set; }
-
-    [JsonPropertyName("targeting")]
-    public AdTargeting? Targeting { get; set; }
-}
-
-/// <summary>The body of <see cref="Resources.AdsResource.CreateNetworkAdAsync"/>.</summary>
-public sealed class CreateNetworkAdOptions : AdConnectionRequestOptions
-{
-    [JsonPropertyName("adSetId")]
-    public string AdSetId { get; set; } = string.Empty;
-
-    /// <summary>From <see cref="Resources.AdsResource.CreateCreativeAsync"/> or the creative library.</summary>
-    [JsonPropertyName("creativeId")]
-    public string CreativeId { get; set; } = string.Empty;
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary>Left unset, the ad is created paused. Set to <c>false</c> to go live at once.</summary>
-    [JsonPropertyName("paused")]
-    public bool? Paused { get; set; }
-}
-
-/// <summary>The body of <see cref="Resources.AdsResource.UpdateNetworkAdAsync"/>; unset fields are left alone.</summary>
-public sealed class UpdateNetworkAdOptions
-{
-    [JsonPropertyName("name")]
-    public string? Name { get; set; }
-
-    /// <summary>One of <see cref="AdStatuses"/>.</summary>
-    [JsonPropertyName("status")]
-    public string? Status { get; set; }
-
-    [JsonPropertyName("creativeId")]
-    public string? CreativeId { get; set; }
-}
-
 /// <summary>A campaign, ad set, or ad named in <see cref="BulkAdStatusOptions"/>.</summary>
 public sealed class AdObjectRef
 {
@@ -535,71 +417,6 @@ public sealed class BulkAdStatusOptions : AdConnectionRequestOptions
     /// <summary>One to 50 objects.</summary>
     [JsonPropertyName("objects")]
     public IList<AdObjectRef> Objects { get; set; } = new List<AdObjectRef>();
-}
-
-/// <summary>One card of a carousel creative.</summary>
-public sealed class AdCreativeCard
-{
-    /// <summary>A media library image.</summary>
-    [JsonPropertyName("mediaUrl")]
-    public string MediaUrl { get; set; } = string.Empty;
-
-    [JsonPropertyName("destinationUrl")]
-    public string? DestinationUrl { get; set; }
-
-    [JsonPropertyName("headline")]
-    public string? Headline { get; set; }
-
-    [JsonPropertyName("description")]
-    public string? Description { get; set; }
-}
-
-/// <summary>The body of <see cref="Resources.AdsResource.CreateCreativeAsync"/>.</summary>
-public sealed class CreateAdCreativeOptions : AdConnectionRequestOptions
-{
-    /// <summary>Ad account id, <c>act_…</c>.</summary>
-    [JsonPropertyName("adAccountId")]
-    public string AdAccountId { get; set; } = string.Empty;
-
-    [JsonPropertyName("pageId")]
-    public string PageId { get; set; } = string.Empty;
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary>One of <see cref="AdCreativeFormats"/>.</summary>
-    [JsonPropertyName("format")]
-    public string Format { get; set; } = AdCreativeFormats.Image;
-
-    /// <summary>Primary text, up to 2000 characters.</summary>
-    [JsonPropertyName("text")]
-    public string Text { get; set; } = string.Empty;
-
-    [JsonPropertyName("headline")]
-    public string? Headline { get; set; }
-
-    [JsonPropertyName("destinationUrl")]
-    public string? DestinationUrl { get; set; }
-
-    /// <summary>For example <c>LEARN_MORE</c> (the default), <c>SHOP_NOW</c>, or <c>SIGN_UP</c>.</summary>
-    [JsonPropertyName("callToAction")]
-    public string? CallToAction { get; set; }
-
-    /// <summary>Query string appended to every link in the ad, e.g. <c>utm_source=meta&amp;utm_medium=paid</c>.</summary>
-    [JsonPropertyName("urlTags")]
-    public string? UrlTags { get; set; }
-
-    /// <summary>A media library asset url: the image, or the video. Required for a video.</summary>
-    [JsonPropertyName("mediaUrl")]
-    public string? MediaUrl { get; set; }
-
-    /// <summary>A video's poster frame, as a library image.</summary>
-    [JsonPropertyName("thumbnailMediaUrl")]
-    public string? ThumbnailMediaUrl { get; set; }
-
-    /// <summary>Two to ten cards; required for a carousel.</summary>
-    [JsonPropertyName("cards")]
-    public IList<AdCreativeCard>? Cards { get; set; }
 }
 
 /// <summary>The body of <see cref="Resources.AdsResource.UpdateAudienceAsync"/>; unset fields are left alone.</summary>
@@ -788,26 +605,4 @@ public sealed class ConversionEventOptions
     /// <summary>The network's click id, as the landing page received it.</summary>
     [JsonPropertyName("clickId")]
     public string? ClickId { get; set; }
-}
-
-/// <summary>What an ad-library search narrows on. Dates are <c>YYYY-MM-DD</c>.</summary>
-public sealed class AdLibraryOptions
-{
-    public string? WorkspaceId { get; set; }
-
-    public string ConnectionId { get; set; } = string.Empty;
-
-    public string? Keyword { get; set; }
-
-    public string? Advertiser { get; set; }
-
-    /// <summary>ISO 3166-1 alpha-2 codes.</summary>
-    public IList<string>? Countries { get; set; }
-
-    public string? Since { get; set; }
-
-    public string? Until { get; set; }
-
-    /// <summary>The <c>NextCursor</c> from the previous page.</summary>
-    public string? Cursor { get; set; }
 }
