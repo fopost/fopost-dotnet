@@ -5,11 +5,10 @@ namespace FoPost.Resources;
 
 /// <summary>
 /// <c>client.Ads.Google</c> — the Google Ads surface no other network has:
-/// keywords, assets, Performance Max asset groups, Local Services leads,
-/// conversions, and raw GAQL.
+/// bid strategies, ad schedules, Local Services leads, conversions, and raw GAQL.
 /// </summary>
 /// <remarks>
-/// Campaigns, ad groups, ads, audiences, and insights are on
+/// Ads, audiences, and insights are on
 /// <see cref="AdsResource"/> and dispatch by connection; a connection on
 /// another network answers 400 here. Every call needs the <c>ads</c> scope,
 /// and anything that changes what a live account serves or bids also needs
@@ -18,7 +17,7 @@ namespace FoPost.Resources;
 /// <example>
 /// <code>
 /// var scope = new GoogleAdsScope { ConnectionId = "c1d2e3f4-…", CustomerId = "1234567890" };
-/// var keywords = await client.Ads.Google.KeywordsAsync(scope);
+/// var strategies = await client.Ads.Google.BidStrategiesAsync(scope);
 /// </code>
 /// </example>
 public sealed class GoogleAdsResource
@@ -26,83 +25,6 @@ public sealed class GoogleAdsResource
     private readonly FoPostHttpClient _http;
 
     internal GoogleAdsResource(FoPostHttpClient http) => _http = http;
-
-    // ── Keywords ──
-
-    /// <summary>Keywords on the account, or on one ad group.</summary>
-    public async Task<IReadOnlyList<GoogleKeyword>> KeywordsAsync(
-        GoogleAdsScope scope,
-        string? adGroupId = null,
-        CancellationToken cancellationToken = default)
-    {
-        var body = await _http.GetAsync("/v1/ads/google/keywords", Query(scope, ("ad_group_id", adGroupId)), cancellationToken)
-            .ConfigureAwait(false);
-        return ToList<GoogleKeyword>(FoPostHttpClient.Unwrap(body));
-    }
-
-    /// <summary>Add a keyword. Needs <c>publish</c> as well as <c>ads</c>.</summary>
-    public Task<string> CreateKeywordAsync(
-        CreateGoogleKeywordOptions options,
-        CancellationToken cancellationToken = default) =>
-        PostIdAsync("/v1/ads/google/keywords", options, cancellationToken);
-
-    /// <summary>Pause, resume, or rebid a keyword. Needs <c>publish</c>.</summary>
-    public async Task<string> UpdateKeywordAsync(
-        string keywordId,
-        UpdateGoogleKeywordOptions options,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-
-        var response = await _http
-            .RequestAsync(HttpMethod.Patch, $"/v1/ads/google/keywords/{Uri.EscapeDataString(keywordId)}", options, null, cancellationToken)
-            .ConfigureAwait(false);
-        return ReadId(response);
-    }
-
-    /// <summary>Remove a keyword. Needs <c>publish</c> as well as <c>ads</c>.</summary>
-    public Task DeleteKeywordAsync(
-        string keywordId,
-        GoogleAdsScope scope,
-        CancellationToken cancellationToken = default) =>
-        _http.DeleteAsync($"/v1/ads/google/keywords/{Uri.EscapeDataString(keywordId)}", scope, cancellationToken);
-
-    /// <summary>Ideas from seed keywords, a landing page, or both.</summary>
-    public async Task<IReadOnlyList<GoogleKeywordIdea>> KeywordIdeasAsync(
-        GoogleKeywordIdeasOptions options,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-
-        var response = await _http.PostAsync("/v1/ads/google/keyword-ideas", options, cancellationToken)
-            .ConfigureAwait(false);
-        return ToList<GoogleKeywordIdea>(FoPostHttpClient.Unwrap(response));
-    }
-
-    /// <summary>Historical metrics for keywords you already have.</summary>
-    public async Task<IReadOnlyList<GoogleKeywordIdea>> KeywordMetricsAsync(
-        GoogleKeywordMetricsOptions options,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-
-        var response = await _http.PostAsync("/v1/ads/google/keyword-metrics", options, cancellationToken)
-            .ConfigureAwait(false);
-        return ToList<GoogleKeywordIdea>(FoPostHttpClient.Unwrap(response));
-    }
-
-    /// <summary>What people actually searched, with the metrics each term earned.</summary>
-    public async Task<IReadOnlyList<GoogleSearchTerm>> SearchTermsAsync(
-        GoogleAdsScope scope,
-        string since,
-        string until,
-        CancellationToken cancellationToken = default)
-    {
-        var body = await _http
-            .GetAsync("/v1/ads/google/search-terms", Query(scope, ("since", since), ("until", until)), cancellationToken)
-            .ConfigureAwait(false);
-        return ToList<GoogleSearchTerm>(FoPostHttpClient.Unwrap(body));
-    }
 
     // ── Bid strategies and ad schedule ──
 
@@ -149,125 +71,6 @@ public sealed class GoogleAdsResource
         return FoPostHttpClient.Unwrap(response)?["slots"]?.GetValue<int>() ?? 0;
     }
 
-    // ── Negative keyword lists ──
-
-    /// <summary>The account's negative keyword lists.</summary>
-    public async Task<IReadOnlyList<GoogleSharedSet>> NegativeKeywordListsAsync(
-        GoogleAdsScope scope,
-        CancellationToken cancellationToken = default)
-    {
-        var body = await _http.GetAsync("/v1/ads/google/negative-keywords", Query(scope), cancellationToken)
-            .ConfigureAwait(false);
-        return ToList<GoogleSharedSet>(FoPostHttpClient.Unwrap(body));
-    }
-
-    /// <summary>Create a negative keyword list. Needs <c>publish</c>.</summary>
-    public Task<string> CreateNegativeKeywordListAsync(
-        CreateGoogleNegativeKeywordListOptions options,
-        CancellationToken cancellationToken = default) =>
-        PostIdAsync("/v1/ads/google/negative-keywords", options, cancellationToken);
-
-    /// <summary>Add keywords to a list; answers how many landed. Needs <c>publish</c>.</summary>
-    public async Task<int> AddNegativeKeywordsAsync(
-        AddGoogleNegativeKeywordsOptions options,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-
-        var response = await _http.PostAsync("/v1/ads/google/negative-keywords/keywords", options, cancellationToken)
-            .ConfigureAwait(false);
-        return FoPostHttpClient.Unwrap(response)?["added"]?.GetValue<int>() ?? 0;
-    }
-
-    /// <summary>Put a list on a campaign. Needs <c>publish</c> as well as <c>ads</c>.</summary>
-    public Task AttachNegativeKeywordListAsync(
-        AttachGoogleNegativeKeywordListOptions options,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-
-        return _http.PostAsync("/v1/ads/google/negative-keywords/attach", options, cancellationToken);
-    }
-
-    // ── Assets ──
-
-    /// <summary>Sitelinks, callouts, and snippets, with the links that place each one.</summary>
-    public async Task<GoogleAssetsResult> AssetsAsync(
-        GoogleAdsScope scope,
-        CancellationToken cancellationToken = default)
-    {
-        var body = await _http.GetAsync("/v1/ads/google/assets", Query(scope), cancellationToken)
-            .ConfigureAwait(false);
-        return Require<GoogleAssetsResult>(FoPostHttpClient.Unwrap(body));
-    }
-
-    /// <summary>Add an asset to the library. Needs <c>publish</c>.</summary>
-    public Task<string> CreateAssetAsync(
-        CreateGoogleAssetOptions options,
-        CancellationToken cancellationToken = default) =>
-        PostIdAsync("/v1/ads/google/assets", options, cancellationToken);
-
-    /// <summary>Put an asset under the ads it belongs to. Needs <c>publish</c>.</summary>
-    public Task AttachAssetAsync(
-        AttachGoogleAssetOptions options,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-
-        return _http.PostAsync("/v1/ads/google/assets/attach", options, cancellationToken);
-    }
-
-    /// <summary>
-    /// Remove the links that put an asset under an ad; on Google the asset
-    /// itself is permanent. Needs <c>publish</c> as well as <c>ads</c>.
-    /// </summary>
-    public Task DeleteAssetAsync(
-        string assetId,
-        GoogleAdsScope scope,
-        CancellationToken cancellationToken = default) =>
-        _http.DeleteAsync($"/v1/ads/google/assets/{Uri.EscapeDataString(assetId)}", scope, cancellationToken);
-
-    // ── Performance Max asset groups ──
-
-    /// <summary>Performance Max asset groups on the account, or on one campaign.</summary>
-    public async Task<IReadOnlyList<GoogleAssetGroup>> AssetGroupsAsync(
-        GoogleAdsScope scope,
-        string? campaignId = null,
-        CancellationToken cancellationToken = default)
-    {
-        var body = await _http
-            .GetAsync("/v1/ads/google/asset-groups", Query(scope, ("campaign_id", campaignId)), cancellationToken)
-            .ConfigureAwait(false);
-        return ToList<GoogleAssetGroup>(FoPostHttpClient.Unwrap(body));
-    }
-
-    /// <summary>Create an asset group. Needs <c>publish</c> as well as <c>ads</c>.</summary>
-    public Task<string> CreateAssetGroupAsync(
-        CreateGoogleAssetGroupOptions options,
-        CancellationToken cancellationToken = default) =>
-        PostIdAsync("/v1/ads/google/asset-groups", options, cancellationToken);
-
-    /// <summary>Rename, pause, or resume an asset group. Needs <c>publish</c>.</summary>
-    public async Task<string> UpdateAssetGroupAsync(
-        string assetGroupId,
-        UpdateGoogleAssetGroupOptions options,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-
-        var response = await _http
-            .RequestAsync(HttpMethod.Patch, $"/v1/ads/google/asset-groups/{Uri.EscapeDataString(assetGroupId)}", options, null, cancellationToken)
-            .ConfigureAwait(false);
-        return ReadId(response);
-    }
-
-    /// <summary>Remove an asset group. Needs <c>publish</c> as well as <c>ads</c>.</summary>
-    public Task DeleteAssetGroupAsync(
-        string assetGroupId,
-        GoogleAdsScope scope,
-        CancellationToken cancellationToken = default) =>
-        _http.DeleteAsync($"/v1/ads/google/asset-groups/{Uri.EscapeDataString(assetGroupId)}", scope, cancellationToken);
-
     // ── Local Services leads ──
 
     /// <summary>Leads from Local Services Ads, read live and never stored.</summary>
@@ -312,51 +115,6 @@ public sealed class GoogleAdsResource
         UploadGoogleConversionAdjustmentsOptions options,
         CancellationToken cancellationToken = default) =>
         UploadedAsync("/v1/ads/google/conversions/adjustments", options, cancellationToken);
-
-    // ── Recommendations ──
-
-    /// <summary>Google's own read on what the account should change next.</summary>
-    /// <param name="scope">The connection and the Google Ads account.</param>
-    /// <param name="types">Narrows to those recommendation types; all of them when empty.</param>
-    /// <param name="cancellationToken">A token to cancel the request.</param>
-    public async Task<IReadOnlyList<GoogleRecommendation>> RecommendationsAsync(
-        GoogleAdsScope scope,
-        IEnumerable<string>? types = null,
-        CancellationToken cancellationToken = default)
-    {
-        var joined = types is null ? null : string.Join(",", types);
-        var body = await _http.GetAsync(
-                "/v1/ads/google/recommendations",
-                Query(scope, ("types", string.IsNullOrEmpty(joined) ? null : joined)),
-                cancellationToken)
-            .ConfigureAwait(false);
-        return ToList<GoogleRecommendation>(FoPostHttpClient.Unwrap(body));
-    }
-
-    /// <summary>The account's score and weight, and the score of each live campaign.</summary>
-    public async Task<GoogleOptimizationScore> OptimizationScoreAsync(
-        GoogleAdsScope scope,
-        CancellationToken cancellationToken = default)
-    {
-        var body = await _http.GetAsync("/v1/ads/google/optimization-score", Query(scope), cancellationToken)
-            .ConfigureAwait(false);
-        return Require<GoogleOptimizationScore>(FoPostHttpClient.Unwrap(body));
-    }
-
-    /// <summary>
-    /// Applies each one, which changes what the live account serves or bids, and
-    /// answers how many landed. Needs <c>publish</c> as well as <c>ads</c>.
-    /// </summary>
-    public Task<int> ApplyRecommendationsAsync(
-        GoogleRecommendationsOptions options,
-        CancellationToken cancellationToken = default) =>
-        CountedAsync("/v1/ads/google/recommendations/apply", "applied", options, cancellationToken);
-
-    /// <summary>Hides each one so Google stops surfacing it. Needs <c>publish</c>.</summary>
-    public Task<int> DismissRecommendationsAsync(
-        GoogleRecommendationsOptions options,
-        CancellationToken cancellationToken = default) =>
-        CountedAsync("/v1/ads/google/recommendations/dismiss", "dismissed", options, cancellationToken);
 
     // ── GAQL ──
 

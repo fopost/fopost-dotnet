@@ -14,69 +14,47 @@ public class GoogleAdsTests
         CustomerId = "1234567890",
     };
 
-    private const string Keyword = """
-    {
-      "id": "1234567890~keyword~77~99",
-      "adGroupId": "1234567890~adGroup~77",
-      "text": "running shoes",
-      "matchType": "EXACT",
-      "status": "ENABLED",
-      "cpcBidMinor": 180,
-      "negative": false
-    }
-    """;
-
     [Fact]
-    public async Task Keywords_name_the_connection_and_the_customer()
+    public async Task Bid_strategies_name_the_connection_and_the_customer()
     {
-        var handler = new StubHandler().Json($$"""{"data":[{{Keyword}}]}""");
+        var handler = new StubHandler().Json("""
+            {"data":[{"id":"1234567890~biddingStrategy~42","name":"Target CPA","type":"TARGET_CPA",
+            "status":"ENABLED","campaignCount":3}]}
+            """);
         using var test = new TestClient(handler);
 
-        var keywords = await test.Client.Ads.Google.KeywordsAsync(Scope, "1234567890~adGroup~77");
+        var strategies = await test.Client.Ads.Google.BidStrategiesAsync(Scope);
 
-        Assert.Single(keywords);
-        Assert.Equal("running shoes", keywords[0].Text);
-        Assert.Equal(180, keywords[0].CpcBidMinor);
+        Assert.Single(strategies);
+        Assert.Equal("Target CPA", strategies[0].Name);
+        Assert.Equal(3, strategies[0].CampaignCount);
 
         var uri = handler.LastRequest.RequestUri!;
-        Assert.Equal("/v1/ads/google/keywords", uri.AbsolutePath);
+        Assert.Equal("/v1/ads/google/bid-strategies", uri.AbsolutePath);
         Assert.Contains("connection_id=conn_1", uri.Query);
         Assert.Contains("customer_id=1234567890", uri.Query);
     }
 
     [Fact]
-    public async Task Create_keyword_sends_the_scope_in_the_body()
+    public async Task Create_bid_strategy_sends_the_scope_in_the_body()
     {
-        var handler = new StubHandler().Json("""{"data":{"id":"1234567890~keyword~77~99"}}""");
+        var handler = new StubHandler().Json("""{"data":{"id":"1234567890~biddingStrategy~42"}}""");
         using var test = new TestClient(handler);
 
-        var id = await test.Client.Ads.Google.CreateKeywordAsync(new CreateGoogleKeywordOptions
+        var id = await test.Client.Ads.Google.CreateBidStrategyAsync(new CreateGoogleBidStrategyOptions
         {
             WorkspaceId = "ws_1",
             ConnectionId = "conn_1",
             CustomerId = "1234567890",
-            AdGroupId = "1234567890~adGroup~77",
-            Text = "running shoes",
-            MatchType = GoogleMatchTypes.Exact,
+            Name = "Target CPA",
+            Type = GoogleBidStrategyTypes.TargetCpa,
+            TargetMinor = 1500,
         });
 
-        Assert.Equal("1234567890~keyword~77~99", id);
+        Assert.Equal("1234567890~biddingStrategy~42", id);
         using var body = JsonDocument.Parse(handler.LastBody!);
         Assert.Equal("1234567890", body.RootElement.GetProperty("customerId").GetString());
-        Assert.Equal("EXACT", body.RootElement.GetProperty("matchType").GetString());
-    }
-
-    [Fact]
-    public async Task Delete_carries_the_scope_in_the_body()
-    {
-        var handler = new StubHandler().Json("""{"data":null}""");
-        using var test = new TestClient(handler);
-
-        await test.Client.Ads.Google.DeleteAssetAsync("1234567890~asset~4321", Scope);
-
-        Assert.Equal(HttpMethod.Delete, handler.LastRequest.Method);
-        using var body = JsonDocument.Parse(handler.LastBody!);
-        Assert.Equal("conn_1", body.RootElement.GetProperty("connectionId").GetString());
+        Assert.Equal("TARGET_CPA", body.RootElement.GetProperty("type").GetString());
     }
 
     [Fact]
@@ -116,46 +94,6 @@ public class GoogleAdsTests
 
         Assert.Single(result.Rows);
         Assert.Equal("/v1/ads/insights/query", handler.LastRequest.RequestUri!.AbsolutePath);
-    }
-
-    [Fact]
-    public async Task Recommendations_join_the_types_filter()
-    {
-        var handler = new StubHandler().Json("""
-            {"data":[{"id":"customers/1234567890/recommendations/ABC~1","type":"KEYWORD",
-            "campaignId":"1234567890~campaign~55","dismissed":false,
-            "impact":{"baseClicks":10,"potentialClicks":25}}]}
-            """);
-        using var test = new TestClient(handler);
-
-        var rows = await test.Client.Ads.Google.RecommendationsAsync(
-            new GoogleAdsScope { ConnectionId = "conn_1", CustomerId = "1234567890" },
-            new[] { "KEYWORD", "TARGET_CPA_OPT_IN" });
-
-        Assert.Equal("KEYWORD", rows[0].Type);
-        Assert.Equal(25, rows[0].Impact!.PotentialClicks);
-        Assert.Contains("types=KEYWORD%2CTARGET_CPA_OPT_IN", handler.LastRequest.RequestUri!.Query);
-    }
-
-    [Fact]
-    public async Task Apply_recommendations_sends_the_ids()
-    {
-        var handler = new StubHandler().Json("""{"data":{"applied":1}}""");
-        using var test = new TestClient(handler);
-
-        var applied = await test.Client.Ads.Google.ApplyRecommendationsAsync(
-            new GoogleRecommendationsOptions
-            {
-                WorkspaceId = "ws_1",
-                ConnectionId = "conn_1",
-                CustomerId = "1234567890",
-                Ids = new List<string> { "customers/1234567890/recommendations/ABC~1" },
-            });
-
-        Assert.Equal(1, applied);
-        Assert.Equal(
-            "/v1/ads/google/recommendations/apply",
-            handler.LastRequest.RequestUri!.AbsolutePath);
     }
 
     [Fact]
