@@ -104,7 +104,7 @@ nothing was attempted, so a sent count lower than the audience is correct rather
 
 `Inbox` (scope `inbox`) skips `/v1/inbox/chat/*` (browser-encrypted X Chat) and the binary
 `/v1/inbox/{id}/attachments/{index}` stream. `Ads` (scope `ads`) wraps every `/v1/ads` route;
-boost, create, set status, delete, bulk status and the campaign/ad set/network ad writes also need
+boost, create, set status, delete and bulk status also need
 `publish`, and anything created starts paused unless `Paused = false`. Inbox lists carry `{ page, perPage, total }` meta, read into
 `InboxPage<T>`/`InboxPageMeta` rather than `Page<T>`. Ads request bodies are camelCase and are
 serialised straight from their options objects; the inbox `read`/`refresh` bodies are

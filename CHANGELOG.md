@@ -68,6 +68,14 @@ All notable changes to `FoPost.Sdk` are listed here. The format follows
   website secret and test, destinations, keywords, articles), with the blog options and models
   (including `BlogArticlePublishedPayload`) and `WebhookEvents.ArticlePublished`. Articles are
   ordinary posts now; `client.Blogs` (remote articles on a connected site) is unchanged.
+- **Breaking:** the ads methods for endpoints the API no longer serves, with their options and
+  models. On `client.Ads`: `AccountTreeAsync`, the campaign, ad set and network ad methods
+  (create, get, update, delete, duplicate), the creative methods, every catalog, product, feed,
+  feed upload and product set method, and `LibraryAsync`. On `client.Ads.Google`: keywords,
+  keyword ideas and metrics, search terms, negative keyword lists, assets, asset groups,
+  recommendations and the optimization score. `CreateAdCampaignOptions.SmartPlus` goes with its
+  method. Boosts, standalone ads (`CreateAsync`), `BulkSetStatusAsync`, audiences, lead forms,
+  pixels, conversions and the remaining Google methods are unchanged.
 
 ## [0.4.0] - 2026-10-18
 

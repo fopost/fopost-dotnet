@@ -85,14 +85,6 @@ public static class AdInsightsBreakdowns
     public const string Country = "country";
 }
 
-/// <summary>The creative formats <see cref="Resources.AdsResource.CreateCreativeAsync"/> builds.</summary>
-public static class AdCreativeFormats
-{
-    public const string Image = "image";
-    public const string Video = "video";
-    public const string Carousel = "carousel";
-}
-
 /// <summary>An interest, behaviour, or income bracket, as the ad platform names it.</summary>
 public sealed class AdTargetingItem : FoPostModel
 {
@@ -751,127 +743,6 @@ public sealed class LeadsPage : FoPostModel
     public string? NextCursor { get; set; }
 }
 
-/// <summary>A campaign on the ad platform. Read live, never stored.</summary>
-public sealed class AdCampaign : FoPostModel
-{
-    /// <summary>The ad platform's campaign id.</summary>
-    [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary><c>ACTIVE</c>, <c>PAUSED</c>, <c>DELETED</c>, or <c>ARCHIVED</c>.</summary>
-    [JsonPropertyName("status")]
-    public string Status { get; set; } = string.Empty;
-
-    [JsonPropertyName("effectiveStatus")]
-    public string? EffectiveStatus { get; set; }
-
-    [JsonPropertyName("objective")]
-    public string? Objective { get; set; }
-
-    /// <summary>Null when the budget lives on the ad sets.</summary>
-    [JsonPropertyName("budgetMinor")]
-    public long? BudgetMinor { get; set; }
-
-    /// <summary>One of <see cref="AdBudgetTypes"/>.</summary>
-    [JsonPropertyName("budgetType")]
-    public string? BudgetType { get; set; }
-
-    [JsonPropertyName("createdAt")]
-    public string? CreatedAt { get; set; }
-
-    /// <summary>Filled only in <see cref="Resources.AdsResource.AccountTreeAsync"/>.</summary>
-    [JsonPropertyName("adSets")]
-    public IList<AdSet>? AdSets { get; set; }
-}
-
-/// <summary>An ad set on the ad platform. Read live, never stored.</summary>
-public sealed class AdSet : FoPostModel
-{
-    /// <summary>The ad platform's ad set id.</summary>
-    [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
-
-    [JsonPropertyName("campaignId")]
-    public string? CampaignId { get; set; }
-
-    [JsonPropertyName("status")]
-    public string Status { get; set; } = string.Empty;
-
-    [JsonPropertyName("effectiveStatus")]
-    public string? EffectiveStatus { get; set; }
-
-    [JsonPropertyName("budgetMinor")]
-    public long? BudgetMinor { get; set; }
-
-    /// <summary>One of <see cref="AdBudgetTypes"/>.</summary>
-    [JsonPropertyName("budgetType")]
-    public string? BudgetType { get; set; }
-
-    [JsonPropertyName("endAt")]
-    public string? EndAt { get; set; }
-
-    [JsonPropertyName("optimizationGoal")]
-    public string? OptimizationGoal { get; set; }
-
-    [JsonPropertyName("createdAt")]
-    public string? CreatedAt { get; set; }
-
-    /// <summary>Filled only in <see cref="Resources.AdsResource.AccountTreeAsync"/>.</summary>
-    [JsonPropertyName("ads")]
-    public IList<NetworkAd>? Ads { get; set; }
-}
-
-/// <summary>An ad inside an ad set on the ad platform. Read live, never stored.</summary>
-public sealed class NetworkAd : FoPostModel
-{
-    /// <summary>The ad platform's ad id.</summary>
-    [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
-
-    [JsonPropertyName("campaignId")]
-    public string? CampaignId { get; set; }
-
-    [JsonPropertyName("adSetId")]
-    public string? AdSetId { get; set; }
-
-    [JsonPropertyName("creativeId")]
-    public string? CreativeId { get; set; }
-
-    [JsonPropertyName("status")]
-    public string Status { get; set; } = string.Empty;
-
-    [JsonPropertyName("effectiveStatus")]
-    public string? EffectiveStatus { get; set; }
-
-    [JsonPropertyName("createdAt")]
-    public string? CreatedAt { get; set; }
-}
-
-/// <summary>An ad account's campaigns, each with its ad sets and their ads.</summary>
-public sealed class AdAccountTree : FoPostModel
-{
-    [JsonPropertyName("adAccountId")]
-    public string AdAccountId { get; set; } = string.Empty;
-
-    [JsonPropertyName("currency")]
-    public string? Currency { get; set; }
-
-    [JsonPropertyName("workspaceId")]
-    public string? WorkspaceId { get; set; }
-
-    [JsonPropertyName("campaigns")]
-    public IList<AdCampaign> Campaigns { get; set; } = new List<AdCampaign>();
-}
-
 /// <summary>What happened to one object in a bulk status change.</summary>
 public sealed class BulkAdStatusResult : FoPostModel
 {
@@ -887,51 +758,6 @@ public sealed class BulkAdStatusResult : FoPostModel
 
     [JsonPropertyName("error")]
     public string? Error { get; set; }
-}
-
-/// <summary>A creative on an ad account, usable in any number of ads.</summary>
-public sealed class NetworkCreative : FoPostModel
-{
-    [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary><c>image</c>, <c>video</c>, <c>carousel</c>, <c>post</c>, or <c>other</c>.</summary>
-    [JsonPropertyName("format")]
-    public string Format { get; set; } = string.Empty;
-
-    [JsonPropertyName("status")]
-    public string? Status { get; set; }
-
-    [JsonPropertyName("title")]
-    public string? Title { get; set; }
-
-    [JsonPropertyName("body")]
-    public string? Body { get; set; }
-
-    [JsonPropertyName("link")]
-    public string? Link { get; set; }
-
-    [JsonPropertyName("thumbnailUrl")]
-    public string? ThumbnailUrl { get; set; }
-
-    [JsonPropertyName("callToAction")]
-    public string? CallToAction { get; set; }
-
-    [JsonPropertyName("urlTags")]
-    public string? UrlTags { get; set; }
-}
-
-/// <summary>The creatives on one ad account.</summary>
-public sealed class CreativesResult : FoPostModel
-{
-    [JsonPropertyName("creatives")]
-    public IList<NetworkCreative> Creatives { get; set; } = new List<NetworkCreative>();
-
-    [JsonPropertyName("workspaceId")]
-    public string? WorkspaceId { get; set; }
 }
 
 /// <summary>How many people a targeting spec could reach.</summary>

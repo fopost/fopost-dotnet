@@ -27,11 +27,10 @@ public class AdsTikTokTests
     }
 
     [Fact]
-    public async Task Spark_post_id_and_smart_plus_travel_in_the_body()
+    public async Task Spark_post_id_travels_in_the_body()
     {
         var handler = new StubHandler()
-            .Json("""{"data":{"id":"ad_1","workspaceId":"ws_1","kind":"ad","name":"Spark","goal":"traffic","status":"paused"}}""")
-            .Json("""{"data":{"id":"c1","name":"Smart","status":"PAUSED"}}""");
+            .Json("""{"data":{"id":"ad_1","workspaceId":"ws_1","kind":"ad","name":"Spark","goal":"traffic","status":"paused"}}""");
         using var test = new TestClient(handler);
 
         await test.Client.Ads.CreateAsync(new CreateAdOptions
@@ -47,17 +46,6 @@ public class AdsTikTokTests
             SparkPostId = "item_99",
         });
         Assert.Contains("\"sparkPostId\":\"item_99\"", handler.LastBody);
-
-        await test.Client.Ads.CreateCampaignAsync(new CreateAdCampaignOptions
-        {
-            WorkspaceId = "ws_1",
-            ConnectionId = "conn_1",
-            AdAccountId = "7011",
-            Name = "Smart",
-            Goal = AdGoals.Traffic,
-            SmartPlus = true,
-        });
-        Assert.Contains("\"smartPlus\":true", handler.LastBody);
     }
 
     [Fact]
